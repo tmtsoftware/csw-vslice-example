@@ -8,6 +8,7 @@ import csw.util.config.Configurations.{ConfigKey, SetupConfig, SetupConfigArg}
 import csw.services.ccs.BlockingAssemblyClient
 import csw.services.ccs.CommandStatus.CommandResult
 import csw.services.events.EventService.EventMonitor
+import csw.services.events.TelemetryService.TelemetryMonitor
 import csw.services.events.{Event, EventService, TelemetryService}
 import csw.util.config.UnitsOfMeasure.{degrees, kilometers, millimeters}
 
@@ -183,7 +184,7 @@ object Demo extends LazyLogging {
    * @param ts a Telemetry Service reference
    * @return an EventService referenc
    */
-  def getStatusEvents(ts: TelemetryService): EventMonitor = ts.subscribe(evPrinter, false, s"$componentPrefix.*")
+  def getStatusEvents(ts: TelemetryService): TelemetryMonitor = ts.subscribe(evPrinter, false, s"$componentPrefix.*")
 
   /**
    * Subscribe to all SystemEvents published by TromboneAssembly and print them to the screen
