@@ -139,6 +139,7 @@ public class EventSubscriberTests extends JavaTestKit {
 
     // No more messages please
     fakeFollowActor.expectNoMsg(duration("500 milli"));
+    es.tell(new StopFollowing(), self());
     cleanup(es);
   }
 
@@ -175,6 +176,7 @@ public class EventSubscriberTests extends JavaTestKit {
     // No more messages please
     fakeFollowActor.expectNoMsg(duration("500 milli"));
 
+    es.tell(new StopFollowing(), self());
     cleanup(es);
   }
 
