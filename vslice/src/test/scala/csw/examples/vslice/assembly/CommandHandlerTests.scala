@@ -4,6 +4,7 @@ import java.net.URI
 
 import akka.actor.{ActorRef, ActorSystem, PoisonPill}
 import akka.testkit.{TestKit, TestProbe}
+import akka.util.Timeout
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import csw.examples.vslice.TestEnv
 import csw.examples.vslice.hcd.SingleAxisSimulator.AxisUpdate
@@ -14,6 +15,7 @@ import csw.services.ccs.SequentialExecutor
 import csw.services.ccs.SequentialExecutor.ExecuteOne
 import csw.services.ccs.Validation.{RequiredHCDUnavailableIssue, WrongInternalStateIssue}
 import csw.services.events.EventService
+import csw.services.events.EventService.eventServiceConnection
 import csw.services.loc.Connection.AkkaConnection
 import csw.services.loc.ConnectionType.AkkaType
 import csw.services.loc.LocationService
@@ -26,6 +28,7 @@ import csw.util.config.Configurations
 import csw.util.config.Configurations.SetupConfig
 import org.scalatest.{BeforeAndAfterAll, FunSpecLike, _}
 
+import scala.concurrent.Await
 import scala.concurrent.duration._
 
 object CommandHandlerTests {
@@ -49,11 +52,18 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     TestEnv.createTromboneAssemblyConfig()
   }
 
-  override def afterAll = TestKit.shutdownActorSystem(system)
+  override def afterAll: Unit = TestKit.shutdownActorSystem(system)
 
   val ac = AssemblyTestData.TestAssemblyContext
 
-  def setupState(ts: TromboneState) = {
+  def getEventServiceLocation: ResolvedTcpLocation = {
+    implicit val timeout = Timeout(5.seconds)
+    val connection = eventServiceConnection(EventService.defaultName)
+    val locationsReady = Await.result(LocationService.resolve(Set(connection)), timeout.duration)
+    locationsReady.locations.head.asInstanceOf[ResolvedTcpLocation]
+  }
+
+  def setupState(ts: TromboneState): Unit = {
     // These times are important to allow time for test actors to get and process the state updates when running tests
     expectNoMsg(20.milli)
     system.eventStream.publish(ts)
@@ -486,7 +496,8 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     //info("Running")
 
     val ch = newCommandHandler(tromboneHCD)
-    val evLocation = ResolvedTcpLocation(EventService.eventServiceConnection(), "localhost", 7777)
+    //    val evLocation = ResolvedTcpLocation(EventService.eventServiceConnection(), "localhost", 7777)
+    val evLocation = getEventServiceLocation
     ch ! evLocation
 
     // set the state so the command succeeds
@@ -514,7 +525,8 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     //info("Running")
 
     val ch = newCommandHandler(tromboneHCD)
-    val evLocation = ResolvedTcpLocation(EventService.eventServiceConnection(), "localhost", 7777)
+    //    val evLocation = ResolvedTcpLocation(EventService.eventServiceConnection(), "localhost", 7777)
+    val evLocation = getEventServiceLocation
     ch ! evLocation
 
     // I'm sending this event to the follower so I know its state so I can check the final result
@@ -591,7 +603,8 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     //info("Running")
 
     val ch = newCommandHandler(tromboneHCD)
-    val evLocation = ResolvedTcpLocation(EventService.eventServiceConnection(), "localhost", 7777)
+    //    val evLocation = ResolvedTcpLocation(EventService.eventServiceConnection(), "localhost", 7777)
+    val evLocation = getEventServiceLocation
     ch ! evLocation
 
     // I'm sending this event to the follower so I know its state so I can check the final result

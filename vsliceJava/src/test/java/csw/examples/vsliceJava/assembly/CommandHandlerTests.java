@@ -34,6 +34,7 @@ import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import static csw.examples.vsliceJava.assembly.TromboneStateActor.*;
@@ -530,7 +531,7 @@ public class CommandHandlerTests extends JavaTestKit {
   }
 
   @Test
-  public void shouldAllowFollowAndAStop() {
+  public void shouldAllowFollowAndAStop() throws ExecutionException, InterruptedException {
 
     ActorRef tromboneHCD = startHCD();
     TestProbe fakeAssembly = new TestProbe(system);
@@ -543,8 +544,8 @@ public class CommandHandlerTests extends JavaTestKit {
     //info("Running")
 
     ActorRef ch = newCommandHandler(tromboneHCD, Optional.empty());
-    LocationService.ResolvedTcpLocation evLocation = new LocationService.ResolvedTcpLocation(
-      IEventService.eventServiceConnection(), "localhost", 7777);
+//    LocationService.ResolvedTcpLocation evLocation = new LocationService.ResolvedTcpLocation(IEventService.eventServiceConnection(), "localhost", 7777);
+    LocationService.ResolvedTcpLocation evLocation = IEventService.getEventServiceLocation(IEventService.defaultName, system, timeout).get();
     ch.tell(evLocation, self());
 
     // set the state so the command succeeds
@@ -561,7 +562,7 @@ public class CommandHandlerTests extends JavaTestKit {
   }
 
   @Test
-  public void shouldAllowFollowWithTwoSetAnglesAndStop() {
+  public void shouldAllowFollowWithTwoSetAnglesAndStop() throws ExecutionException, InterruptedException {
     ActorRef tromboneHCD = startHCD();
     TestProbe fakeAssembly = new TestProbe(system);
 
@@ -573,8 +574,8 @@ public class CommandHandlerTests extends JavaTestKit {
     //info("Running")
 
     ActorRef ch = newCommandHandler(tromboneHCD, Optional.empty());
-    LocationService.ResolvedTcpLocation evLocation = new LocationService.ResolvedTcpLocation(
-      IEventService.eventServiceConnection(), "localhost", 7777);
+//    LocationService.ResolvedTcpLocation evLocation = new LocationService.ResolvedTcpLocation(IEventService.eventServiceConnection(), "localhost", 7777);
+    LocationService.ResolvedTcpLocation evLocation = IEventService.getEventServiceLocation(IEventService.defaultName, system, timeout).get();
     ch.tell(evLocation, self());
 
     // I'm sending this event to the follower so I know its state so I can check the final result
@@ -640,7 +641,7 @@ public class CommandHandlerTests extends JavaTestKit {
   }
 
   @Test
-  public void shouldAllowOneArgWithSetElevationFollowSetAngleAndStopAsASingleSequence() {
+  public void shouldAllowOneArgWithSetElevationFollowSetAngleAndStopAsASingleSequence() throws ExecutionException, InterruptedException {
     ActorRef tromboneHCD = startHCD();
     TestProbe fakeAssembly = new TestProbe(system);
 
@@ -652,8 +653,8 @@ public class CommandHandlerTests extends JavaTestKit {
     //info("Running")
 
     ActorRef ch = newCommandHandler(tromboneHCD, Optional.empty());
-    LocationService.ResolvedTcpLocation evLocation = new LocationService.ResolvedTcpLocation(
-      IEventService.eventServiceConnection(), "localhost", 7777);
+//    LocationService.ResolvedTcpLocation evLocation = new LocationService.ResolvedTcpLocation(IEventService.eventServiceConnection(), "localhost", 7777);
+    LocationService.ResolvedTcpLocation evLocation = IEventService.getEventServiceLocation(IEventService.defaultName, system, timeout).get();
     ch.tell(evLocation, self());
 
     // I'm sending this event to the follower so I know its state so I can check the final result

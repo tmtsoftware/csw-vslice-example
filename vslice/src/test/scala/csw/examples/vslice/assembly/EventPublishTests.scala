@@ -6,6 +6,7 @@ import akka.util.Timeout
 import com.typesafe.scalalogging.slf4j.LazyLogging
 import csw.examples.vslice.TestEnv
 import csw.examples.vslice.assembly.FollowActor.UpdatedEventData
+import csw.services.events.EventService.eventServiceConnection
 import csw.services.events.{Event, EventService, TelemetryService}
 import csw.services.loc.LocationService
 import csw.services.loc.LocationService.ResolvedTcpLocation
@@ -77,6 +78,12 @@ class EventPublishTests extends TestKit(EventPublishTests.system) with ImplicitS
 
   // Used for creating followers
   private val initialElevation = naElevation(assemblyContext.calculationConfig.defaultInitialElevation)
+
+  def getEventServiceLocation: ResolvedTcpLocation = {
+    val connection = eventServiceConnection(EventService.defaultName)
+    val locationsReady = Await.result(LocationService.resolve(Set(connection)), 5.seconds)
+    locationsReady.locations.head.asInstanceOf[ResolvedTcpLocation]
+  }
 
   // Stop any actors created for a test to avoid conflict with other tests
   private def cleanup(a: ActorRef*): Unit = {
@@ -200,7 +207,8 @@ class EventPublishTests extends TestKit(EventPublishTests.system) with ImplicitS
       // create the subscriber that listens for events from TCS for zenith angle and focus error from RTC
       val es = system.actorOf(TromboneEventSubscriber.props(assemblyContext, setNssInUse(false), Some(followActorRef), eventService))
       // This injects the event service location
-      val evLocation = ResolvedTcpLocation(EventService.eventServiceConnection(), "localhost", 7777)
+      //      val evLocation = ResolvedTcpLocation(EventService.eventServiceConnection(), "localhost", 7777)
+      val evLocation = getEventServiceLocation
       es ! evLocation
 
       // This creates a local subscriber to get all aoSystemEventPrefix SystemEvents published for testing

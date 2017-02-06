@@ -24,6 +24,7 @@ import org.junit.Test;
 import scala.concurrent.duration.FiniteDuration;
 
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -258,7 +259,7 @@ public class EventPublishTests extends JavaTestKit {
    * event service as is done in this and the previous tests.
    */
   @Test
-  public void test3() {
+  public void test3() throws ExecutionException, InterruptedException {
     // should allow publishing several events through the event service
     // Ignoring the messages for TrombonePosition
     // Create the trombone publisher for publishing SystemEvents to AOESW
@@ -270,7 +271,8 @@ public class EventPublishTests extends JavaTestKit {
     ActorRef es = system.actorOf(TromboneEventSubscriber.props(assemblyContext, assemblyContext.setNssInUse(false),
       Optional.of(followActorRef), eventService));
     // This injects the event service location
-    ResolvedTcpLocation evLocation = new ResolvedTcpLocation(IEventService.eventServiceConnection(), "localhost", 7777);
+//    ResolvedTcpLocation evLocation = new ResolvedTcpLocation(IEventService.eventServiceConnection(), "localhost", 7777);
+    LocationService.ResolvedTcpLocation evLocation = IEventService.getEventServiceLocation(IEventService.defaultName, system, timeout).get();
     es.tell(evLocation, self());
 
     // This creates a local subscriber to get all aoSystemEventPrefix SystemEvents published for testing

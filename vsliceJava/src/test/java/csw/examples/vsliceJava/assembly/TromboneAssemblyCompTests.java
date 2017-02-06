@@ -115,7 +115,7 @@ public class TromboneAssemblyCompTests extends JavaTestKit {
 
     tla.tell(new SubscribeLifecycleCallback(fakeSequencer.ref()), self());
     fakeSequencer.expectMsg(new LifecycleStateChanged(LifecycleInitialized));
-    fakeSequencer.expectMsg(new LifecycleStateChanged(LifecycleRunning));
+    fakeSequencer.expectMsg(duration("5 seconds"), new LifecycleStateChanged(LifecycleRunning));
 
     fakeSequencer.expectNoMsg(duration("3 seconds")); // wait for connections
 
