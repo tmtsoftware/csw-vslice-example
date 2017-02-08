@@ -5,7 +5,7 @@ import java.net.URI
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, PoisonPill, Props}
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
 import akka.util.Timeout
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import csw.examples.vslice.TestEnv
 import csw.examples.vslice.assembly.DiagPublisher.{DiagnosticState, OperationsState}
 import csw.examples.vslice.assembly.TrombonePublisher.{AxisStateUpdate, AxisStatsUpdate}
@@ -72,7 +72,7 @@ object DiagPublisherTests {
 }
 
 class DiagPublisherTests extends TestKit(DiagPublisherTests.system) with ImplicitSender
-    with FunSpecLike with ShouldMatchers with BeforeAndAfterAll with BeforeAndAfterEach with LazyLogging {
+    with FunSpecLike with Matchers with BeforeAndAfterAll with BeforeAndAfterEach with LazyLogging {
 
   import DiagPublisherTests._
 

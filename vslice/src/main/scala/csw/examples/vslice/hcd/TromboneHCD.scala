@@ -180,6 +180,7 @@ class TromboneHCD(override val info: HcdInfo, supervisor: ActorRef) extends Hcd 
         tromboneAxis ! Home
       case `axisCancelCK` =>
         tromboneAxis ! CancelMove
+      case x => log.warning(s"Unknown config key $x")
     }
   }
 

@@ -6,7 +6,7 @@ package csw.examples.vslice.assembly
 
 import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import csw.examples.vslice.TestEnv
 import csw.services.apps.containerCmd.ContainerCmd
 import csw.services.ccs.AssemblyController.Submit
@@ -29,7 +29,7 @@ object TromboneAssemblyCompTests {
 }
 
 class TromboneAssemblyCompTests extends TestKit(TromboneAssemblyCompTests.system) with ImplicitSender
-    with FunSpecLike with ShouldMatchers with BeforeAndAfterAll with LazyLogging {
+    with FunSpecLike with Matchers with BeforeAndAfterAll with LazyLogging {
 
   val assemblyContext = AssemblyTestData.TestAssemblyContext
 

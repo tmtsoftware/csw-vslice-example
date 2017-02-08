@@ -192,6 +192,8 @@ class TromboneCommandHandler(ac: AssemblyContext, tromboneHCDIn: Option[ActorRef
           // Go back to no follow state
           context.become(noFollowReceive())
           commandOriginator.foreach(_ ! Completed)
+
+        case x => log.warning(s"Unknown config key: $x")
       }
 
     case x => log.error(s"TromboneCommandHandler:followReceive received an unknown message: $x")

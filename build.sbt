@@ -22,8 +22,8 @@ lazy val vslice = project
   .enablePlugins(JavaAppPackaging)
   .settings(packageSettings("VerticalSlice", "Vertical Slice Example", "More complicated example showing CSW features"): _*)
   .settings(libraryDependencies ++=
-    compile(pkg, cs, ccs, ts, events, alarms, containerCmd, seqSupport) ++
-      test(scalaTest, specs2, akkaTestKit)
+    compile(pkg, cs, ccs, ts, events, alarms, containerCmd, seqSupport, log) ++
+      test(scalaTest, akkaTestKit)
   )
 
 // EndToEnd Example project Java version
@@ -31,7 +31,7 @@ lazy val vsliceJava = project
   .enablePlugins(JavaAppPackaging)
   .settings(packageSettings("VerticalSliceJava", "Vertical Slice Java Example", "More complicated example showing CSW Java features"): _*)
   .settings(libraryDependencies ++=
-    compile(javacsw) ++
-      test(akkaTestKit, junit, junitInterface, scalaJava8Compat)
+    compile(javacsw, log) ++
+      test(akkaTestKit, junitInterface, scalaJava8Compat)
   )
 

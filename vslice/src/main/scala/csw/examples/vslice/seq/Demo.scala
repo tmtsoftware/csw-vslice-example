@@ -1,7 +1,7 @@
 package csw.examples.vslice.seq
 
 import akka.util.Timeout
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import csw.services.ccs.AssemblyMessages.{DiagnosticMode, OperationsMode}
 import csw.util.config.{BooleanKey, Configurations, DoubleItem, DoubleKey}
 import csw.util.config.Configurations.{ConfigKey, SetupConfig, SetupConfigArg}

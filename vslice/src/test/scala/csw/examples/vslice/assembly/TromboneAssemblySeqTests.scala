@@ -3,7 +3,7 @@ package csw.examples.vslice.assembly
 import akka.actor.{ActorRef, ActorSystem, PoisonPill}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import akka.util.Timeout
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import csw.examples.vslice.TestEnv
 import csw.examples.vslice.seq.Demo.logger
 import csw.services.apps.containerCmd.ContainerCmd
@@ -36,7 +36,7 @@ object TromboneAssemblySeqTests {
 }
 
 class TromboneAssemblySeqTests extends TestKit(TromboneAssemblyCompTests.system) with ImplicitSender
-    with FunSpecLike with ShouldMatchers with BeforeAndAfterAll with LazyLogging {
+    with FunSpecLike with Matchers with BeforeAndAfterAll with LazyLogging {
 
   implicit val timeout = Timeout(10.seconds)
 

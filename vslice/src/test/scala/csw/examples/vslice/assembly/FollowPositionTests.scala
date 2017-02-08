@@ -3,7 +3,7 @@ package csw.examples.vslice.assembly
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, PoisonPill, Props}
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
 import akka.util.Timeout
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import csw.examples.vslice.TestEnv
 import csw.examples.vslice.assembly.FollowActor.UpdatedEventData
 import csw.examples.vslice.assembly.TromboneControl.GoToStagePosition
@@ -63,7 +63,7 @@ object FollowPositionTests {
  * These tests are about testing the calculated values for the trombone position when following.
  */
 class FollowPositionTests extends TestKit(FollowPositionTests.system) with ImplicitSender
-    with FunSpecLike with ShouldMatchers with BeforeAndAfterAll with BeforeAndAfterEach with LazyLogging {
+    with FunSpecLike with Matchers with BeforeAndAfterAll with BeforeAndAfterEach with LazyLogging {
   import system._
   import Algorithms._
   import TromboneAssembly._

@@ -2,7 +2,7 @@ package csw.examples.vslice.hcd
 
 import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.TestProbe
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import csw.examples.vslice.TestEnv
 import csw.services.loc.ConnectionType.AkkaType
 import csw.services.loc.LocationService
@@ -25,7 +25,7 @@ object TromboneHCDCompTests {
   implicit val system = ActorSystem("TromboneHCDCompTests")
 }
 
-class TromboneHCDCompTests extends FunSpec with ShouldMatchers with LazyLogging with BeforeAndAfterAll {
+class TromboneHCDCompTests extends FunSpec with Matchers with LazyLogging with BeforeAndAfterAll {
 
   import TromboneHCDCompTests._
   import TromboneHCD._

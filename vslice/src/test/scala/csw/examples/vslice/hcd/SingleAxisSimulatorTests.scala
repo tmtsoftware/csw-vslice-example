@@ -3,7 +3,7 @@ package csw.examples.vslice.hcd
 import akka.actor.{ActorRef, ActorSystem, PoisonPill}
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
 import csw.examples.vslice.hcd.MotionWorker._
-import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FunSpecLike, ShouldMatchers}
+import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FunSpecLike, Matchers}
 
 import scala.concurrent.duration._
 
@@ -11,7 +11,7 @@ import scala.concurrent.duration._
  * TMT Source Code: 7/19/16.
  */
 class SingleAxisSimulatorTests extends TestKit(ActorSystem("TromboneHCDTests")) with ImplicitSender
-    with FunSpecLike with ShouldMatchers with BeforeAndAfterAll {
+    with FunSpecLike with Matchers with BeforeAndAfterAll {
 
   import SingleAxisSimulator._
 

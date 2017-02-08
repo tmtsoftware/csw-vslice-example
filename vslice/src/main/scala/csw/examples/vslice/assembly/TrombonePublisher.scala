@@ -8,6 +8,8 @@ import csw.services.loc.LocationSubscriberClient
 import csw.util.config._
 import csw.util.config.Events.{StatusEvent, SystemEvent}
 
+import scala.util.Failure
+
 /**
  * An actor that provides the publishing interface to the TMT Event Service and Telemetry Service.
  *
@@ -89,16 +91,18 @@ class TrombonePublisher(assemblyContext: AssemblyContext, eventServiceIn: Option
   private def publishAOESW(eventService: Option[EventService], elevationItem: DoubleItem, rangeItem: DoubleItem) = {
     val se = SystemEvent(aoSystemEventPrefix).madd(elevationItem, rangeItem)
     log.debug(s"System publish of $aoSystemEventPrefix: $se")
-    eventService.foreach(_.publish(se).onFailure {
-      case ex => log.error("TrombonePublisher failed to publish AO system event: $se", ex)
+    eventService.foreach(_.publish(se).onComplete {
+      case Failure(ex) => log.error("TrombonePublisher failed to publish AO system event: $se", ex)
+      case _           =>
     })
   }
 
   private def publishEngr(telemetryService: Option[TelemetryService], rtcFocusError: DoubleItem, stagePosition: DoubleItem, zenithAngle: DoubleItem) = {
     val ste = StatusEvent(engStatusEventPrefix).madd(rtcFocusError, stagePosition, zenithAngle)
     log.info(s"Status publish of $engStatusEventPrefix: $ste")
-    telemetryService.foreach(_.publish(ste).onFailure {
-      case ex => log.error(s"TrombonePublisher failed to publish engr event: $ste", ex)
+    telemetryService.foreach(_.publish(ste).onComplete {
+      case Failure(ex) => log.error(s"TrombonePublisher failed to publish engr event: $ste", ex)
+      case _           =>
     })
   }
 
@@ -106,24 +110,27 @@ class TrombonePublisher(assemblyContext: AssemblyContext, eventServiceIn: Option
     // We can do this for convenience rather than using TromboneStateHandler's stateReceive
     val ste = StatusEvent(tromboneStateStatusEventPrefix).madd(ts.cmd, ts.move, ts.sodiumLayer, ts.nss)
     log.info(s"Status state publish of $tromboneStateStatusEventPrefix: $ste")
-    telemetryService.foreach(_.publish(ste).onFailure {
-      case ex => log.error(s"TrombonePublisher failed to publish trombone state: $ste", ex)
+    telemetryService.foreach(_.publish(ste).onComplete {
+      case Failure(ex) => log.error(s"TrombonePublisher failed to publish trombone state: $ste", ex)
+      case _           =>
     })
   }
 
   private def publishAxisState(telemetryService: Option[TelemetryService], axisName: StringItem, position: IntItem, state: ChoiceItem, inLowLimit: BooleanItem, inHighLimit: BooleanItem, inHome: BooleanItem) = {
     val ste = StatusEvent(axisStateEventPrefix).madd(axisName, position, state, inLowLimit, inHighLimit, inHome)
     log.debug(s"Axis state publish of $axisStateEventPrefix: $ste")
-    telemetryService.foreach(_.publish(ste).onFailure {
-      case ex => log.error(s"TrombonePublisher failed to publish trombone axis state: $ste", ex)
+    telemetryService.foreach(_.publish(ste).onComplete {
+      case Failure(ex) => log.error(s"TrombonePublisher failed to publish trombone axis state: $ste", ex)
+      case _           =>
     })
   }
 
   def publishAxisStats(telemetryService: Option[TelemetryService], axisName: StringItem, datumCount: IntItem, moveCount: IntItem, homeCount: IntItem, limitCount: IntItem, successCount: IntItem, failureCount: IntItem, cancelCount: IntItem): Unit = {
     val ste = StatusEvent(axisStatsEventPrefix).madd(axisName, datumCount, moveCount, homeCount, limitCount, successCount, failureCount, cancelCount)
     log.debug(s"Axis stats publish of $axisStatsEventPrefix: $ste")
-    telemetryService.foreach(_.publish(ste).onFailure {
-      case ex => log.error(s"TrombonePublisher failed to publish trombone axis stats: $ste", ex)
+    telemetryService.foreach(_.publish(ste).onComplete {
+      case Failure(ex) => log.error(s"TrombonePublisher failed to publish trombone axis stats: $ste", ex)
+      case _           =>
     })
   }
 

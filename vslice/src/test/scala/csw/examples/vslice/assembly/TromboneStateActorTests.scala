@@ -50,7 +50,7 @@ object TromboneStateActorTests {
 }
 
 class TromboneStateActorTests extends TestKit(TromboneStateActorTests.system) with ImplicitSender
-    with FunSpecLike with ShouldMatchers with Inspectors with BeforeAndAfterEach {
+    with FunSpecLike with Matchers with Inspectors with BeforeAndAfterEach {
 
   import TromboneStateActorTests._
   import TromboneStateActor._

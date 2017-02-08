@@ -3,7 +3,7 @@ package csw.examples.vslice.assembly
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, PoisonPill, Props}
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
 import akka.util.Timeout
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import csw.examples.vslice.TestEnv
 import csw.examples.vslice.assembly.FollowCommand.{StopFollowing, UpdateZAandFE}
 import csw.examples.vslice.hcd.TromboneHCD
@@ -61,7 +61,7 @@ object FollowCommandTests {
  */
 //noinspection TypeAnnotation
 class FollowCommandTests extends TestKit(FollowCommandTests.system) with ImplicitSender
-    with FunSpecLike with ShouldMatchers with BeforeAndAfterAll with BeforeAndAfterEach with LazyLogging {
+    with FunSpecLike with Matchers with BeforeAndAfterAll with BeforeAndAfterEach with LazyLogging {
 
   import FollowCommandTests._
   import system.dispatcher

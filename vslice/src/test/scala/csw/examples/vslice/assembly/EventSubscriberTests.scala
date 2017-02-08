@@ -3,7 +3,7 @@ package csw.examples.vslice.assembly
 import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
 import akka.util.Timeout
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import csw.examples.vslice.TestEnv
 import csw.examples.vslice.assembly.FollowActor.{StopFollowing, UpdatedEventData}
 import csw.examples.vslice.assembly.TromboneEventSubscriber.UpdateNssInUse
@@ -25,7 +25,7 @@ object EventSubscriberTests {
  * TMT Source Code: 9/17/16.
  */
 class EventSubscriberTests extends TestKit(EventSubscriberTests.sys) with ImplicitSender
-    with FunSpecLike with ShouldMatchers with BeforeAndAfterAll with BeforeAndAfterEach with LazyLogging {
+    with FunSpecLike with Matchers with BeforeAndAfterAll with BeforeAndAfterEach with LazyLogging {
 
   import system._
   implicit val timeout = Timeout(20.seconds)

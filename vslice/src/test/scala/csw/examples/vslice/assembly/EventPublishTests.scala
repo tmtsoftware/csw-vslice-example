@@ -3,7 +3,7 @@ package csw.examples.vslice.assembly
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import akka.util.Timeout
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import csw.examples.vslice.TestEnv
 import csw.examples.vslice.assembly.FollowActor.UpdatedEventData
 import csw.services.events.EventService.eventServiceConnection
@@ -53,7 +53,7 @@ object EventPublishTests {
  * TMT Source Code: 8/17/16.
  */
 class EventPublishTests extends TestKit(EventPublishTests.system) with ImplicitSender
-    with FunSpecLike with ShouldMatchers with BeforeAndAfterAll with BeforeAndAfterEach with LazyLogging {
+    with FunSpecLike with Matchers with BeforeAndAfterAll with BeforeAndAfterEach with LazyLogging {
 
   import system._
   import EventPublishTests._

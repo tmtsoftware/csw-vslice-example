@@ -6,12 +6,12 @@ import csw.services.ccs.Validation._
 import csw.util.config.Configurations.SetupConfig
 import csw.util.config.UnitsOfMeasure.kilometers
 import csw.util.config.{Configurations, DoubleKey}
-import org.scalatest.{BeforeAndAfterAll, FunSpec, Inspectors, ShouldMatchers}
+import org.scalatest.{BeforeAndAfterAll, FunSpec, Inspectors, Matchers}
 
 /**
  * TMT Source Code: 8/25/16.
  */
-class ValidationTests extends FunSpec with ShouldMatchers with Inspectors with BeforeAndAfterAll {
+class ValidationTests extends FunSpec with Matchers with Inspectors with BeforeAndAfterAll {
   import ConfigValidation._
 
   implicit val ac = AssemblyTestData.TestAssemblyContext

@@ -3,7 +3,7 @@ package csw.examples.vslice.assembly
 import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import akka.util.Timeout
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import csw.examples.vslice.TestEnv
 import csw.examples.vslice.hcd.TromboneHCD
 import csw.examples.vslice.hcd.TromboneHCD._
@@ -36,7 +36,7 @@ object AlarmMonitorTests {
  * AlarmMonitorTests
  */
 class AlarmMonitorTests extends TestKit(AlarmMonitorTests.system) with ImplicitSender
-    with FunSpecLike with ShouldMatchers with BeforeAndAfterAll with BeforeAndAfterEach with LazyLogging {
+    with FunSpecLike with Matchers with BeforeAndAfterAll with BeforeAndAfterEach with LazyLogging {
 
   import TromboneAlarmMonitor._
   import TromboneStateActor._

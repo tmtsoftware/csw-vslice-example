@@ -12,7 +12,7 @@ import csw.services.pkg.Component.{DoNotRegister, HcdInfo}
 import csw.services.pkg.Supervisor._
 import csw.util.config.Configurations.SetupConfig
 import csw.util.config.StateVariable.CurrentState
-import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FunSpecLike, ShouldMatchers}
+import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FunSpecLike, Matchers}
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -27,7 +27,7 @@ object TromboneHCDBasicTests {
 }
 
 class TromboneHCDBasicTests extends TestKit(TromboneHCDBasicTests.system) with ImplicitSender
-    with FunSpecLike with ShouldMatchers with BeforeAndAfterAll {
+    with FunSpecLike with Matchers with BeforeAndAfterAll {
 
   override def beforeAll: Unit = {
     TestEnv.createTromboneHcdConfig()

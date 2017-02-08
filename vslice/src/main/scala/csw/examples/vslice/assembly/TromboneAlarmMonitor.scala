@@ -99,6 +99,9 @@ class TromboneAlarmMonitor(currentStateReceiver: ActorRef, alarmService: AlarmSe
             // Go back to monitor State
             context.become(monitorReceive(alarmService))
           }
+
+        case _ =>
+          log.warning(s"Unexpected alarm key: $alarmKey")
       }
 
     case x => log.error(s"TromboneAlarmMonitor:inAlarmStateReceive received an unexpected message: $x")

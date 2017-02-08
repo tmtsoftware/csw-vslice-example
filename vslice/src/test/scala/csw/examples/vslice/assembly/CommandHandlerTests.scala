@@ -5,7 +5,7 @@ import java.net.URI
 import akka.actor.{ActorRef, ActorSystem, PoisonPill}
 import akka.testkit.{TestKit, TestProbe}
 import akka.util.Timeout
-import com.typesafe.scalalogging.slf4j.LazyLogging
+import com.typesafe.scalalogging.LazyLogging
 import csw.examples.vslice.TestEnv
 import csw.examples.vslice.hcd.SingleAxisSimulator.AxisUpdate
 import csw.examples.vslice.hcd.TromboneHCD
@@ -40,7 +40,7 @@ object CommandHandlerTests {
  * TMT Source Code: 9/21/16.
  */
 class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
-    with FunSpecLike with ShouldMatchers with BeforeAndAfterAll with BeforeAndAfterEach with LazyLogging {
+    with FunSpecLike with Matchers with BeforeAndAfterAll with BeforeAndAfterEach with LazyLogging {
 
   import TromboneStateActor._
 
