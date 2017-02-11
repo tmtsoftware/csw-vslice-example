@@ -15,7 +15,7 @@ import csw.services.loc.ConnectionType.AkkaType
 import csw.services.loc.LocationService
 import csw.services.pkg.Component.{DoNotRegister, HcdInfo}
 import csw.services.pkg.Supervisor
-import csw.services.pkg.Supervisor.{HaltComponent, LifecycleInitialized, LifecycleRunning}
+import csw.services.pkg.Supervisor.{HaltComponent, LifecycleRunning}
 import csw.services.pkg.SupervisorExternal.{LifecycleStateChanged, SubscribeLifecycleCallback}
 import csw.util.config.StateVariable.CurrentState
 import csw.util.config.UnitsOfMeasure.encoder
@@ -213,7 +213,6 @@ class AlarmMonitorTests extends TestKit(AlarmMonitorTests.system) with ImplicitS
 
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD ! SubscribeLifecycleCallback(fakeAssembly.ref)
-    fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleInitialized))
     fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleRunning))
     //info("Running")
 

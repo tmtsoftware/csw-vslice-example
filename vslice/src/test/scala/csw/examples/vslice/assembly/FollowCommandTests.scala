@@ -14,7 +14,7 @@ import csw.services.loc.ConnectionType.AkkaType
 import csw.services.loc.LocationService
 import csw.services.pkg.Component.{DoNotRegister, HcdInfo}
 import csw.services.pkg.Supervisor
-import csw.services.pkg.Supervisor.{HaltComponent, LifecycleInitialized, LifecycleRunning}
+import csw.services.pkg.Supervisor.{HaltComponent, LifecycleRunning}
 import csw.services.pkg.SupervisorExternal.{LifecycleStateChanged, SubscribeLifecycleCallback}
 import csw.util.config.BooleanItem
 import csw.util.config.Events.{StatusEvent, SystemEvent}
@@ -207,7 +207,6 @@ class FollowCommandTests extends TestKit(FollowCommandTests.system) with Implici
       val fakeAssembly = TestProbe()
 
       tromboneHCD ! SubscribeLifecycleCallback(fakeAssembly.ref)
-      fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleInitialized))
       fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleRunning))
       //info("Running")
 
@@ -323,7 +322,6 @@ class FollowCommandTests extends TestKit(FollowCommandTests.system) with Implici
       val fakeAssembly = TestProbe()
 
       tromboneHCD ! SubscribeLifecycleCallback(fakeAssembly.ref)
-      fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleInitialized))
       fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleRunning))
       //info("Running")
 
@@ -425,7 +423,6 @@ class FollowCommandTests extends TestKit(FollowCommandTests.system) with Implici
       val fakeAssembly = TestProbe()
 
       tromboneHCD ! SubscribeLifecycleCallback(fakeAssembly.ref)
-      fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleInitialized))
       fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleRunning))
       //info("Running")
 

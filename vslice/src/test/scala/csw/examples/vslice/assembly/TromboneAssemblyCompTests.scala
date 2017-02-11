@@ -70,7 +70,6 @@ class TromboneAssemblyCompTests extends TestKit(TromboneAssemblyCompTests.system
       val fakeSequencer = TestProbe()
 
       tla ! SubscribeLifecycleCallback(fakeSequencer.ref)
-      fakeSequencer.expectMsg(LifecycleStateChanged(LifecycleInitialized))
       fakeSequencer.expectMsg(LifecycleStateChanged(LifecycleRunning))
       cleanup(tla)
     }
@@ -80,7 +79,6 @@ class TromboneAssemblyCompTests extends TestKit(TromboneAssemblyCompTests.system
       val fakeSequencer = TestProbe()
 
       tla ! SubscribeLifecycleCallback(fakeSequencer.ref)
-      fakeSequencer.expectMsg(LifecycleStateChanged(LifecycleInitialized))
       fakeSequencer.expectMsg(LifecycleStateChanged(LifecycleRunning))
 
       fakeSequencer.expectNoMsg(3.seconds) // wait for connections
@@ -107,7 +105,6 @@ class TromboneAssemblyCompTests extends TestKit(TromboneAssemblyCompTests.system
       val fakeSequencer = TestProbe()
 
       tla ! SubscribeLifecycleCallback(fakeSequencer.ref)
-      fakeSequencer.expectMsg(LifecycleStateChanged(LifecycleInitialized))
       fakeSequencer.expectMsg(20.seconds, LifecycleStateChanged(LifecycleRunning))
 
       //fakeSequencer.expectNoMsg(12.seconds)  // wait for connections

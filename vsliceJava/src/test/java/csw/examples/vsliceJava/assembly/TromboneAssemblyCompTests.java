@@ -33,7 +33,6 @@ import java.util.stream.Collectors;
 
 import static csw.services.pkg.SupervisorExternal.LifecycleStateChanged;
 import static javacsw.services.ccs.JCommandStatus.*;
-import static javacsw.services.pkg.JSupervisor.LifecycleInitialized;
 import static javacsw.services.pkg.JSupervisor.LifecycleRunning;
 import static junit.framework.TestCase.assertEquals;
 
@@ -102,7 +101,6 @@ public class TromboneAssemblyCompTests extends JavaTestKit {
     TestProbe fakeSequencer = new TestProbe(system);
 
     tla.tell(new SubscribeLifecycleCallback(fakeSequencer.ref()), self());
-    fakeSequencer.expectMsg(new LifecycleStateChanged(LifecycleInitialized));
     fakeSequencer.expectMsg(duration("10 seconds"), new LifecycleStateChanged(LifecycleRunning));
     cleanup(tla);
   }
@@ -114,7 +112,6 @@ public class TromboneAssemblyCompTests extends JavaTestKit {
     TestProbe fakeSequencer = new TestProbe(system);
 
     tla.tell(new SubscribeLifecycleCallback(fakeSequencer.ref()), self());
-    fakeSequencer.expectMsg(new LifecycleStateChanged(LifecycleInitialized));
     fakeSequencer.expectMsg(duration("5 seconds"), new LifecycleStateChanged(LifecycleRunning));
 
     fakeSequencer.expectNoMsg(duration("3 seconds")); // wait for connections
@@ -144,7 +141,6 @@ public class TromboneAssemblyCompTests extends JavaTestKit {
     TestProbe fakeSequencer = new TestProbe(system);
 
     tla.tell(new SubscribeLifecycleCallback(fakeSequencer.ref()), self());
-    fakeSequencer.expectMsg(new LifecycleStateChanged(LifecycleInitialized));
     fakeSequencer.expectMsg(duration("20 seconds"), new LifecycleStateChanged(LifecycleRunning));
 
     fakeSequencer.expectNoMsg(duration("3 seconds")); // wait for connections

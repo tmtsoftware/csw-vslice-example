@@ -81,7 +81,6 @@ class TromboneAssembly(val info: AssemblyInfo, supervisor: ActorRef) extends Ass
       LocationSubscriberActor.trackConnection(TelemetryService.telemetryServiceConnection(), trackerSubscriber)
       LocationSubscriberActor.trackConnection(AlarmService.alarmServiceConnection(), trackerSubscriber)
 
-      supervisor ! Initialized
       assemblyContext
     } catch {
       case ex: Exception =>
@@ -110,7 +109,7 @@ class TromboneAssembly(val info: AssemblyInfo, supervisor: ActorRef) extends Ass
 
   /**
    * This Receive partial function processes changes to the services and TromboneHCD
-   * Ideally, we would wait for all services before sending Started, but it's not done yet
+   * Ideally, we would wait for all services before sending Initialized, but it's not done yet
    */
   def locationReceive: Receive = {
     case location: Location =>
@@ -119,8 +118,8 @@ class TromboneAssembly(val info: AssemblyInfo, supervisor: ActorRef) extends Ass
         case l: ResolvedAkkaLocation =>
           log.info(s"Got actorRef: ${l.actorRef}")
           tromboneHCD = l.actorRef
-          // When the HCD is located, Started is sent to Supervisor
-          supervisor ! Started
+          // When the HCD is located, Initialized is sent to Supervisor
+          supervisor ! Initialized
 
         case h: ResolvedHttpLocation =>
           log.info(s"HTTP Service Damn it: ${h.connection}")

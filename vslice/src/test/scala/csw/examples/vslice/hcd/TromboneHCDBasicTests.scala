@@ -75,7 +75,6 @@ class TromboneHCDBasicTests extends TestKit(TromboneHCDBasicTests.system) with I
 
   def lifecycleStart(supervisor: TestProbe, tla: ActorRef): Unit = {
     supervisor.expectMsg(Initialized)
-    supervisor.expectMsg(Started)
 
     supervisor.send(tla, Running)
   }
@@ -136,7 +135,6 @@ class TromboneHCDBasicTests extends TestKit(TromboneHCDBasicTests.system) with I
       val (supervisor, tla) = newTestTrombone()
 
       supervisor.expectMsg(Initialized)
-      supervisor.expectMsg(Started)
 
       supervisor.send(tla, Running)
 

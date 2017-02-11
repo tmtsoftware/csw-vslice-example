@@ -17,7 +17,7 @@ import csw.services.loc.ConnectionType.AkkaType
 import csw.services.loc.LocationService
 import csw.services.pkg.Component.{DoNotRegister, HcdInfo}
 import csw.services.pkg.Supervisor
-import csw.services.pkg.Supervisor.{HaltComponent, LifecycleInitialized, LifecycleRunning}
+import csw.services.pkg.Supervisor.{HaltComponent, LifecycleRunning}
 import csw.services.pkg.SupervisorExternal.{LifecycleStateChanged, SubscribeLifecycleCallback}
 import csw.util.config.BooleanItem
 import csw.util.config.Events.{EventTime, StatusEvent, SystemEvent}
@@ -357,7 +357,6 @@ class FollowActorTests extends TestKit(FollowActorTests.system) with ImplicitSen
       val fakeAssembly = TestProbe()
 
       tromboneHCD ! SubscribeLifecycleCallback(fakeAssembly.ref)
-      fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleInitialized))
       fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleRunning))
       //info("Running")
 

@@ -47,7 +47,6 @@ import static csw.util.config.Events.SystemEvent;
 import static javacsw.services.loc.JConnectionType.AkkaType;
 import static javacsw.services.pkg.JComponent.DoNotRegister;
 import static javacsw.services.pkg.JSupervisor.HaltComponent;
-import static javacsw.services.pkg.JSupervisor.LifecycleInitialized;
 import static javacsw.services.pkg.JSupervisor.LifecycleRunning;
 import static javacsw.util.config.JItems.jadd;
 import static javacsw.util.config.JItems.jset;
@@ -544,7 +543,6 @@ public class FollowPositionTests extends JavaTestKit {
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD.tell(new SupervisorExternal.SubscribeLifecycleCallback(fakeAssembly), self());
-    expectMsgEquals(new SupervisorExternal.LifecycleStateChanged(LifecycleInitialized));
     expectMsgEquals(new SupervisorExternal.LifecycleStateChanged(LifecycleRunning));
     //info("Running")
 
@@ -618,7 +616,6 @@ public class FollowPositionTests extends JavaTestKit {
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD.tell(new SupervisorExternal.SubscribeLifecycleCallback(fakeAssembly), self());
-    expectMsgEquals(new SupervisorExternal.LifecycleStateChanged(LifecycleInitialized));
     expectMsgEquals(new SupervisorExternal.LifecycleStateChanged(LifecycleRunning));
     //info("Running")
 
@@ -695,7 +692,6 @@ public class FollowPositionTests extends JavaTestKit {
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD.tell(new SupervisorExternal.SubscribeLifecycleCallback(fakeAssembly), self());
-    expectMsgEquals(new SupervisorExternal.LifecycleStateChanged(LifecycleInitialized));
     expectMsgEquals(new SupervisorExternal.LifecycleStateChanged(LifecycleRunning));
     //info("Running")
 

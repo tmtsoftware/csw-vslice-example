@@ -18,7 +18,7 @@ import csw.services.loc.LocationService
 import csw.services.loc.LocationService.{Location, ResolvedAkkaLocation, Unresolved}
 import csw.services.pkg.Component.{DoNotRegister, HcdInfo}
 import csw.services.pkg.Supervisor
-import csw.services.pkg.Supervisor.{HaltComponent, LifecycleInitialized, LifecycleRunning}
+import csw.services.pkg.Supervisor.{HaltComponent, LifecycleRunning}
 import csw.services.pkg.SupervisorExternal.{LifecycleStateChanged, SubscribeLifecycleCallback}
 import csw.util.config.Events.{StatusEvent, SystemEvent}
 import org.scalatest.{BeforeAndAfterAll, FunSpecLike, _}
@@ -142,7 +142,6 @@ class DiagPublisherTests extends TestKit(DiagPublisherTests.system) with Implici
       // The following is to synchronize the test with the HCD entering Running state
       // This is boiler plate for setting up an HCD for testing
       tromboneHCD ! SubscribeLifecycleCallback(fakeAssembly.ref)
-      fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleInitialized))
       fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleRunning))
 
       val fakePublisher = TestProbe()
@@ -176,7 +175,6 @@ class DiagPublisherTests extends TestKit(DiagPublisherTests.system) with Implici
       // The following is to synchronize the test with the HCD entering Running state
       // This is boiler plate for setting up an HCD for testing
       tromboneHCD ! SubscribeLifecycleCallback(fakeAssembly.ref)
-      fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleInitialized))
       fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleRunning))
 
       val fakePublisher = TestProbe()
@@ -214,7 +212,6 @@ class DiagPublisherTests extends TestKit(DiagPublisherTests.system) with Implici
       // The following is to synchronize the test with the HCD entering Running state
       // This is boiler plate for setting up an HCD for testing
       tromboneHCD ! SubscribeLifecycleCallback(fakeAssembly.ref)
-      fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleInitialized))
       fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleRunning))
 
       val fakePublisher = TestProbe()
@@ -254,7 +251,6 @@ class DiagPublisherTests extends TestKit(DiagPublisherTests.system) with Implici
       // The following is to synchronize the test with the HCD entering Running state
       // This is boiler plate for setting up an HCD for testing
       tromboneHCD ! SubscribeLifecycleCallback(fakeAssembly.ref)
-      fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleInitialized))
       fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleRunning))
 
       val fakePublisher = TestProbe()
@@ -283,7 +279,6 @@ class DiagPublisherTests extends TestKit(DiagPublisherTests.system) with Implici
       // The following is to synchronize the test with the HCD entering Running state
       // This is boiler plate for setting up an HCD for testing
       tromboneHCD ! SubscribeLifecycleCallback(fakeAssembly.ref)
-      fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleInitialized))
       fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleRunning))
 
       val fakeEventPublisher = TestProbe()
@@ -327,7 +322,6 @@ class DiagPublisherTests extends TestKit(DiagPublisherTests.system) with Implici
       // The following is to synchronize the test with the HCD entering Running state
       // This is boiler plate for setting up an HCD for testing
       tromboneHCD ! SubscribeLifecycleCallback(fakeAssembly.ref)
-      fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleInitialized))
       fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleRunning))
 
       val fakePublisher = TestProbe()
@@ -380,7 +374,6 @@ class DiagPublisherTests extends TestKit(DiagPublisherTests.system) with Implici
       // The following is to synchronize the test with the HCD entering Running state
       // This is boiler plate for setting up an HCD for testing
       tromboneHCD ! SubscribeLifecycleCallback(fakeAssembly.ref)
-      fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleInitialized))
       fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleRunning))
 
       // Use HCD as currentStateReceiver
@@ -434,7 +427,6 @@ class DiagPublisherTests extends TestKit(DiagPublisherTests.system) with Implici
       // The following is to synchronize the test with the HCD entering Running state
       // This is boiler plate for setting up an HCD for testing
       tromboneHCD ! SubscribeLifecycleCallback(fakeAssembly.ref)
-      fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleInitialized))
       fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleRunning))
 
       // Use HCD as currentStateReceiver
@@ -499,7 +491,6 @@ class DiagPublisherTests extends TestKit(DiagPublisherTests.system) with Implici
       // The following is to synchronize the test with the HCD entering Running state
       // This is boiler plate for setting up an HCD for testing
       tromboneHCD ! SubscribeLifecycleCallback(fakeAssembly.ref)
-      fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleInitialized))
       fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleRunning))
 
       // Use HCD as currentStateReceiver

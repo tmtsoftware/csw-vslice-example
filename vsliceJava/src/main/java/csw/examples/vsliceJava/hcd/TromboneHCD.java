@@ -93,7 +93,6 @@ public class TromboneHCD extends JHcdController {
 
       // Required setup for Lifecycle in order to get messages
       supervisor.tell(Initialized, self());
-      supervisor.tell(Started, self());
     } catch (Exception ex) {
       supervisor.tell(new Supervisor.InitializeFailure(ex.getMessage()), self());
     }

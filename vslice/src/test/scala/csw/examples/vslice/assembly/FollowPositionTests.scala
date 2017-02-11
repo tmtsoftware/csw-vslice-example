@@ -15,7 +15,7 @@ import csw.services.loc.ConnectionType.AkkaType
 import csw.services.loc.LocationService
 import csw.services.pkg.Component.{DoNotRegister, HcdInfo}
 import csw.services.pkg.Supervisor
-import csw.services.pkg.Supervisor.{HaltComponent, LifecycleInitialized, LifecycleRunning}
+import csw.services.pkg.Supervisor.{HaltComponent, LifecycleRunning}
 import csw.services.pkg.SupervisorExternal.{LifecycleStateChanged, SubscribeLifecycleCallback}
 import csw.util.config.Configurations.SetupConfig
 import csw.util.config.DoubleItem
@@ -436,7 +436,6 @@ class FollowPositionTests extends TestKit(FollowPositionTests.system) with Impli
       // The following is to synchronize the test with the HCD entering Running state
       // This is boiler plate for setting up an HCD for testing
       tromboneHCD ! SubscribeLifecycleCallback(fakeAssembly.ref)
-      fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleInitialized))
       fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleRunning))
       //info("Running")
 
@@ -498,7 +497,6 @@ class FollowPositionTests extends TestKit(FollowPositionTests.system) with Impli
       val fakeAssembly = TestProbe()
 
       tromboneHCD ! SubscribeLifecycleCallback(fakeAssembly.ref)
-      fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleInitialized))
       fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleRunning))
       //info("Running")
 
@@ -562,7 +560,6 @@ class FollowPositionTests extends TestKit(FollowPositionTests.system) with Impli
       val fakeAssembly = TestProbe()
 
       tromboneHCD ! SubscribeLifecycleCallback(fakeAssembly.ref)
-      fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleInitialized))
       fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleRunning))
       //info("Running")
 

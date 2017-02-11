@@ -107,7 +107,6 @@ public class TromboneAssemblyBasicTests extends JavaTestKit {
     ActorRef tla = newTrombone(fakeSupervisor.ref());
 
     fakeSupervisor.expectMsg(Initialized);
-    fakeSupervisor.expectMsg(duration("10 seconds"), Started);
 
     fakeSupervisor.send(tla, Running);
 
@@ -127,7 +126,6 @@ public class TromboneAssemblyBasicTests extends JavaTestKit {
 
     //val fakeSupervisor = TestProbe()
     fakeSupervisor.expectMsg(Initialized);
-    fakeSupervisor.expectMsg(Started);
     fakeSupervisor.send(tromboneAssembly, Running);
 
     SetupConfigArg sca = Configurations.createSetupConfigArg("testobsId", new SetupConfig(assemblyContext.datumCK.prefix()));
@@ -158,7 +156,6 @@ public class TromboneAssemblyBasicTests extends JavaTestKit {
     TestProbe fakeClient = new TestProbe(system);
 
     fakeSupervisor.expectMsg(Initialized);
-    fakeSupervisor.expectMsg(Started);
     fakeSupervisor.send(tromboneAssembly, Running);
 
     SetupConfigArg sca = Configurations.createSetupConfigArg("testobsId",
@@ -190,7 +187,6 @@ public class TromboneAssemblyBasicTests extends JavaTestKit {
     TestProbe fakeClient = new TestProbe(system);
 
     fakeSupervisor.expectMsg(Initialized);
-    fakeSupervisor.expectMsg(Started);
     fakeSupervisor.send(tromboneAssembly, Running);
 
     // Sending an Init first so we can see the dataum issue
@@ -225,7 +221,6 @@ public class TromboneAssemblyBasicTests extends JavaTestKit {
     TestProbe fakeClient = new TestProbe(system);
 
     fakeSupervisor.expectMsg(Initialized);
-    fakeSupervisor.expectMsg(Started);
     fakeSupervisor.expectNoMsg(duration("200 milli"));
     fakeSupervisor.send(tromboneAssembly, Running);
 
@@ -260,7 +255,6 @@ public class TromboneAssemblyBasicTests extends JavaTestKit {
     TestProbe fakeClient = new TestProbe(system);
 
     fakeSupervisor.expectMsg(Initialized);
-    fakeSupervisor.expectMsg(Started);
     fakeSupervisor.expectNoMsg(duration("200 milli"));
     fakeSupervisor.send(tromboneAssembly, Running);
 
@@ -294,7 +288,6 @@ public class TromboneAssemblyBasicTests extends JavaTestKit {
     TestProbe fakeClient = new TestProbe(system);
 
     fakeSupervisor.expectMsg(Initialized);
-    fakeSupervisor.expectMsg(Started);
     fakeSupervisor.expectNoMsg(duration("200 milli"));
     fakeSupervisor.send(tromboneAssembly, Running);
 
@@ -343,7 +336,6 @@ public class TromboneAssemblyBasicTests extends JavaTestKit {
     TestProbe fakeClient = new TestProbe(system);
 
     fakeSupervisor.expectMsg(Initialized);
-    fakeSupervisor.expectMsg(Started);
     fakeSupervisor.expectNoMsg(duration("200 milli"));
     fakeSupervisor.send(tromboneAssembly, Running);
 
@@ -406,7 +398,6 @@ public class TromboneAssemblyBasicTests extends JavaTestKit {
     FiniteDuration d = duration("10 seconds");
 
     fakeSupervisor.expectMsg(Initialized);
-    fakeSupervisor.expectMsg(d, Started);
     fakeSupervisor.expectNoMsg(duration("200 milli"));
     fakeSupervisor.send(tromboneAssembly, Running);
 
@@ -452,7 +443,6 @@ public class TromboneAssemblyBasicTests extends JavaTestKit {
     TestProbe fakeClient = new TestProbe(system);
 
     fakeSupervisor.expectMsg(Initialized);
-    fakeSupervisor.expectMsg(duration("10 seconds"), Started);
     fakeSupervisor.expectNoMsg(duration("200 milli"));
     fakeSupervisor.send(tromboneAssembly, Running);
 
@@ -501,7 +491,6 @@ public class TromboneAssemblyBasicTests extends JavaTestKit {
     TestProbe fakeClient = new TestProbe(system);
 
     fakeSupervisor.expectMsg(Initialized);
-    fakeSupervisor.expectMsg(Started);
     fakeSupervisor.expectNoMsg(duration("200 milli"));
     fakeSupervisor.send(tromboneAssembly, Running);
 
@@ -549,7 +538,6 @@ public class TromboneAssemblyBasicTests extends JavaTestKit {
     TestProbe fakeClient = new TestProbe(system);
 
     fakeSupervisor.expectMsg(Initialized);
-    fakeSupervisor.expectMsg(duration("10 seconds"), Started);
     fakeSupervisor.expectNoMsg(duration("200 milli"));
     fakeSupervisor.send(tromboneAssembly, Running);
 

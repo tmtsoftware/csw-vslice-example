@@ -68,7 +68,6 @@ class TromboneHCD(override val info: HcdInfo, supervisor: ActorRef) extends Hcd 
 
     // Required setup for Lifecycle in order to get messages
     supervisor ! Initialized
-    supervisor ! Started
   } catch {
     case ex: Exception =>
       supervisor ! InitializeFailure(ex.getMessage)

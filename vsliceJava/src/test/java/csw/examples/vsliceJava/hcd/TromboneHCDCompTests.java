@@ -120,7 +120,6 @@ public class TromboneHCDCompTests extends JavaTestKit {
     TestProbe fakeAssembly = new TestProbe(system);
 
     hcd.tell(new SubscribeLifecycleCallback(fakeAssembly.ref()), self());
-    fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleInitialized));
     fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleRunning));
     log.info("Running");
 
@@ -152,7 +151,6 @@ public class TromboneHCDCompTests extends JavaTestKit {
     TestProbe fakeAssembly = new TestProbe(system);
 
     hcd.tell(new SubscribeLifecycleCallback(fakeAssembly.ref()), self());
-    fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleInitialized));
     fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleRunning));
     log.info("Running");
 
@@ -185,7 +183,6 @@ public class TromboneHCDCompTests extends JavaTestKit {
     // Note: Can't use receiveWhile with a TestProbe in Java, so using inherited TestProbe here!
 
     hcd.tell(new SubscribeLifecycleCallback(getRef()), self());
-    expectMsgEquals(new LifecycleStateChanged(LifecycleInitialized));
     expectMsgEquals(new LifecycleStateChanged(LifecycleRunning));
     log.info("Running");
 
@@ -219,7 +216,6 @@ public class TromboneHCDCompTests extends JavaTestKit {
     // Note: Can't use receiveWhile with a TestProbe in Java, so using inherited TestProbe here!
 
     hcd.tell(new SubscribeLifecycleCallback(getRef()), self());
-    expectMsgEquals(new LifecycleStateChanged(LifecycleInitialized));
     expectMsgEquals(new LifecycleStateChanged(LifecycleRunning));
     log.info("Running");
 
@@ -260,7 +256,6 @@ public class TromboneHCDCompTests extends JavaTestKit {
     // Note: Can't use receiveWhile with a TestProbe in Java, so using inherited TestProbe here!
 
     hcd.tell(new SubscribeLifecycleCallback(getRef()), self());
-    expectMsgEquals(new LifecycleStateChanged(LifecycleInitialized));
     expectMsgEquals(new LifecycleStateChanged(LifecycleRunning));
     log.info("Running");
 
@@ -292,7 +287,6 @@ public class TromboneHCDCompTests extends JavaTestKit {
     // Note: Can't use receiveWhile with a TestProbe in Java, so using inherited TestProbe here!
 
     hcd.tell(new SubscribeLifecycleCallback(getRef()), self());
-    expectMsgEquals(new LifecycleStateChanged(LifecycleInitialized));
     expectMsgEquals(new LifecycleStateChanged(LifecycleRunning));
     log.info("Running");
 
@@ -327,7 +321,6 @@ public class TromboneHCDCompTests extends JavaTestKit {
     // Note: Can't use receiveWhile with a TestProbe in Java, so using inherited TestProbe here!
 
     hcd.tell(new SubscribeLifecycleCallback(getRef()), self());
-    expectMsgEquals(new LifecycleStateChanged(LifecycleInitialized));
     expectMsgEquals(new LifecycleStateChanged(LifecycleRunning));
     log.info("Running");
 
@@ -362,7 +355,6 @@ public class TromboneHCDCompTests extends JavaTestKit {
     // Note: Can't use receiveWhile with a TestProbe in Java, so using inherited TestProbe here!
 
     send(hcd, new SubscribeLifecycleCallback(getRef()));
-    expectMsgEquals(new LifecycleStateChanged(LifecycleInitialized));
     expectMsgEquals(new LifecycleStateChanged(LifecycleRunning));
     log.info("Running");
 
@@ -444,7 +436,6 @@ public class TromboneHCDCompTests extends JavaTestKit {
     // Note: Can't use receiveWhile with a TestProbe in Java, so using inherited TestProbe here!
 
     send(hcd, new SubscribeLifecycleCallback(getRef()));
-    expectMsgEquals(new LifecycleStateChanged(LifecycleInitialized));
     expectMsgEquals(new LifecycleStateChanged(LifecycleRunning));
 
     // Currently can't subscribe unless in Running state because controllerReceive has process
@@ -486,7 +477,6 @@ public class TromboneHCDCompTests extends JavaTestKit {
     // Note: Can't use receiveWhile with a TestProbe in Java, so using inherited TestProbe here!
 
     send(hcd, new SubscribeLifecycleCallback(getRef()));
-    expectMsgEquals(new LifecycleStateChanged(LifecycleInitialized));
     expectMsgEquals(new LifecycleStateChanged(LifecycleRunning));
 
     // Currently can't subscribe unless in Running state because controllerReceive has process
@@ -524,7 +514,6 @@ public class TromboneHCDCompTests extends JavaTestKit {
     // Note: Can't use receiveWhile with a TestProbe in Java, so using inherited TestProbe here!
 
     send(hcd, new SubscribeLifecycleCallback(getRef()));
-    expectMsgEquals(new LifecycleStateChanged(LifecycleInitialized));
     expectMsgEquals(new LifecycleStateChanged(LifecycleRunning));
 
     // Currently can't subscribe unless in Running state because controllerReceive has process

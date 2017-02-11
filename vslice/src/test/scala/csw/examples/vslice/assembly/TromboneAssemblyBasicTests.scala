@@ -94,7 +94,6 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
       val tla = newTrombone(fakeSupervisor.ref)
 
       fakeSupervisor.expectMsg(Initialized)
-      fakeSupervisor.expectMsg(10.seconds, Started)
 
       fakeSupervisor.send(tla, Running)
 
@@ -113,7 +112,6 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
 
       //val fakeSupervisor = TestProbe()
       fakeSupervisor.expectMsg(Initialized)
-      fakeSupervisor.expectMsg(Started)
       fakeSupervisor.send(tromboneAssembly, Running)
 
       val sca = Configurations.createSetupConfigArg("testobsId", SetupConfig(datumCK))
@@ -142,7 +140,6 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
 
       //val fakeSupervisor = TestProbe()
       fakeSupervisor.expectMsg(Initialized)
-      fakeSupervisor.expectMsg(Started)
       fakeSupervisor.send(tromboneAssembly, Running)
 
       val sca = Configurations.createSetupConfigArg("testobsId", SetupConfig(initCK), SetupConfig(datumCK))
@@ -171,7 +168,6 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
 
       //val fakeSupervisor = TestProbe()
       fakeSupervisor.expectMsg(Initialized)
-      fakeSupervisor.expectMsg(Started)
       fakeSupervisor.send(tromboneAssembly, Running)
 
       // Sending an Init first so we can see the dataum issue
@@ -204,7 +200,6 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
       val fakeClient = TestProbe()
 
       fakeSupervisor.expectMsg(Initialized)
-      fakeSupervisor.expectMsg(Started)
       fakeSupervisor.expectNoMsg(200.milli)
       fakeSupervisor.send(tromboneAssembly, Running)
 
@@ -235,7 +230,6 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
 
       //val fakeSupervisor = TestProbe()
       fakeSupervisor.expectMsg(Initialized)
-      fakeSupervisor.expectMsg(Started)
       fakeSupervisor.expectNoMsg(200.milli)
       fakeSupervisor.send(tromboneAssembly, Running)
 
@@ -266,7 +260,6 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
 
       //val fakeSupervisor = TestProbe()
       fakeSupervisor.expectMsg(Initialized)
-      fakeSupervisor.expectMsg(Started)
       fakeSupervisor.expectNoMsg(200.milli)
       fakeSupervisor.send(tromboneAssembly, Running)
 
@@ -312,7 +305,6 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
 
       //val fakeSupervisor = TestProbe()
       fakeSupervisor.expectMsg(Initialized)
-      fakeSupervisor.expectMsg(Started)
       fakeSupervisor.expectNoMsg(200.milli)
       fakeSupervisor.send(tromboneAssembly, Running)
 
@@ -367,7 +359,6 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
 
       //val fakeSupervisor = TestProbe()
       fakeSupervisor.expectMsg(Initialized)
-      fakeSupervisor.expectMsg(Started)
       fakeSupervisor.expectNoMsg(200.milli)
       fakeSupervisor.send(tromboneAssembly, Running)
 
@@ -409,7 +400,6 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
 
       //val fakeSupervisor = TestProbe()
       fakeSupervisor.expectMsg(Initialized)
-      fakeSupervisor.expectMsg(Started)
       fakeSupervisor.send(tromboneAssembly, Running)
 
       // Sending an Init first so we can see the datum issue
@@ -458,7 +448,6 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
 
       //val fakeSupervisor = TestProbe()
       fakeSupervisor.expectMsg(Initialized)
-      fakeSupervisor.expectMsg(Started)
       fakeSupervisor.expectNoMsg(200.milli)
       fakeSupervisor.send(tromboneAssembly, Running)
 
@@ -502,7 +491,6 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
 
     //val fakeSupervisor = TestProbe()
     fakeSupervisor.expectMsg(Initialized)
-    fakeSupervisor.expectMsg(Started)
     fakeSupervisor.expectNoMsg(200.milli)
     fakeSupervisor.send(tromboneAssembly, Running)
 

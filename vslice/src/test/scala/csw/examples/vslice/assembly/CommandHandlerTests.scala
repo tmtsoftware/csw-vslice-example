@@ -22,7 +22,7 @@ import csw.services.loc.LocationService
 import csw.services.loc.LocationService.{ResolvedAkkaLocation, ResolvedTcpLocation, Unresolved}
 import csw.services.pkg.Component.{DoNotRegister, HcdInfo}
 import csw.services.pkg.Supervisor
-import csw.services.pkg.Supervisor.{HaltComponent, LifecycleInitialized, LifecycleRunning}
+import csw.services.pkg.Supervisor.{HaltComponent, LifecycleRunning}
 import csw.services.pkg.SupervisorExternal.{LifecycleStateChanged, SubscribeLifecycleCallback}
 import csw.util.config.Configurations
 import csw.util.config.Configurations.SetupConfig
@@ -109,7 +109,6 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD ! SubscribeLifecycleCallback(fakeAssembly.ref)
-    fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleInitialized))
     fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleRunning))
     //info("Running")
 
@@ -144,7 +143,6 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD ! SubscribeLifecycleCallback(fakeAssembly.ref)
-    fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleInitialized))
     fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleRunning))
     //info("Running")
 
@@ -189,7 +187,6 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD ! SubscribeLifecycleCallback(fakeAssembly.ref)
-    fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleInitialized))
     fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleRunning))
     //info("Running")
 
@@ -229,7 +226,6 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD ! SubscribeLifecycleCallback(fakeAssembly.ref)
-    fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleInitialized))
     fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleRunning))
     //info("Running")
 
@@ -262,7 +258,6 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD ! SubscribeLifecycleCallback(fakeAssembly.ref)
-    fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleInitialized))
     fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleRunning))
     //info("Running")
 
@@ -293,7 +288,6 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD ! SubscribeLifecycleCallback(fakeAssembly.ref)
-    fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleInitialized))
     fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleRunning))
     //info("Running")
 
@@ -326,7 +320,6 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD ! SubscribeLifecycleCallback(fakeAssembly.ref)
-    fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleInitialized))
     fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleRunning))
     //info("Running")
 
@@ -365,7 +358,6 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD ! SubscribeLifecycleCallback(fakeAssembly.ref)
-    fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleInitialized))
     fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleRunning))
     //info("Running")
 
@@ -398,7 +390,6 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD ! SubscribeLifecycleCallback(fakeAssembly.ref)
-    fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleInitialized))
     fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleRunning))
     //info("Running")
 
@@ -434,7 +425,6 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD ! SubscribeLifecycleCallback(fakeAssembly.ref)
-    fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleInitialized))
     fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleRunning))
     //info("Running")
 
@@ -464,7 +454,6 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD ! SubscribeLifecycleCallback(fakeAssembly.ref)
-    fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleInitialized))
     fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleRunning))
     //info("Running")
 
@@ -491,7 +480,6 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD ! SubscribeLifecycleCallback(fakeAssembly.ref)
-    fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleInitialized))
     fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleRunning))
     //info("Running")
 
@@ -520,7 +508,6 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD ! SubscribeLifecycleCallback(fakeAssembly.ref)
-    fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleInitialized))
     fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleRunning))
     //info("Running")
 
@@ -598,7 +585,6 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD ! SubscribeLifecycleCallback(fakeAssembly.ref)
-    fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleInitialized))
     fakeAssembly.expectMsg(LifecycleStateChanged(LifecycleRunning))
     //info("Running")
 

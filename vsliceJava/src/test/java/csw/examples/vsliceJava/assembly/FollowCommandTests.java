@@ -43,7 +43,6 @@ import static csw.util.config.StateVariable.CurrentState;
 import static javacsw.services.loc.JConnectionType.AkkaType;
 import static javacsw.services.pkg.JComponent.DoNotRegister;
 import static javacsw.services.pkg.JSupervisor.HaltComponent;
-import static javacsw.services.pkg.JSupervisor.LifecycleInitialized;
 import static javacsw.services.pkg.JSupervisor.LifecycleRunning;
 import static javacsw.util.config.JItems.jadd;
 import static javacsw.util.config.JItems.jset;
@@ -284,7 +283,6 @@ public class FollowCommandTests extends JavaTestKit {
     ActorRef fakeAssembly = self();
 
     tromboneHCD.tell(new SubscribeLifecycleCallback(fakeAssembly), self());
-    expectMsgEquals(new LifecycleStateChanged(LifecycleInitialized));
     expectMsgEquals(new LifecycleStateChanged(LifecycleRunning));
 
     // This has HCD sending updates back to this Assembly
@@ -425,7 +423,6 @@ public class FollowCommandTests extends JavaTestKit {
     ActorRef fakeAssembly = self();
 
     tromboneHCD.tell(new SubscribeLifecycleCallback(fakeAssembly), self());
-    expectMsgEquals(new LifecycleStateChanged(LifecycleInitialized));
     expectMsgEquals(new LifecycleStateChanged(LifecycleRunning));
 
     // This has HCD sending updates back to this Assembly
@@ -548,7 +545,6 @@ public class FollowCommandTests extends JavaTestKit {
     ActorRef fakeAssembly = self();
 
     tromboneHCD.tell(new SubscribeLifecycleCallback(fakeAssembly), self());
-    expectMsgEquals(new LifecycleStateChanged(LifecycleInitialized));
     expectMsgEquals(new LifecycleStateChanged(LifecycleRunning));
 
     // This has HCD sending updates back to this Assembly

@@ -46,7 +46,6 @@ import static csw.util.config.Events.SystemEvent;
 import static javacsw.services.loc.JConnectionType.AkkaType;
 import static javacsw.services.pkg.JComponent.DoNotRegister;
 import static javacsw.services.pkg.JSupervisor.HaltComponent;
-import static javacsw.services.pkg.JSupervisor.LifecycleInitialized;
 import static javacsw.services.pkg.JSupervisor.LifecycleRunning;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
@@ -202,7 +201,6 @@ public class DiagPublisherTests extends JavaTestKit {
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD.tell(new SubscribeLifecycleCallback(fakeAssembly.ref()), self());
-    fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleInitialized));
     fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleRunning));
 
     TestProbe fakePublisher = new TestProbe(system);
@@ -237,7 +235,6 @@ public class DiagPublisherTests extends JavaTestKit {
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD.tell(new SubscribeLifecycleCallback(fakeAssembly.ref()), self());
-    fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleInitialized));
     fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleRunning));
 
     TestProbe fakePublisher = new TestProbe(system);
@@ -276,7 +273,6 @@ public class DiagPublisherTests extends JavaTestKit {
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD.tell(new SubscribeLifecycleCallback(fakeAssembly.ref()), self());
-    fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleInitialized));
     fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleRunning));
 
     TestProbe fakePublisher = new TestProbe(system);
@@ -317,7 +313,6 @@ public class DiagPublisherTests extends JavaTestKit {
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD.tell(new SubscribeLifecycleCallback(fakeAssembly.ref()), self());
-    fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleInitialized));
     fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleRunning));
 
     TestProbe fakePublisher = new TestProbe(system);
@@ -347,7 +342,6 @@ public class DiagPublisherTests extends JavaTestKit {
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD.tell(new SubscribeLifecycleCallback(fakeAssembly.ref()), self());
-    fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleInitialized));
     fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleRunning));
 
     // XXX Using self instead of TestProbe in the Java version of this test, since I don't know how to
@@ -403,7 +397,6 @@ public class DiagPublisherTests extends JavaTestKit {
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD.tell(new SubscribeLifecycleCallback(fakeAssembly.ref()), self());
-    fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleInitialized));
     fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleRunning));
 
     TestProbe fakePublisher = new TestProbe(system);
@@ -456,7 +449,6 @@ public class DiagPublisherTests extends JavaTestKit {
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD.tell(new SubscribeLifecycleCallback(fakeAssembly.ref()), self());
-    fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleInitialized));
     fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleRunning));
 
     // Use HCD as currentStateReceiver
@@ -510,7 +502,6 @@ public class DiagPublisherTests extends JavaTestKit {
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD.tell(new SubscribeLifecycleCallback(fakeAssembly.ref()), self());
-    fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleInitialized));
     fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleRunning));
 
     // Use HCD as currentStateReceiver
@@ -576,7 +567,6 @@ public class DiagPublisherTests extends JavaTestKit {
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD.tell(new SubscribeLifecycleCallback(fakeAssembly.ref()), self());
-    fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleInitialized));
     fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleRunning));
 
     // Use HCD as currentStateReceiver

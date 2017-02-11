@@ -122,7 +122,6 @@ public class TromboneAssembly extends JAssemblyController {
       LocationSubscriberActor.trackConnection(ITelemetryService.telemetryServiceConnection(), trackerSubscriber);
       LocationSubscriberActor.trackConnection(IAlarmService.alarmServiceConnection(), trackerSubscriber);
 
-      supervisor.tell(Initialized, self());
       return assemblyContext;
 
     } catch(Exception ex) {
@@ -155,8 +154,8 @@ public class TromboneAssembly extends JAssemblyController {
             ResolvedAkkaLocation l = (ResolvedAkkaLocation) location;
             log.info("Got actorRef: " + l.getActorRef());
             tromboneHCD = l.getActorRef();
-            // When the HCD is located, Started is sent to Supervisor
-            supervisor.tell(Started, self());
+            // When the HCD is located, Initialized is sent to Supervisor
+            supervisor.tell(Initialized, self());
 
           } else if (location instanceof ResolvedHttpLocation) {
             log.info("HTTP Service Damn it: " + location.connection());

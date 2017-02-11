@@ -43,7 +43,6 @@ import static javacsw.services.ccs.JCommandStatus.Completed;
 import static javacsw.services.loc.JConnectionType.AkkaType;
 import static javacsw.services.pkg.JComponent.DoNotRegister;
 import static javacsw.services.pkg.JSupervisor.HaltComponent;
-import static javacsw.services.pkg.JSupervisor.LifecycleInitialized;
 import static javacsw.services.pkg.JSupervisor.LifecycleRunning;
 import static javacsw.util.config.JConfigDSL.cs;
 import static javacsw.util.config.JItems.jadd;
@@ -249,7 +248,6 @@ public class AlarmMonitorTests extends JavaTestKit {
 
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD.tell(new SubscribeLifecycleCallback(fakeAssembly.ref()), self());
-    fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleInitialized));
     fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleRunning));
     //info("Running")
 

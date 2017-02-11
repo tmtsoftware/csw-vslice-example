@@ -121,7 +121,6 @@ public class TromboneHCDBasicTests extends JavaTestKit {
 
   void lifecycleStart(TestProbe supervisor, ActorRef tla) {
     supervisor.expectMsg(Initialized);
-    supervisor.expectMsg(Started);
 
     supervisor.send(tla, Running);
   }
@@ -209,7 +208,6 @@ public class TromboneHCDBasicTests extends JavaTestKit {
     TestActorRef<TromboneHCD> tla = t.testActorRef;
 
     supervisor.expectMsg(Initialized);
-    supervisor.expectMsg(Started);
 
     supervisor.send(tla, Running);
 

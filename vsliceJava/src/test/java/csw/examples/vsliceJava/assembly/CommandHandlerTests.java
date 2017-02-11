@@ -51,7 +51,6 @@ import static javacsw.services.ccs.JSequentialExecutor.ExecuteOne;
 import static javacsw.services.loc.JConnectionType.AkkaType;
 import static javacsw.services.pkg.JComponent.DoNotRegister;
 import static javacsw.services.pkg.JSupervisor.HaltComponent;
-import static javacsw.services.pkg.JSupervisor.LifecycleInitialized;
 import static javacsw.services.pkg.JSupervisor.LifecycleRunning;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
@@ -132,7 +131,6 @@ public class CommandHandlerTests extends JavaTestKit {
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD.tell(new SubscribeLifecycleCallback(fakeAssembly.ref()), self());
-    fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleInitialized));
     fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleRunning));
 
 //    ActorRef tsa = system.actorOf(TromboneStateActor.props());
@@ -170,7 +168,6 @@ public class CommandHandlerTests extends JavaTestKit {
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD.tell(new SubscribeLifecycleCallback(fakeAssembly.ref()), self());
-    fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleInitialized));
     fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleRunning));
 
     // Start with good HCD
@@ -218,7 +215,6 @@ public class CommandHandlerTests extends JavaTestKit {
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD.tell(new SubscribeLifecycleCallback(fakeAssembly.ref()), self());
-    fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleInitialized));
     fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleRunning));
     //info("Running")
 
@@ -260,7 +256,6 @@ public class CommandHandlerTests extends JavaTestKit {
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD.tell(new SubscribeLifecycleCallback(fakeAssembly.ref()), self());
-    fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleInitialized));
     fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleRunning));
     //info("Running")
 
@@ -294,7 +289,6 @@ public class CommandHandlerTests extends JavaTestKit {
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD.tell(new SubscribeLifecycleCallback(fakeAssembly.ref()), self());
-    fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleInitialized));
     fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleRunning));
     //info("Running")
 
@@ -326,7 +320,6 @@ public class CommandHandlerTests extends JavaTestKit {
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD.tell(new SubscribeLifecycleCallback(fakeAssembly.ref()), self());
-    fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleInitialized));
     fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleRunning));
     //info("Running")
 
@@ -362,7 +355,6 @@ public class CommandHandlerTests extends JavaTestKit {
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD.tell(new SubscribeLifecycleCallback(fakeAssembly.ref()), self());
-    fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleInitialized));
     fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleRunning));
     //info("Running")
 
@@ -407,7 +399,6 @@ public class CommandHandlerTests extends JavaTestKit {
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD.tell(new SubscribeLifecycleCallback(fakeAssembly.ref()), self());
-    fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleInitialized));
     fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleRunning));
     //info("Running")
 
@@ -441,7 +432,6 @@ public class CommandHandlerTests extends JavaTestKit {
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD.tell(new SubscribeLifecycleCallback(fakeAssembly.ref()), self());
-    fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleInitialized));
     fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleRunning));
     //info("Running")
 
@@ -480,7 +470,6 @@ public class CommandHandlerTests extends JavaTestKit {
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD.tell(new SubscribeLifecycleCallback(fakeAssembly.ref()), self());
-    fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleInitialized));
     fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleRunning));
     //info("Running")
 
@@ -511,7 +500,6 @@ public class CommandHandlerTests extends JavaTestKit {
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD.tell(new SubscribeLifecycleCallback(fakeAssembly.ref()), self());
-    fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleInitialized));
     fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleRunning));
     //info("Running")
 
@@ -539,7 +527,6 @@ public class CommandHandlerTests extends JavaTestKit {
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD.tell(new SubscribeLifecycleCallback(fakeAssembly.ref()), self());
-    fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleInitialized));
     fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleRunning));
     //info("Running")
 
@@ -569,7 +556,6 @@ public class CommandHandlerTests extends JavaTestKit {
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD.tell(new SubscribeLifecycleCallback(fakeAssembly.ref()), self());
-    fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleInitialized));
     fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleRunning));
     //info("Running")
 
@@ -648,7 +634,6 @@ public class CommandHandlerTests extends JavaTestKit {
     // The following is to synchronize the test with the HCD entering Running state
     // This is boiler plate for setting up an HCD for testing
     tromboneHCD.tell(new SubscribeLifecycleCallback(fakeAssembly.ref()), self());
-    fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleInitialized));
     fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleRunning));
     //info("Running")
 
