@@ -34,9 +34,9 @@ class EventSubscriberTests extends TestKit(EventSubscriberTests.sys) with Implic
   private val eventService = Await.result(EventService(), timeout.duration)
   logger.info("Got Event Service!")
 
-  override protected def beforeEach(): Unit = {
-    TestEnv.resetRedisServices()
-  }
+  //  override protected def beforeEach(): Unit = {
+  //    TestEnv.resetRedisServices()
+  //  }
 
   override protected def afterAll(): Unit = {
     TestKit.shutdownActorSystem(system)
@@ -52,7 +52,9 @@ class EventSubscriberTests extends TestKit(EventSubscriberTests.sys) with Implic
 
   def newEventSubscriber(nssInUse: BooleanItem, followActor: Option[ActorRef], eventService: EventService): ActorRef = {
     val props = TromboneEventSubscriber.props(assemblyContext, nssInUse, followActor, eventService)
-    system.actorOf(props)
+    val actorRef = system.actorOf(props)
+    expectNoMsg(200.milli) // give the new actor time to subscribe before any test publishing...
+    actorRef
   }
 
   // Stop any actors created for a test to avoid conflict with other tests
