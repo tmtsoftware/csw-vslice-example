@@ -45,7 +45,6 @@ class TromboneAssemblyCompTests extends TestKit(TromboneAssemblyCompTests.system
   var hcdActors: List[ActorRef] = Nil
 
   override def beforeAll: Unit = {
-    logger.info("XXX TromboneAssemblyCompTests beforeAll in")
     TestEnv.createTromboneAssemblyConfig()
 
     // Starts the HCD used in the test
@@ -53,15 +52,12 @@ class TromboneAssemblyCompTests extends TestKit(TromboneAssemblyCompTests.system
     hcdActors = cmd.actors
     expectNoMsg(2.seconds) // XXX FIXME Give time for location service update so we don't get previous value
     resolveHcd(TromboneAssemblyBasicTests.thName)
-    logger.info("XXX TromboneAssemblyCompTests beforeAll out")
   }
 
   override def afterAll: Unit = {
-    logger.info("XXX TromboneAssemblyCompTests afterAll in")
     hcdActors.foreach(cleanup)
     TestKit.shutdownActorSystem(system)
     Thread.sleep(7000) // XXX FIXME Make sure components have time to unregister from location service
-    logger.info("XXX TromboneAssemblyCompTests afterAll out")
   }
 
   // Stop any actors created for a test to avoid conflict with other tests

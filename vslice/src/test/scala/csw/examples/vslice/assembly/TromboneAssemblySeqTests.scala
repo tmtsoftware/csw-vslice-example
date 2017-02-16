@@ -78,7 +78,6 @@ class TromboneAssemblySeqTests extends TestKit(TromboneAssemblySeqTests.system) 
   var containerActors: List[ActorRef] = Nil
 
   override def beforeAll: Unit = {
-    logger.info("XXX TromboneAssemblySeqTests beforeAll in")
     TestEnv.createTromboneAssemblyConfig()
 
     // Starts the assembly and HCD used in the test
@@ -98,7 +97,6 @@ class TromboneAssemblySeqTests extends TestKit(TromboneAssemblySeqTests.system) 
     }
     expectNoMsg(5.seconds) // XXX FIXME Give time for location service update so we don't get previous value
     resolveAssembly(taName)
-    logger.info("XXX TromboneAssemblySeqTests beforeAll out")
   }
 
   // Stop any actors created for a test to avoid conflict with other tests
@@ -113,11 +111,9 @@ class TromboneAssemblySeqTests extends TestKit(TromboneAssemblySeqTests.system) 
   }
 
   override def afterAll: Unit = {
-    logger.info("XXX TromboneAssemblySeqTests afterAll in")
     containerActors.foreach(cleanup)
     TestKit.shutdownActorSystem(system)
     Thread.sleep(7000) // XXX FIXME Make sure components have time to unregister from location service
-    logger.info("XXX TromboneAssemblySeqTests afterAll out")
   }
 
   def getTrombone: BlockingAssemblyClient = resolveAssembly(taName)
