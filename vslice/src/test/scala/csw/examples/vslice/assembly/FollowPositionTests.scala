@@ -1,6 +1,6 @@
 package csw.examples.vslice.assembly
 
-import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, PoisonPill, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
@@ -64,7 +64,7 @@ object FollowPositionTests {
  */
 class FollowPositionTests extends TestKit(FollowPositionTests.system) with ImplicitSender
     with FunSpecLike with Matchers with BeforeAndAfterAll with BeforeAndAfterEach with LazyLogging {
-  import system._
+  import system.dispatcher
   import Algorithms._
   import TromboneAssembly._
 
@@ -94,15 +94,20 @@ class FollowPositionTests extends TestKit(FollowPositionTests.system) with Impli
 
   // Used for creating followers
   val initialElevation = naElevation(assemblyContext.calculationConfig.defaultInitialElevation)
+
   def newFollower(tromboneControl: Option[ActorRef], publisher: Option[ActorRef]): TestActorRef[FollowActor] = {
     val props = FollowActor.props(assemblyContext, initialElevation, setNssInUse(false), tromboneControl, publisher)
-    TestActorRef(props)
+    val a: TestActorRef[FollowActor] = TestActorRef(props)
+    expectNoMsg(200.millis)
+    a
   }
 
   def newTestElPublisher(tromboneControl: Option[ActorRef]): TestActorRef[FollowActor] = {
     val testEventServiceProps = TrombonePublisher.props(assemblyContext, Some(eventService))
     val publisherActorRef = system.actorOf(testEventServiceProps)
-    newFollower(tromboneControl, Some(publisherActorRef))
+    val a: TestActorRef[FollowActor] = newFollower(tromboneControl, Some(publisherActorRef))
+    expectNoMsg(200.millis)
+    a
   }
 
   /**

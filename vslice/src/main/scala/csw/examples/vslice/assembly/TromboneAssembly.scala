@@ -170,7 +170,7 @@ class TromboneAssembly(val info: AssemblyInfo, supervisor: ActorRef) extends Ass
       diagPublsher ! DiagPublisher.OperationsState
   }
 
-  // Receive artial function to handle runtime lifecycle messages
+  // Receive partial function to handle runtime lifecycle messages
   def lifecycleReceivePF: Receive = {
     case Running =>
     // Already running so ignore
@@ -182,7 +182,7 @@ class TromboneAssembly(val info: AssemblyInfo, supervisor: ActorRef) extends Ass
     case DoShutdown =>
       log.info("Received doshutdown")
       // Ask our HCD to shutdown, then return complete
-      tromboneHCD.foreach(_ ! DoShutdown)
+      //      tromboneHCD.foreach(_ ! DoShutdown)
       supervisor ! ShutdownComplete
     case LifecycleFailureInfo(state: LifecycleState, reason: String) =>
       // This is an error conditin so log it

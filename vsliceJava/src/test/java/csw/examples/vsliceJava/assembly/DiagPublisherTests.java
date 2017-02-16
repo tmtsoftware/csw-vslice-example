@@ -183,7 +183,9 @@ public class DiagPublisherTests extends JavaTestKit {
 
   TestActorRef<DiagPublisher> newDiagPublisher(ActorRef currentStateReceiver, Optional<ActorRef> tromboneHCD, Optional<ActorRef> eventPublisher) {
     Props props = DiagPublisher.props(assemblyContext, tromboneHCD, eventPublisher);
-    return TestActorRef.create(system, props);
+    TestActorRef<DiagPublisher> a = TestActorRef.create(system, props);
+    expectNoMsg(duration("200 millis"));
+    return a;
   }
 
   // --- basic diag tests ---

@@ -15,8 +15,8 @@ import csw.services.loc.ConnectionType.AkkaType
 import csw.services.loc.LocationService
 import csw.services.pkg.Component.{DoNotRegister, HcdInfo}
 import csw.services.pkg.Supervisor
-import csw.services.pkg.Supervisor.{HaltComponent, LifecycleRunning}
-import csw.services.pkg.SupervisorExternal.{LifecycleStateChanged, SubscribeLifecycleCallback}
+import csw.services.pkg.Supervisor.{HaltComponent, LifecyclePreparingToShutdown, LifecycleRunning, LifecycleShutdown}
+import csw.services.pkg.SupervisorExternal.{ExComponentShutdown, LifecycleStateChanged, SubscribeLifecycleCallback}
 import csw.util.config.StateVariable.CurrentState
 import csw.util.config.UnitsOfMeasure.encoder
 import org.scalatest.{BeforeAndAfterAll, _}
@@ -86,7 +86,9 @@ class AlarmMonitorTests extends TestKit(AlarmMonitorTests.system) with ImplicitS
   }
 
   def newCommandHandler(tromboneHCD: ActorRef, allEventPublisher: Option[ActorRef] = None): ActorRef = {
-    system.actorOf(TromboneCommandHandler.props(ac, Some(tromboneHCD), allEventPublisher))
+    val a = system.actorOf(TromboneCommandHandler.props(ac, Some(tromboneHCD), allEventPublisher))
+    expectNoMsg(200.millis) // give it time to start
+    a
   }
 
   // Test Low Limit
@@ -116,7 +118,6 @@ class AlarmMonitorTests extends TestKit(AlarmMonitorTests.system) with ImplicitS
     inHomeKey -> false
   )
 
-  // Stop any actors created for a test to avoid conflict with other tests
   private def cleanup(tromboneHCD: ActorRef, a: ActorRef*): Unit = {
     val monitor = TestProbe()
     a.foreach { actorRef =>

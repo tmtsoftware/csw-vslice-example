@@ -1,6 +1,6 @@
 package csw.examples.vslice.assembly
 
-import akka.actor.{ActorRef, ActorSystem, PoisonPill, Props}
+import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
@@ -17,6 +17,7 @@ import csw.util.config.Configurations
 import csw.util.config.Configurations.SetupConfig
 import csw.util.config.Events.SystemEvent
 import org.scalatest.{BeforeAndAfterAll, FunSpecLike, _}
+import csw.services.sequencer.SequencerEnv._
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -25,6 +26,7 @@ object TromboneAssemblyBasicTests {
   LocationService.initInterface()
 
   val system = ActorSystem("TromboneAssemblyBasicTests")
+  val thName = "lgsTromboneHCD"
 }
 
 /**
@@ -34,26 +36,43 @@ object TromboneAssemblyBasicTests {
 class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.system) with ImplicitSender
     with FunSpecLike with Matchers with BeforeAndAfterAll with LazyLogging {
 
-  import system._
+  import system.dispatcher
 
   // List of top level actors that were created for the HCD (for clean up)
   var hcdActors: List[ActorRef] = Nil
 
   override def beforeAll: Unit = {
+    logger.info("XXX TromboneAssemblyBasicTests beforeAll in")
     TestEnv.createTromboneAssemblyConfig()
 
     // Starts the HCD used in the test
     val cmd = ContainerCmd("vslice", Array("--standalone"), Map("" -> "tromboneHCD.conf"))
     hcdActors = cmd.actors
+    expectNoMsg(2.seconds) // XXX FIXME Give time for location service update so we don't get previous value
+    resolveHcd(TromboneAssemblyBasicTests.thName)
+    logger.info("XXX TromboneAssemblyBasicTests beforeAll out")
   }
 
   override def afterAll: Unit = {
+    logger.info("XXX TromboneAssemblyBasicTests afterAll in")
     hcdActors.foreach { actorRef =>
       watch(actorRef)
       actorRef ! HaltComponent
       expectTerminated(actorRef)
     }
-    TestKit.shutdownActorSystem(TromboneAssemblyBasicTests.system)
+    TestKit.shutdownActorSystem(system)
+    Thread.sleep(7000) // XXX FIXME Make sure components have time to unregister from location service
+    logger.info("XXX TromboneAssemblyBasicTests afterAll out")
+  }
+
+  // Stop any actors created for a test to avoid conflict with other tests
+  private def cleanup(a: ActorRef*): Unit = {
+    val monitor = TestProbe()
+    a.foreach { actorRef =>
+      monitor.watch(actorRef)
+      system.stop(actorRef)
+      monitor.expectTerminated(actorRef)
+    }
   }
 
   val assemblyContext = AssemblyTestData.TestAssemblyContext
@@ -74,16 +93,6 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
   def newTrombone(supervisor: ActorRef, assemblyInfo: AssemblyInfo = assemblyContext.info): ActorRef = {
     val props = getTromboneProps(assemblyInfo, Some(supervisor))
     system.actorOf(props)
-  }
-
-  // Stop any actors created for a test to avoid conflict with other tests
-  private def cleanup(a: ActorRef*): Unit = {
-    val monitor = TestProbe()
-    a.foreach { actorRef =>
-      monitor.watch(actorRef)
-      system.stop(actorRef)
-      monitor.expectTerminated(actorRef)
-    }
   }
 
   describe("low-level instrumented trombone assembly tests") {
@@ -200,7 +209,6 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
       val fakeClient = TestProbe()
 
       fakeSupervisor.expectMsg(Initialized)
-      fakeSupervisor.expectNoMsg(200.milli)
       fakeSupervisor.send(tromboneAssembly, Running)
 
       val testMove = 90.0
@@ -262,6 +270,7 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
       fakeSupervisor.expectMsg(Initialized)
       fakeSupervisor.expectNoMsg(200.milli)
       fakeSupervisor.send(tromboneAssembly, Running)
+      expectNoMsg(200.millis)
 
       val datum = Configurations.createSetupConfigArg("testobsId", SetupConfig(initCK), SetupConfig(datumCK))
       fakeClient.send(tromboneAssembly, Submit(datum))

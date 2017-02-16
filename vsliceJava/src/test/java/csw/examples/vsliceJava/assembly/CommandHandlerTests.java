@@ -50,6 +50,7 @@ import static javacsw.services.ccs.JCommandStatus.*;
 import static javacsw.services.ccs.JSequentialExecutor.ExecuteOne;
 import static javacsw.services.loc.JConnectionType.AkkaType;
 import static javacsw.services.pkg.JComponent.DoNotRegister;
+import static javacsw.services.pkg.JSupervisor.ExComponentShutdown;
 import static javacsw.services.pkg.JSupervisor.HaltComponent;
 import static javacsw.services.pkg.JSupervisor.LifecycleRunning;
 import static junit.framework.TestCase.assertTrue;

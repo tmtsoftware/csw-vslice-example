@@ -42,6 +42,7 @@ import static javacsw.services.alarms.JAlarmModel.JSeverityLevel.Warning;
 import static javacsw.services.ccs.JCommandStatus.Completed;
 import static javacsw.services.loc.JConnectionType.AkkaType;
 import static javacsw.services.pkg.JComponent.DoNotRegister;
+import static javacsw.services.pkg.JSupervisor.ExComponentShutdown;
 import static javacsw.services.pkg.JSupervisor.HaltComponent;
 import static javacsw.services.pkg.JSupervisor.LifecycleRunning;
 import static javacsw.util.config.JConfigDSL.cs;
@@ -118,7 +119,9 @@ public class AlarmMonitorTests extends JavaTestKit {
   }
 
   ActorRef newCommandHandler(ActorRef tromboneHCD, Optional<ActorRef> allEventPublisher) {
-    return system.actorOf(TromboneCommandHandler.props(ac, Optional.of(tromboneHCD), allEventPublisher));
+    ActorRef a = system.actorOf(TromboneCommandHandler.props(ac, Optional.of(tromboneHCD), allEventPublisher));
+    expectNoMsg(duration("200 millis")); // give it time to start
+    return a;
   }
 
   // Test Low Limit

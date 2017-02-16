@@ -79,7 +79,9 @@ public class TromboneAssemblyCompTests extends JavaTestKit {
   }
 
   ActorRef newTrombone() {
-    return JSupervisor.create(assemblyContext.info);
+    ActorRef a = JSupervisor.create(assemblyContext.info);
+    expectNoMsg(duration("200 millis"));
+    return a;
   }
 
   // Stop any actors created for a test to avoid conflict with other tests

@@ -1,6 +1,6 @@
 package csw.examples.vslice.assembly
 
-import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, PoisonPill, Props}
+import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props}
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
@@ -70,7 +70,7 @@ object FollowActorTests {
 class FollowActorTests extends TestKit(FollowActorTests.system) with ImplicitSender
     with FunSpecLike with Matchers with BeforeAndAfterAll with BeforeAndAfterEach with LazyLogging {
 
-  import system._
+  import system.dispatcher
   import FollowActorTests._
 
   implicit val timeout = Timeout(10.seconds)
@@ -103,7 +103,9 @@ class FollowActorTests extends TestKit(FollowActorTests.system) with ImplicitSen
     // Used for creating followers
     val initialElevation = iElevation(assemblyContext.calculationConfig.defaultInitialElevation)
     val props = FollowActor.props(assemblyContext, initialElevation, usingNSS, Some(tromboneControl), Some(aoPublisher), Some(engPublisher))
-    TestActorRef(props)
+    val a: TestActorRef[FollowActor] = TestActorRef(props)
+    expectNoMsg(200.milli) // give it time to initialize
+    a
   }
 
   // Stop any actors created for a test to avoid conflict with other tests
@@ -391,6 +393,7 @@ class FollowActorTests extends TestKit(FollowActorTests.system) with ImplicitSen
 
       val resultSubscriber2 = system.actorOf(TestSubscriber.props())
       telemetryService.subscribe(resultSubscriber2, postLastEvents = false, engStatusEventPrefix)
+      expectNoMsg(200.millis) // Give the actor time to subscribe (involves sending messages)
 
       // Publish a single focus error. This will generate a published event
       tcsRtc.foreach(_.publish(SystemEvent(focusErrorPrefix).add(fe(testFE))))

@@ -55,7 +55,7 @@ object EventPublishTests {
 class EventPublishTests extends TestKit(EventPublishTests.system) with ImplicitSender
     with FunSpecLike with Matchers with BeforeAndAfterAll with BeforeAndAfterEach with LazyLogging {
 
-  import system._
+  import system.dispatcher
   import EventPublishTests._
 
   val assemblyContext = AssemblyTestData.TestAssemblyContext
@@ -98,12 +98,16 @@ class EventPublishTests extends TestKit(EventPublishTests.system) with ImplicitS
   // Publisher behaves the same whether nss is in use or not so always nssNotInUse
   def newTestFollower(tromboneControl: Option[ActorRef], publisher: Option[ActorRef]): ActorRef = {
     val props = FollowActor.props(assemblyContext, initialElevation, setNssInUse(false), tromboneControl, publisher)
-    system.actorOf(props)
+    val a = system.actorOf(props)
+    expectNoMsg(200.millis)
+    a
   }
 
   def newTestPublisher(eventService: Option[EventService], telemetryService: Option[TelemetryService]): ActorRef = {
     val testEventPublisherProps = TrombonePublisher.props(assemblyContext, eventService, telemetryService)
-    system.actorOf(testEventPublisherProps)
+    val a = system.actorOf(testEventPublisherProps)
+    expectNoMsg(200.millis)
+    a
   }
 
   describe("Create follow actor with publisher and subscriber") {

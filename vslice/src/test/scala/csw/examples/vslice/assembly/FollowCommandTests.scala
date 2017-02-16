@@ -15,7 +15,7 @@ import csw.services.loc.LocationService
 import csw.services.pkg.Component.{DoNotRegister, HcdInfo}
 import csw.services.pkg.Supervisor
 import csw.services.pkg.Supervisor.{HaltComponent, LifecycleRunning}
-import csw.services.pkg.SupervisorExternal.{LifecycleStateChanged, SubscribeLifecycleCallback}
+import csw.services.pkg.SupervisorExternal.{ExComponentShutdown, LifecycleStateChanged, SubscribeLifecycleCallback}
 import csw.util.config.BooleanItem
 import csw.util.config.Events.{StatusEvent, SystemEvent}
 import csw.util.config.StateVariable.CurrentState
@@ -96,12 +96,16 @@ class FollowCommandTests extends TestKit(FollowCommandTests.system) with Implici
 
   def newTestFollowCommand(nssInUse: BooleanItem, tromboneHCD: Option[ActorRef], eventPublisher: Option[ActorRef]): TestActorRef[FollowCommand] = {
     val props = FollowCommand.props(assemblyContext, initialElevation, nssInUse, tromboneHCD, eventPublisher, eventService)
-    TestActorRef(props)
+    val a: TestActorRef[FollowCommand] = TestActorRef(props)
+    expectNoMsg(200.millis)
+    a
   }
 
   def newFollowCommand(isNssInUse: BooleanItem, tromboneHCD: Option[ActorRef], eventPublisher: Option[ActorRef]): ActorRef = {
     val props = FollowCommand.props(assemblyContext, initialElevation, isNssInUse, tromboneHCD, eventPublisher, eventService)
-    system.actorOf(props)
+    val a = system.actorOf(props)
+    expectNoMsg(200.millis)
+    a
   }
 
   // The following are used to start a tromboneHCD for testing purposes

@@ -98,7 +98,9 @@ public class TromboneHCDBasicTests extends JavaTestKit {
     HcdInfo hcdInfo = testInfo;
     TestProbe supervisor = new TestProbe(system);
     Props props = getTromboneProps(hcdInfo, Optional.of(supervisor.ref()));
-    return new TestProbeActorRefPair(supervisor, system.actorOf(props));
+    TestProbeActorRefPair result = new TestProbeActorRefPair(supervisor, system.actorOf(props));
+    expectNoMsg(duration("300 milli")); // give the new actor time to subscribe before any test publishing...
+    return result;
   }
 
   // In place of Scala pair...
@@ -116,7 +118,9 @@ public class TromboneHCDBasicTests extends JavaTestKit {
     HcdInfo hcdInfo = testInfo;
     TestProbe supervisor = new TestProbe(system);
     Props props = getTromboneProps(hcdInfo, Optional.of(supervisor.ref()));
-    return new TestProbeTestActorRefPair(supervisor, TestActorRef.create(system, props));
+    TestProbeTestActorRefPair result = new TestProbeTestActorRefPair(supervisor, TestActorRef.create(system, props));
+    expectNoMsg(duration("300 milli")); // give the new actor time to subscribe before any test publishing...
+    return result;
   }
 
   void lifecycleStart(TestProbe supervisor, ActorRef tla) {

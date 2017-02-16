@@ -1,14 +1,14 @@
 package csw.examples.vslice.hcd
 
 import akka.actor.{ActorRef, ActorSystem}
-import akka.testkit.TestProbe
+import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import com.typesafe.scalalogging.LazyLogging
 import csw.examples.vslice.TestEnv
 import csw.services.loc.ConnectionType.AkkaType
 import csw.services.loc.LocationService
 import csw.services.pkg.Component.{DoNotRegister, HcdInfo}
 import csw.services.pkg.Supervisor.{HaltComponent, LifecycleRunning}
-import csw.services.pkg.SupervisorExternal.{LifecycleStateChanged, SubscribeLifecycleCallback}
+import csw.services.pkg.SupervisorExternal.{ExComponentShutdown, LifecycleStateChanged, SubscribeLifecycleCallback}
 import csw.services.pkg.Supervisor
 import csw.util.config.Configurations.SetupConfig
 import csw.util.config.StateVariable.CurrentState
@@ -22,14 +22,16 @@ import scala.concurrent.duration.{FiniteDuration, _}
  */
 object TromboneHCDCompTests {
   LocationService.initInterface()
-  implicit val system = ActorSystem("TromboneHCDCompTests")
+  val system = ActorSystem("TromboneHCDCompTests")
 }
 
-class TromboneHCDCompTests extends FunSpec with Matchers with LazyLogging with BeforeAndAfterAll {
+class TromboneHCDCompTests extends TestKit(TromboneHCDCompTests.system) with ImplicitSender
+    with FunSpecLike with Matchers with BeforeAndAfterAll with LazyLogging {
 
   import TromboneHCDCompTests._
   import TromboneHCD._
   import csw.services.ccs.HcdController._
+  implicit val sys: ActorSystem = system
 
   override def beforeAll: Unit = {
     TestEnv.createTromboneHcdConfig()
@@ -43,8 +45,6 @@ class TromboneHCDCompTests extends FunSpec with Matchers with LazyLogging with B
     TromboneHCD.componentClassName,
     DoNotRegister, Set(AkkaType), 1.second
   )
-
-  // val troboneAssemblyPrefix: String = TromboneAssembly.componentPrefix
 
   def startHCD: ActorRef = {
     val testInfo = HcdInfo(

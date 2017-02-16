@@ -4,7 +4,6 @@ import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.{ImplicitSender, TestActorRef, TestKit, TestProbe}
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
-import csw.examples.vslice.TestEnv
 import csw.examples.vslice.assembly.FollowActor.{StopFollowing, UpdatedEventData}
 import csw.examples.vslice.assembly.TromboneEventSubscriber.UpdateNssInUse
 import csw.services.events.EventService
@@ -27,16 +26,12 @@ object EventSubscriberTests {
 class EventSubscriberTests extends TestKit(EventSubscriberTests.sys) with ImplicitSender
     with FunSpecLike with Matchers with BeforeAndAfterAll with BeforeAndAfterEach with LazyLogging {
 
-  import system._
+  import system.dispatcher
   implicit val timeout = Timeout(20.seconds)
 
   // Get the event service by looking up the name with the location service.
   private val eventService = Await.result(EventService(), timeout.duration)
   logger.info("Got Event Service!")
-
-  //  override protected def beforeEach(): Unit = {
-  //    TestEnv.resetRedisServices()
-  //  }
 
   override protected def afterAll(): Unit = {
     TestKit.shutdownActorSystem(system)
@@ -47,7 +42,9 @@ class EventSubscriberTests extends TestKit(EventSubscriberTests.sys) with Implic
 
   def newTestEventSubscriber(nssInUseIn: BooleanItem, followActor: Option[ActorRef], eventService: EventService): TestActorRef[TromboneEventSubscriber] = {
     val props = TromboneEventSubscriber.props(assemblyContext, nssInUseIn, followActor, eventService)
-    TestActorRef(props)
+    val a: TestActorRef[TromboneEventSubscriber] = TestActorRef(props)
+    expectNoMsg(200.milli) // give the new actor time to subscribe before any test publishing...
+    a
   }
 
   def newEventSubscriber(nssInUse: BooleanItem, followActor: Option[ActorRef], eventService: EventService): ActorRef = {

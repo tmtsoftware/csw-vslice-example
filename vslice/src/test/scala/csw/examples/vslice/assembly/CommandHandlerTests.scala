@@ -23,7 +23,7 @@ import csw.services.loc.LocationService.{ResolvedAkkaLocation, ResolvedTcpLocati
 import csw.services.pkg.Component.{DoNotRegister, HcdInfo}
 import csw.services.pkg.Supervisor
 import csw.services.pkg.Supervisor.{HaltComponent, LifecycleRunning}
-import csw.services.pkg.SupervisorExternal.{LifecycleStateChanged, SubscribeLifecycleCallback}
+import csw.services.pkg.SupervisorExternal.{ExComponentShutdown, LifecycleStateChanged, SubscribeLifecycleCallback}
 import csw.util.config.Configurations
 import csw.util.config.Configurations.SetupConfig
 import org.scalatest.{BeforeAndAfterAll, FunSpecLike, _}

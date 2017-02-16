@@ -156,7 +156,9 @@ public class FollowActorTests extends JavaTestKit {
     DoubleItem initialElevation = iElevation(assemblyContext.calculationConfig.defaultInitialElevation);
     Props props = FollowActor.props(assemblyContext, initialElevation, usingNSS, Optional.of(tromboneControl),
       Optional.of(aoPublisher), Optional.of(engPublisher));
-    return TestActorRef.create(system, props);
+    TestActorRef<FollowActor> a = TestActorRef.create(system, props);
+    expectNoMsg(duration("200 milli")); // give it time to initialize...
+    return a;
   }
 
   // Stop any actors created for a test to avoid conflict with other tests
@@ -467,6 +469,7 @@ public class FollowActorTests extends JavaTestKit {
 
     ActorRef resultSubscriber2 = system.actorOf(TestSubscriber.props());
     telemetryService.subscribe(resultSubscriber2, false, assemblyContext.engStatusEventPrefix);
+    expectNoMsg(duration("200 millis"));
 
     // Publish a single focus error. This will generate a published event
     tcsRtc.ifPresent(f -> f.publish(new SystemEvent(focusErrorPrefix).add(fe(testFE))));

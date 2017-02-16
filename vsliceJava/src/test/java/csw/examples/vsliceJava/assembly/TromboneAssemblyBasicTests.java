@@ -73,7 +73,9 @@ public class TromboneAssemblyBasicTests extends JavaTestKit {
 
   @AfterClass
   public static void teardown() {
-    hcdActors.forEach(TromboneAssemblyBasicTests::cleanup);
+    hcdActors.forEach(actorRef -> {
+      actorRef.tell(HaltComponent, ActorRef.noSender());
+    });
     JavaTestKit.shutdownActorSystem(system);
     system = null;
   }

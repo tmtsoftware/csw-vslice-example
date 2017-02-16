@@ -149,13 +149,17 @@ public class FollowPositionTests extends JavaTestKit {
 
   TestActorRef<FollowActor> newFollower(Optional<ActorRef> tromboneControl, Optional<ActorRef> publisher) {
     Props props = FollowActor.props(assemblyContext, initialElevation, setNssInUse(false), tromboneControl, publisher, Optional.empty());
-    return TestActorRef.create(system, props);
+    TestActorRef<FollowActor> a = TestActorRef.create(system, props);
+    expectNoMsg(duration("200 milli")); // give the new actor time to subscribe before any test publishing...
+    return a;
   }
 
   TestActorRef<FollowActor> newTestElPublisher(Optional<ActorRef> tromboneControl) {
     Props testEventServiceProps = TrombonePublisher.props(assemblyContext, Optional.of(eventService), Optional.empty());
     ActorRef publisherActorRef = system.actorOf(testEventServiceProps);
-    return newFollower(tromboneControl, Optional.of(publisherActorRef));
+    TestActorRef<FollowActor> a = newFollower(tromboneControl, Optional.of(publisherActorRef));
+    expectNoMsg(duration("200 milli")); // give the new actor time to subscribe before any test publishing...
+    return a;
   }
 
   /**

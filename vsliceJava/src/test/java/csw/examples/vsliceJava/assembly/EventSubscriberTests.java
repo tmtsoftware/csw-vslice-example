@@ -75,12 +75,16 @@ public class EventSubscriberTests extends JavaTestKit {
 
   TestActorRef<TromboneEventSubscriber> newTestEventSubscriber(BooleanItem nssInUseIn, Optional<ActorRef> followActor, IEventService eventService) {
     Props props = TromboneEventSubscriber.props(assemblyContext, nssInUseIn, followActor, eventService);
-    return TestActorRef.create(system, props);
+    TestActorRef<TromboneEventSubscriber> a = TestActorRef.create(system, props);
+    expectNoMsg(duration("200 milli")); // give the new actor time to subscribe before any test publishing...
+    return a;
   }
 
   ActorRef newEventSubscriber(BooleanItem nssInUse, Optional<ActorRef> followActor, IEventService eventService) {
     Props props = TromboneEventSubscriber.props(assemblyContext, nssInUse, followActor, eventService);
-    return system.actorOf(props);
+    ActorRef a = system.actorOf(props);
+    expectNoMsg(duration("200 milli")); // give the new actor time to subscribe before any test publishing...
+    return a;
   }
 
   // Stop any actors created for a test to avoid conflict with other tests

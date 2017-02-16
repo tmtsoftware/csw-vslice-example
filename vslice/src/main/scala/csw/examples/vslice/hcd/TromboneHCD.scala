@@ -105,7 +105,7 @@ class TromboneHCD(override val info: HcdInfo, supervisor: ActorRef) extends Hcd 
       supervisor ! ShutdownComplete
 
     case LifecycleFailureInfo(state: LifecycleState, reason: String) =>
-      log.info(s"Received failed state: $state for reason: $reason")
+      log.error(s"Received failed state: $state for reason: $reason")
 
     case GetAxisStats =>
       tromboneAxis ! GetStatistics

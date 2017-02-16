@@ -19,7 +19,7 @@ import csw.services.loc.LocationService.{Location, ResolvedAkkaLocation, Unresol
 import csw.services.pkg.Component.{DoNotRegister, HcdInfo}
 import csw.services.pkg.Supervisor
 import csw.services.pkg.Supervisor.{HaltComponent, LifecycleRunning}
-import csw.services.pkg.SupervisorExternal.{LifecycleStateChanged, SubscribeLifecycleCallback}
+import csw.services.pkg.SupervisorExternal.{ExComponentShutdown, LifecycleStateChanged, SubscribeLifecycleCallback}
 import csw.util.config.Events.{StatusEvent, SystemEvent}
 import org.scalatest.{BeforeAndAfterAll, FunSpecLike, _}
 
@@ -112,7 +112,9 @@ class DiagPublisherTests extends TestKit(DiagPublisherTests.system) with Implici
 
   def newDiagPublisher(currentStateReceiver: ActorRef, tromboneHCD: Option[ActorRef], eventPublisher: Option[ActorRef]): TestActorRef[DiagPublisher] = {
     val props = DiagPublisher.props(assemblyContext, tromboneHCD, eventPublisher)
-    TestActorRef[DiagPublisher](props)
+    val a: TestActorRef[DiagPublisher] = TestActorRef[DiagPublisher](props)
+    expectNoMsg(200.millis)
+    a
   }
 
   // Stop any actors created for a test to avoid conflict with other tests

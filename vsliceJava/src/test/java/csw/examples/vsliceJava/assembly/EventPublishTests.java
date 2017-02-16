@@ -33,9 +33,7 @@ import static csw.examples.vsliceJava.assembly.AssemblyTestData.newRangeAndElDat
 import static csw.examples.vsliceJava.assembly.AssemblyTestData.testZenithAngles;
 import static csw.examples.vsliceJava.assembly.FollowActor.UpdatedEventData;
 import static csw.examples.vsliceJava.assembly.TromboneStateActor.*;
-import static csw.services.loc.LocationService.ResolvedTcpLocation;
 import static csw.util.config.Events.*;
-import static javacsw.services.pkg.JSupervisor.HaltComponent;
 import static javacsw.util.config.JItems.jadd;
 import static javacsw.util.config.JItems.jset;
 import static junit.framework.TestCase.assertEquals;
@@ -136,14 +134,18 @@ public class EventPublishTests extends JavaTestKit {
 
   // Publisher behaves the same whether nss is in use or not so always nssNotInUse
   ActorRef newTestFollower(Optional<ActorRef> tromboneControl, Optional<ActorRef> publisher) {
-    Props props = FollowActor.props(assemblyContext, initialElevation, assemblyContext.setNssInUse(false),
+    Props props = FollowActor.props(assemblyContext, initialElevation, setNssInUse(false),
       tromboneControl, publisher, Optional.empty());
-    return system.actorOf(props);
+    ActorRef a = system.actorOf(props);
+    expectNoMsg(duration("200 millis"));
+    return a;
   }
 
   ActorRef newTestPublisher(Optional<IEventService> eventService, Optional<ITelemetryService> telemetryService) {
     Props testEventPublisherProps = TrombonePublisher.props(assemblyContext, eventService, telemetryService);
-    return system.actorOf(testEventPublisherProps);
+    ActorRef a = system.actorOf(testEventPublisherProps);
+    expectNoMsg(duration("200 millis"));
+    return a;
   }
 
   // Stop any actors created for a test to avoid conflict with other tests

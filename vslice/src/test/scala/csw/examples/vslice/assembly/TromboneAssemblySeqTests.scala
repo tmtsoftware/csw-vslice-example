@@ -1,22 +1,17 @@
 package csw.examples.vslice.assembly
 
-import akka.actor.{ActorRef, ActorSystem, PoisonPill}
+import akka.actor.{ActorRef, ActorSystem}
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
 import csw.examples.vslice.TestEnv
-import csw.examples.vslice.seq.Demo.logger
 import csw.services.apps.containerCmd.ContainerCmd
-import csw.services.ccs.AssemblyController.Submit
-import csw.services.ccs.AssemblyMessages.{DiagnosticMode, OperationsMode}
 import csw.services.ccs.BlockingAssemblyClient
-import csw.services.ccs.CommandStatus.{Accepted, AllCompleted, CommandResult, Completed}
+import csw.services.ccs.CommandStatus.AllCompleted
 import csw.services.events.Event
 import csw.services.loc.LocationService
-import csw.services.pkg.Component.AssemblyInfo
-import csw.services.pkg.Supervisor
 import csw.services.pkg.Supervisor._
-import csw.services.pkg.SupervisorExternal.{LifecycleStateChanged, SubscribeLifecycleCallback}
+import csw.services.pkg.SupervisorExternal.{LifecycleStateChanged, SubscribeLifecycleCallback, UnsubscribeLifecycleCallback}
 import csw.util.config.{Configurations, DoubleKey}
 import csw.util.config.Configurations.{ConfigKey, SetupConfig}
 import org.scalatest.{BeforeAndAfterAll, _}
@@ -35,7 +30,7 @@ object TromboneAssemblySeqTests {
   val system = ActorSystem("TromboneAssemblySeqTests")
 }
 
-class TromboneAssemblySeqTests extends TestKit(TromboneAssemblyCompTests.system) with ImplicitSender
+class TromboneAssemblySeqTests extends TestKit(TromboneAssemblySeqTests.system) with ImplicitSender
     with FunSpecLike with Matchers with BeforeAndAfterAll with LazyLogging {
 
   implicit val timeout = Timeout(10.seconds)
@@ -83,24 +78,46 @@ class TromboneAssemblySeqTests extends TestKit(TromboneAssemblyCompTests.system)
   var containerActors: List[ActorRef] = Nil
 
   override def beforeAll: Unit = {
+    logger.info("XXX TromboneAssemblySeqTests beforeAll in")
     TestEnv.createTromboneAssemblyConfig()
 
     // Starts the assembly and HCD used in the test
     val cmd = ContainerCmd("vslice", Array("--standalone"), Map("" -> "tromboneContainer.conf"))
     containerActors = cmd.actors
+
+    // Wait for components to be in running state
+    val probe = TestProbe()
+    containerActors.foreach { actorRef =>
+      actorRef ! SubscribeLifecycleCallback(probe.ref)
+    }
+    probe.expectMsg(10.seconds, LifecycleStateChanged(LifecycleRunning))
+    probe.expectMsg(10.seconds, LifecycleStateChanged(LifecycleRunning))
+
+    containerActors.foreach { actorRef =>
+      actorRef ! UnsubscribeLifecycleCallback(probe.ref)
+    }
+    expectNoMsg(5.seconds) // XXX FIXME Give time for location service update so we don't get previous value
+    resolveAssembly(taName)
+    logger.info("XXX TromboneAssemblySeqTests beforeAll out")
   }
 
   // Stop any actors created for a test to avoid conflict with other tests
   private def cleanup(component: ActorRef): Unit = {
-    val monitor = TestProbe()
-    monitor.watch(component)
+    val probe = TestProbe()
+    component ! SubscribeLifecycleCallback(probe.ref)
+
     component ! HaltComponent
-    monitor.expectTerminated(component)
+
+    probe.expectMsg(10.seconds, LifecycleStateChanged(LifecyclePreparingToShutdown))
+    probe.expectMsg(10.seconds, LifecycleStateChanged(LifecycleShutdown))
   }
 
   override def afterAll: Unit = {
+    logger.info("XXX TromboneAssemblySeqTests afterAll in")
     containerActors.foreach(cleanup)
-    TestKit.shutdownActorSystem(TromboneAssemblyBasicTests.system)
+    TestKit.shutdownActorSystem(system)
+    Thread.sleep(7000) // XXX FIXME Make sure components have time to unregister from location service
+    logger.info("XXX TromboneAssemblySeqTests afterAll out")
   }
 
   def getTrombone: BlockingAssemblyClient = resolveAssembly(taName)

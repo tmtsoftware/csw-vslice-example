@@ -87,6 +87,7 @@ class TromboneCommandHandler(ac: AssemblyContext, tromboneHCDIn: Option[ActorRef
         case ac.initCK =>
           log.info("Init not fully implemented -- only sets state ready!")
           tromboneStateActor ! SetState(cmdItem(cmdReady), moveItem(moveUnindexed), sodiumItem(false), nssItem(false))
+          Thread.sleep(500) // XXX FIXME! Want to be sure state is actually set before replying!
           commandOriginator.foreach(_ ! Completed)
 
         case ac.datumCK =>
@@ -146,6 +147,7 @@ class TromboneCommandHandler(ac: AssemblyContext, tromboneHCDIn: Option[ActorRef
             context.become(followReceive(eventService.get, followCommandActor))
             // Note that this is where sodiumLayer is set allowing other commands that require this state
             tromboneStateActor ! SetState(cmdContinuous, moveMoving, sodiumLayer(currentState), nssItem.head)
+            Thread.sleep(500) // XXX FIXME! Want to be sure state is actually set before replying!
             commandOriginator.foreach(_ ! Completed)
           }
 
@@ -179,6 +181,7 @@ class TromboneCommandHandler(ac: AssemblyContext, tromboneHCDIn: Option[ActorRef
           executeMatch(context, idleMatcher, tromboneHCD, commandOriginator) {
             case Completed =>
               tromboneStateActor ! SetState(cmdContinuous, move(currentState), sodiumLayer(currentState), nss(currentState))
+              Thread.sleep(500) // XXX FIXME! Want to be sure state is actually set before replying!
             case Error(message) =>
               log.error(s"setElevation command failed with message: $message")
           }
@@ -188,6 +191,7 @@ class TromboneCommandHandler(ac: AssemblyContext, tromboneHCDIn: Option[ActorRef
           log.debug(s"Stop received while following")
           followActor ! StopFollowing
           tromboneStateActor ! SetState(cmdReady, moveIndexed, sodiumLayer(currentState), nss(currentState))
+          Thread.sleep(500) // XXX FIXME! Want to be sure state is actually set before replying!
 
           // Go back to no follow state
           context.become(noFollowReceive())
@@ -210,7 +214,8 @@ class TromboneCommandHandler(ac: AssemblyContext, tromboneHCDIn: Option[ActorRef
       } {
         commandOriginator.foreach(_ ! cs)
         currentCommand ! PoisonPill
-        self ! CommandDone
+        //        self ! CommandDone
+        context.become(noFollowReceive())
       }
 
     case SetupConfig(ac.stopCK, _) =>
@@ -221,8 +226,8 @@ class TromboneCommandHandler(ac: AssemblyContext, tromboneHCDIn: Option[ActorRef
       log.debug("actorExecutingReceive: ExecuteOneStop")
       closeDownMotionCommand(currentCommand, commandOriginator)
 
-    case CommandDone =>
-      context.become(noFollowReceive())
+    //    case CommandDone =>
+    //      context.become(noFollowReceive())
 
     case x => log.error(s"TromboneCommandHandler:actorExecutingReceive received an unknown message: $x")
   }
@@ -260,7 +265,7 @@ object TromboneCommandHandler {
   def posMatcher(position: Int): DemandMatcher =
     DemandMatcher(DemandState(axisStateCK).madd(stateKey -> TromboneHCD.AXIS_IDLE, positionKey -> position))
 
-  // message sent to self when a command completes
-  private case object CommandDone
+  //  // message sent to self when a command completes
+  //  private case object CommandDone
 }
 

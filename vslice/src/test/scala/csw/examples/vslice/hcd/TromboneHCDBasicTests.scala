@@ -64,13 +64,17 @@ class TromboneHCDBasicTests extends TestKit(TromboneHCDBasicTests.system) with I
   def newTrombone(hcdInfo: HcdInfo = testInfo): (TestProbe, ActorRef) = {
     val supervisor = TestProbe()
     val props = getTromboneProps(hcdInfo, Some(supervisor.ref))
-    (supervisor, system.actorOf(props))
+    val result = (supervisor, system.actorOf(props))
+    expectNoMsg(300.millis)
+    result
   }
 
   def newTestTrombone(hcdInfo: HcdInfo = testInfo): (TestProbe, TestActorRef[TromboneHCD]) = {
     val supervisor = TestProbe()
     val props = getTromboneProps(hcdInfo, Some(supervisor.ref))
-    (supervisor, TestActorRef(props))
+    val result: (TestProbe, TestActorRef[TromboneHCD]) = (supervisor, TestActorRef(props))
+    expectNoMsg(300.millis)
+    result
   }
 
   def lifecycleStart(supervisor: TestProbe, tla: ActorRef): Unit = {

@@ -19,6 +19,7 @@ import csw.services.pkg.SupervisorExternal.{LifecycleStateChanged, SubscribeLife
 import csw.util.config.Configurations
 import csw.util.config.Configurations.SetupConfig
 import org.scalatest.{BeforeAndAfterAll, _}
+import csw.services.sequencer.SequencerEnv._
 
 import scala.concurrent.duration._
 
@@ -26,6 +27,7 @@ object TromboneAssemblyCompTests {
   LocationService.initInterface()
 
   val system = ActorSystem("TromboneAssemblyCompTests")
+  val thName = "lgsTromboneHCD"
 }
 
 class TromboneAssemblyCompTests extends TestKit(TromboneAssemblyCompTests.system) with ImplicitSender
@@ -39,28 +41,35 @@ class TromboneAssemblyCompTests extends TestKit(TromboneAssemblyCompTests.system
     Supervisor(assemblyInfo)
   }
 
+  // List of top level actors that were created for the HCD (for clean up)
+  var hcdActors: List[ActorRef] = Nil
+
+  override def beforeAll: Unit = {
+    logger.info("XXX TromboneAssemblyCompTests beforeAll in")
+    TestEnv.createTromboneAssemblyConfig()
+
+    // Starts the HCD used in the test
+    val cmd = ContainerCmd("vslice", Array("--standalone"), Map("" -> "tromboneHCD.conf"))
+    hcdActors = cmd.actors
+    expectNoMsg(2.seconds) // XXX FIXME Give time for location service update so we don't get previous value
+    resolveHcd(TromboneAssemblyBasicTests.thName)
+    logger.info("XXX TromboneAssemblyCompTests beforeAll out")
+  }
+
+  override def afterAll: Unit = {
+    logger.info("XXX TromboneAssemblyCompTests afterAll in")
+    hcdActors.foreach(cleanup)
+    TestKit.shutdownActorSystem(system)
+    Thread.sleep(7000) // XXX FIXME Make sure components have time to unregister from location service
+    logger.info("XXX TromboneAssemblyCompTests afterAll out")
+  }
+
   // Stop any actors created for a test to avoid conflict with other tests
   private def cleanup(component: ActorRef): Unit = {
     val monitor = TestProbe()
     monitor.watch(component)
     component ! HaltComponent
     monitor.expectTerminated(component)
-  }
-
-  // List of top level actors that were created for the HCD (for clean up)
-  var hcdActors: List[ActorRef] = Nil
-
-  override def beforeAll: Unit = {
-    TestEnv.createTromboneAssemblyConfig()
-
-    // Starts the HCD used in the test
-    val cmd = ContainerCmd("vslice", Array("--standalone"), Map("" -> "tromboneHCD.conf"))
-    hcdActors = cmd.actors
-  }
-
-  override def afterAll: Unit = {
-    hcdActors.foreach(cleanup)
-    TestKit.shutdownActorSystem(TromboneAssemblyBasicTests.system)
   }
 
   describe("comp tests") {

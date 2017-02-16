@@ -149,12 +149,16 @@ public class FollowCommandTests extends JavaTestKit {
 
   TestActorRef<FollowCommand> newTestFollowCommand(BooleanItem nssInUse, Optional<ActorRef> tromboneHCD, Optional<ActorRef> eventPublisher) {
     Props props = FollowCommand.props(assemblyContext, initialElevation, nssInUse, tromboneHCD, eventPublisher, eventService);
-    return TestActorRef.create(system, props);
+    TestActorRef<FollowCommand> a = TestActorRef.create(system, props);
+    expectNoMsg(duration("200 milli")); // give the new actor time to subscribe before any test publishing...
+    return a;
   }
 
   ActorRef newFollowCommand(BooleanItem isNssInUse, Optional<ActorRef> tromboneHCD, Optional<ActorRef> eventPublisher) {
     Props props = FollowCommand.props(assemblyContext, initialElevation, isNssInUse, tromboneHCD, eventPublisher, eventService);
-    return system.actorOf(props);
+    ActorRef a = system.actorOf(props);
+    expectNoMsg(duration("200 milli")); // give the new actor time to subscribe before any test publishing...
+    return a;
   }
 
   // The following are used to start a tromboneHCD for testing purposes
