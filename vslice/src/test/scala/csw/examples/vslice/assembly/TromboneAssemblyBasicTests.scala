@@ -58,7 +58,7 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
       expectTerminated(actorRef)
     }
     TestKit.shutdownActorSystem(system)
-    Thread.sleep(7000) // XXX FIXME Make sure components have time to unregister from location service
+    Thread.sleep(10000) // XXX FIXME Make sure components have time to unregister from location service
   }
 
   // Stop any actors created for a test to avoid conflict with other tests
@@ -88,6 +88,7 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
 
   def newTrombone(supervisor: ActorRef, assemblyInfo: AssemblyInfo = assemblyContext.info): ActorRef = {
     val props = getTromboneProps(assemblyInfo, Some(supervisor))
+    expectNoMsg(300.millis)
     system.actorOf(props)
   }
 

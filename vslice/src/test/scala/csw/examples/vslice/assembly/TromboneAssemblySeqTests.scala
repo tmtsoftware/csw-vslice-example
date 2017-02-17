@@ -91,11 +91,10 @@ class TromboneAssemblySeqTests extends TestKit(TromboneAssemblySeqTests.system) 
     }
     probe.expectMsg(10.seconds, LifecycleStateChanged(LifecycleRunning))
     probe.expectMsg(10.seconds, LifecycleStateChanged(LifecycleRunning))
-
     containerActors.foreach { actorRef =>
       actorRef ! UnsubscribeLifecycleCallback(probe.ref)
     }
-    expectNoMsg(5.seconds) // XXX FIXME Give time for location service update so we don't get previous value
+    expectNoMsg(10.seconds) // XXX FIXME Give time for location service update so we don't get previous value
     resolveAssembly(taName)
   }
 

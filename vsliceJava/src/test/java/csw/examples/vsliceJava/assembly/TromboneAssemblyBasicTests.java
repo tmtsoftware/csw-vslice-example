@@ -69,25 +69,22 @@ public class TromboneAssemblyBasicTests extends JavaTestKit {
     ContainerCmd cmd = new ContainerCmd("vsliceJava", new String[]{"--standalone"}, configMap);
     hcdActors = cmd.getActors();
     if (hcdActors.size() == 0) logger.error("Failed to create trombone HCD");
+    Thread.sleep(2000); // XXX FIXME Give time for location service update so we don't get previous value
   }
 
   @AfterClass
-  public static void teardown() {
+  public static void teardown() throws InterruptedException {
     hcdActors.forEach(actorRef -> {
       actorRef.tell(HaltComponent, ActorRef.noSender());
     });
     JavaTestKit.shutdownActorSystem(system);
     system = null;
+    Thread.sleep(7000); // XXX FIXME Make sure components have time to unregister from location service
   }
 
   Props getTromboneProps(AssemblyInfo assemblyInfo, Optional<ActorRef> supervisorIn) {
     if (!supervisorIn.isPresent()) return TromboneAssembly.props(assemblyInfo, new TestProbe(system).ref());
     return TromboneAssembly.props(assemblyInfo, supervisorIn.get());
-  }
-
-  ActorRef newTrombone(ActorRef supervisor) {
-    Props props = getTromboneProps(assemblyContext.info, Optional.of(supervisor));
-    return system.actorOf(props);
   }
 
   // Stop any actors created for a test to avoid conflict with other tests
@@ -98,6 +95,13 @@ public class TromboneAssemblyBasicTests extends JavaTestKit {
       system.stop(actorRef);
       monitor.expectTerminated(actorRef, timeout.duration());
     }
+  }
+
+  ActorRef newTrombone(ActorRef supervisor) {
+    Props props = getTromboneProps(assemblyContext.info, Optional.of(supervisor));
+    ActorRef result = system.actorOf(props);
+    expectNoMsg(duration("300 millis"));
+    return result;
   }
 
   // --- low-level instrumented trombone assembly tests ---
@@ -291,7 +295,7 @@ public class TromboneAssemblyBasicTests extends JavaTestKit {
 
     fakeSupervisor.expectMsg(Initialized);
     fakeSupervisor.expectNoMsg(duration("200 milli"));
-    fakeSupervisor.send(tromboneAssembly, Running);
+    expectNoMsg(duration("200 millis"));
 
     SetupConfigArg datum = Configurations.createSetupConfigArg("testobsId",
       new SetupConfig(assemblyContext.initCK.prefix()),

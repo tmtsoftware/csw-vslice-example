@@ -235,7 +235,7 @@ public class TromboneAssembly extends JAssemblyController {
       matchEquals(DoShutdown, t -> {
         log.info("Received doshutdown");
         // Ask our HCD to shutdown, then return complete
-        tromboneHCD.ifPresent(actorRef -> actorRef.tell(DoShutdown, self()));
+//        tromboneHCD.ifPresent(actorRef -> actorRef.tell(DoShutdown, self()));
         supervisor.tell(ShutdownComplete, self());
       }).
       match(Supervisor.LifecycleFailureInfo.class, t -> {

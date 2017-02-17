@@ -50,14 +50,14 @@ class TromboneAssemblyCompTests extends TestKit(TromboneAssemblyCompTests.system
     // Starts the HCD used in the test
     val cmd = ContainerCmd("vslice", Array("--standalone"), Map("" -> "tromboneHCD.conf"))
     hcdActors = cmd.actors
-    expectNoMsg(2.seconds) // XXX FIXME Give time for location service update so we don't get previous value
+    expectNoMsg(5.seconds) // XXX FIXME Give time for location service update so we don't get previous value
     resolveHcd(TromboneAssemblyBasicTests.thName)
   }
 
   override def afterAll: Unit = {
     hcdActors.foreach(cleanup)
     TestKit.shutdownActorSystem(system)
-    Thread.sleep(7000) // XXX FIXME Make sure components have time to unregister from location service
+    Thread.sleep(10000) // XXX FIXME Make sure components have time to unregister from location service
   }
 
   // Stop any actors created for a test to avoid conflict with other tests

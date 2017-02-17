@@ -132,7 +132,7 @@ public class TromboneHCD extends JHcdController {
         supervisor.tell(ShutdownComplete, self());
       })
       .match(Supervisor.LifecycleFailureInfo.class, e -> {
-        log.info("Received failed state: " + e.state() + " for reason: " + e.reason());
+        log.error("Received failed state: " + e.state() + " for reason: " + e.reason());
       })
       .matchEquals(TromboneEngineering.GetAxisStats, e -> {
         tromboneAxis.tell(GetStatistics.instance, self());

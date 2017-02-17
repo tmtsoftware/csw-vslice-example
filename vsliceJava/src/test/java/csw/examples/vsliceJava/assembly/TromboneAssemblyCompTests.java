@@ -69,19 +69,15 @@ public class TromboneAssemblyCompTests extends JavaTestKit {
     hcdActors = cmd.getActors();
     if (hcdActors.size() == 0) logger.error("Failed to create trombone HCD");
     else System.out.println("Created HCD actor: " + hcdActors);
+    Thread.sleep(5000); // XXX FIXME Give time for location service update so we don't get previous value
   }
 
   @AfterClass
-  public static void teardown() {
+  public static void teardown() throws InterruptedException {
     hcdActors.forEach(TromboneAssemblyCompTests::cleanup);
     JavaTestKit.shutdownActorSystem(system);
     system = null;
-  }
-
-  ActorRef newTrombone() {
-    ActorRef a = JSupervisor.create(assemblyContext.info);
-    expectNoMsg(duration("200 millis"));
-    return a;
+    Thread.sleep(7000); // XXX FIXME Make sure components have time to unregister from location service
   }
 
   // Stop any actors created for a test to avoid conflict with other tests
@@ -92,6 +88,12 @@ public class TromboneAssemblyCompTests extends JavaTestKit {
       system.stop(actorRef);
       monitor.expectTerminated(actorRef, timeout.duration());
     }
+  }
+
+  ActorRef newTrombone() {
+    ActorRef a = JSupervisor.create(assemblyContext.info);
+    expectNoMsg(duration("200 millis"));
+    return a;
   }
 
   // --- comp tests ---
