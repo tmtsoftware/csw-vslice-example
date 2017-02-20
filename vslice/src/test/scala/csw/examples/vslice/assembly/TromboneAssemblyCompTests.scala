@@ -62,22 +62,24 @@ class TromboneAssemblyCompTests extends TestKit(TromboneAssemblyCompTests.system
 
   // Stop any actors created for a test to avoid conflict with other tests
   private def cleanup(component: ActorRef): Unit = {
+    logger.info(s"XXXXXXXXXXXXXXXXXX cleanup start: $component")
     val monitor = TestProbe()
     monitor.watch(component)
     component ! HaltComponent
     monitor.expectTerminated(component)
+    logger.info(s"XXXXXXXXXXXXXXXXXX cleanup end: $component")
   }
 
   describe("comp tests") {
 
-    it("should just startup") {
-      val tla = newTrombone()
-      val fakeSequencer = TestProbe()
-
-      tla ! SubscribeLifecycleCallback(fakeSequencer.ref)
-      fakeSequencer.expectMsg(LifecycleStateChanged(LifecycleRunning))
-      cleanup(tla)
-    }
+    //    it("should just startup") {
+    //      val tla = newTrombone()
+    //      val fakeSequencer = TestProbe()
+    //
+    //      tla ! SubscribeLifecycleCallback(fakeSequencer.ref)
+    //      fakeSequencer.expectMsg(LifecycleStateChanged(LifecycleRunning))
+    //      cleanup(tla)
+    //    }
 
     it("should allow a datum") {
       val tla = newTrombone()
