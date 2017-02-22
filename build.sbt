@@ -31,7 +31,7 @@ lazy val vsliceJava = project
   .enablePlugins(JavaAppPackaging)
   .settings(packageSettings("VerticalSliceJava", "Vertical Slice Java Example", "More complicated example showing CSW Java features"): _*)
   .settings(libraryDependencies ++=
-    compile(javacsw, log) ++
+    compile(javacsw, seqSupport, log) ++
       test(akkaTestKit, junitInterface, scalaJava8Compat)
   )
 

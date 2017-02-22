@@ -121,6 +121,7 @@ class TromboneStateActorTests extends TestKit(TromboneStateActorTests.system) wi
     val tsa = system.actorOf(TromboneStateActor.props())
 
     val tsub = system.actorOf(TestSubscriber.props())
+    expectNoMsg(200.milli)
 
     val ts1 = defaultTromboneState
 
@@ -134,22 +135,23 @@ class TromboneStateActorTests extends TestKit(TromboneStateActorTests.system) wi
 
     // Starts with default so ensure setting it doesn't cause publish
     tsa ! SetState(ts1)
+    expectNoMsg(200.milli)
     // Delays are to give time to subscriber to run
     // Should publish (1)
     tsa ! SetState(ts2)
-    expectNoMsg(5.milli)
+    expectNoMsg(200.milli)
     // Try again should not be published
     tsa ! SetState(ts2)
-    expectNoMsg(5.milli)
+    expectNoMsg(200.milli)
     // Should publish (2)
     tsa ! SetState(ts3)
-    expectNoMsg(5.milli)
+    expectNoMsg(200.milli)
     // Should publish (3)
     tsa ! SetState(ts4)
-    expectNoMsg(5.milli)
+    expectNoMsg(200.milli)
     // Should publish (4)
     tsa ! SetState(ts5)
-    expectNoMsg(5.milli)
+    expectNoMsg(200.milli)
 
     tsub ! GetResults
     val result = expectMsgClass(classOf[TestSubscriber.Results])
@@ -161,10 +163,10 @@ class TromboneStateActorTests extends TestKit(TromboneStateActorTests.system) wi
 
   def setupState(ts: TromboneState) = {
     // These times are important to allow time for test actors to get and process the state updates when running tests
-    expectNoMsg(20.milli)
+    expectNoMsg(200.milli)
     system.eventStream.publish(ts)
     // This is here to allow the destination to run and set its state
-    expectNoMsg(20.milli)
+    expectNoMsg(200.milli)
   }
 
   it("it might work with publish directly") {

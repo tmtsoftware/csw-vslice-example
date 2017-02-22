@@ -136,7 +136,7 @@ class EventPublishTests extends TestKit(EventPublishTests.system) with ImplicitS
       fakeTromboneEventSubscriber.send(fol, UpdatedEventData(za(0), fe(0), EventTime()))
 
       // This is to give actors time to run
-      expectNoMsg(100.milli)
+      expectNoMsg(200.milli)
 
       // Ask our test subscriber for the published events
       resultSubscriber ! GetResults

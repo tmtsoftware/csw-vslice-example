@@ -22,10 +22,7 @@ import csw.util.config.JavaHelpers;
 import javacsw.services.events.IEventService;
 import javacsw.services.events.ITelemetryService;
 import javacsw.services.pkg.JComponent;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 import scala.concurrent.duration.FiniteDuration;
 
 import java.util.*;
@@ -130,10 +127,15 @@ public class FollowActorTests extends JavaTestKit {
     super(system);
   }
 
+  @Before
+  public void beforeEach() throws Exception {
+    TestEnv.resetRedisServices(system);
+  }
+
   @BeforeClass
   public static void setup() throws Exception {
     LocationService.initInterface();
-    system = ActorSystem.create();
+    system = ActorSystem.create("FollowActorTests");
     logger = Logging.getLogger(system, system);
 
     TestEnv.createTromboneAssemblyConfig(system);

@@ -65,6 +65,14 @@ public class TromboneHCDBasicTests extends JavaTestKit {
     system = null;
   }
 
+  // Stop any actors created for a test to avoid conflict with other tests
+  private void cleanup(ActorRef actorRef) {
+    TestProbe monitor = new TestProbe(system);
+    monitor.watch(actorRef);
+    system.stop(actorRef);
+    monitor.expectTerminated(actorRef, timeout.duration());
+  }
+
   String troboneAssemblyPrefix = "nfiraos.ncc.trombone";
 
   HcdInfo testInfo = JComponent.hcdInfo(
@@ -202,6 +210,8 @@ public class TromboneHCDBasicTests extends JavaTestKit {
     assertEquals(ua.stats.initCount, 0);
     assertEquals(ua.stats.moveCount, 0);
     assertEquals(ua.stats.successCount, 0);
+
+    cleanup(tla);
   }
 
   @Test
@@ -217,6 +227,8 @@ public class TromboneHCDBasicTests extends JavaTestKit {
 
     supervisor.send(tla, DoShutdown);
     supervisor.expectMsg(ShutdownComplete);
+
+    cleanup(tla);
   }
 
   @Test
@@ -243,7 +255,7 @@ public class TromboneHCDBasicTests extends JavaTestKit {
 
     tla.tell(JHcdController.Unsubscribe, self());
 
-    tla.underlyingActor().context().stop(tla);
+    cleanup(tla);
   }
 
   @Test
@@ -270,7 +282,7 @@ public class TromboneHCDBasicTests extends JavaTestKit {
 
     tla.tell(JHcdController.Unsubscribe, self());
 
-    tla.underlyingActor().context().stop(tla);
+    cleanup(tla);
   }
 
   @Test
@@ -299,7 +311,7 @@ public class TromboneHCDBasicTests extends JavaTestKit {
     assertEquals(stats.item(moveCountKey).head(), 1);
 
     tla.tell(JHcdController.Unsubscribe, self());
-    system.stop(tla);
+    cleanup(tla);
   }
 
   @Test
@@ -333,7 +345,7 @@ public class TromboneHCDBasicTests extends JavaTestKit {
     assertEquals(stats.item(moveCountKey).head(), 1);
 
     tla.tell(JHcdController.Unsubscribe, self());
-    system.stop(tla);
+    cleanup(tla);
   }
 
   @Test
@@ -358,7 +370,7 @@ public class TromboneHCDBasicTests extends JavaTestKit {
 
     //info("Msgs: " + msgs)
     tla.tell(JHcdController.Unsubscribe, self());
-    system.stop(tla);
+    cleanup(tla);
   }
 
 
@@ -386,7 +398,7 @@ public class TromboneHCDBasicTests extends JavaTestKit {
     waitForMoveMsgs();
 
     tla.tell(JHcdController.Unsubscribe, self());
-    system.stop(tla);
+    cleanup(tla);
   }
 
   @Test
@@ -413,7 +425,7 @@ public class TromboneHCDBasicTests extends JavaTestKit {
 
     //info("Msgs: " + msgs)
     tla.tell(JHcdController.Unsubscribe, self());
-    system.stop(tla);
+    cleanup(tla);
   }
 
 
@@ -442,7 +454,7 @@ public class TromboneHCDBasicTests extends JavaTestKit {
 
       //info("Msgs: " + msgs)
       tla.tell(JHcdController.Unsubscribe, self());
-      system.stop(tla);
+      cleanup(tla);
     }
   }
 
@@ -521,7 +533,7 @@ public class TromboneHCDBasicTests extends JavaTestKit {
       assertEquals(stats.item(cancelCountKey).head(), 0);
 
       tla.tell(JHcdController.Unsubscribe, self());
-      system.stop(tla);
+      cleanup(tla);
     }
   }
 
@@ -559,7 +571,7 @@ public class TromboneHCDBasicTests extends JavaTestKit {
       assertEquals(stats.item(cancelCountKey).head(), 1);
 
       tla.tell(JHcdController.Unsubscribe, self());
-      system.stop(tla);
+      cleanup(tla);
     }
   }
 }

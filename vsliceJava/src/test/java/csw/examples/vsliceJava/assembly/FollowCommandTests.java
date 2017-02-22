@@ -22,10 +22,7 @@ import csw.util.config.JavaHelpers;
 import javacsw.services.events.IEventService;
 import javacsw.services.events.ITelemetryService;
 import javacsw.services.pkg.JComponent;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 import scala.concurrent.duration.FiniteDuration;
 
 import java.util.*;
@@ -123,10 +120,15 @@ public class FollowCommandTests extends JavaTestKit {
     super(system);
   }
 
+  @Before
+  public void beforeEach() throws Exception {
+    TestEnv.resetRedisServices(system);
+  }
+
   @BeforeClass
   public static void setup() throws Exception {
     LocationService.initInterface();
-    system = ActorSystem.create();
+    system = ActorSystem.create("FollowCommandTests");
     logger = Logging.getLogger(system, system);
 
     TestEnv.createTromboneAssemblyConfig(system);
@@ -195,8 +197,8 @@ public class FollowCommandTests extends JavaTestKit {
         }
       }.get(); // this extracts the received messages
 
-    CurrentState fmsg1 = expectMsgClass(duration("10 seconds"), CurrentState.class); // last one with current == target
-    CurrentState fmsg2 = expectMsgClass(CurrentState.class); // the the end event with IDLE
+    CurrentState fmsg1 = expectMsgClass(timeout.duration(), CurrentState.class); // last one with current == target
+    CurrentState fmsg2 = expectMsgClass(CurrentState.class); // the end event with IDLE
     List<CurrentState> allmsgs = new ArrayList<>();
     allmsgs.addAll(Arrays.asList(msgs));
     allmsgs.add(fmsg1);
@@ -232,7 +234,7 @@ public class FollowCommandTests extends JavaTestKit {
   }
 
   // Stop any actors created for a test to avoid conflict with other tests
-  private void cleanup(Optional<ActorRef> tromboneHCDOpt, ActorRef... a) {
+  private void cleanup(Optional<ActorRef> hcd, ActorRef... a) {
     TestProbe monitor = new TestProbe(system);
     for(ActorRef actorRef : a) {
       monitor.watch(actorRef);
@@ -240,7 +242,7 @@ public class FollowCommandTests extends JavaTestKit {
       monitor.expectTerminated(actorRef, timeout.duration());
     }
 
-    tromboneHCDOpt.ifPresent(tromboneHCD -> {
+    hcd.ifPresent(tromboneHCD -> {
       monitor.watch(tromboneHCD);
       tromboneHCD.tell(HaltComponent, self());
       monitor.expectTerminated(tromboneHCD, timeout.duration());
@@ -572,7 +574,7 @@ public class FollowCommandTests extends JavaTestKit {
       // The following is not required, but is added to make the event timing more interesting
       // Varying this delay from 50 to 10 shows completion of moves and at 10 update of move positions before finishing
       try {
-        Thread.sleep(500); // 500 makes it seem more interesting to watch, but is not needed for proper operation
+        Thread.sleep(100); // 500 makes it seem more interesting to watch, but is not needed for proper operation
       } catch (InterruptedException e) {
         e.printStackTrace();
       }
@@ -593,7 +595,7 @@ public class FollowCommandTests extends JavaTestKit {
       // The following is not required, but is added to make the event timing more interesting
       // Varying this delay from 50 to 10 shows completion of moves and at 10 update of move positions before finishing
       try {
-        Thread.sleep(500); // 500 makes it seem more interesting to watch, but is not needed for proper operation
+        Thread.sleep(100); // 500 makes it seem more interesting to watch, but is not needed for proper operation
       } catch (InterruptedException e) {
         e.printStackTrace();
       }

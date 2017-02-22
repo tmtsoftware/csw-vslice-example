@@ -19,10 +19,7 @@ import javacsw.services.alarms.IAlarmServiceAdmin;
 import javacsw.services.alarms.JAlarmServiceAdmin;
 import javacsw.services.ccs.JSequentialExecutor;
 import javacsw.services.pkg.JComponent;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 import scala.concurrent.duration.FiniteDuration;
 
 import java.util.Collections;
@@ -82,10 +79,15 @@ public class AlarmMonitorTests extends JavaTestKit {
     super(system);
   }
 
+  @Before
+  public void beforeEach() throws Exception {
+    TestEnv.resetRedisServices(system);
+  }
+
   @BeforeClass
   public static void setup() throws Exception {
     LocationService.initInterface();
-    system = ActorSystem.create();
+    system = ActorSystem.create("AlarmMonitorTests");
     logger = Logging.getLogger(system, system);
     TestEnv.createTromboneAssemblyConfig(system);
     alarmService = IAlarmService.getAlarmService(system, timeout).get();

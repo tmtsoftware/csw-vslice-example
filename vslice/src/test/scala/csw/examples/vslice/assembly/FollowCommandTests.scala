@@ -134,7 +134,7 @@ class FollowCommandTests extends TestKit(FollowCommandTests.system) with Implici
       case st @ CurrentState(ck, _) if ck.prefix.equals(TromboneHCD.axisStatsPrefix) => st
     }
     val fmsg1 = tp.expectMsgClass(classOf[CurrentState]) // last one with current == target
-    val fmsg2 = tp.expectMsgClass(classOf[CurrentState]) // the the end event with IDLE
+    val fmsg2 = tp.expectMsgClass(classOf[CurrentState]) // the end event with IDLE
     val allmsgs = msgs :+ fmsg1 :+ fmsg2
     allmsgs
   }

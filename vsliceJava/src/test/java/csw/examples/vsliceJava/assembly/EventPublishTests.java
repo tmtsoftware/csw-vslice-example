@@ -12,15 +12,13 @@ import akka.japi.pf.ReceiveBuilder;
 import akka.testkit.JavaTestKit;
 import akka.testkit.TestProbe;
 import akka.util.Timeout;
+import csw.examples.vsliceJava.TestEnv;
 import csw.services.loc.LocationService;
 import csw.util.config.DoubleItem;
 import csw.util.config.Events;
 import javacsw.services.events.IEventService;
 import javacsw.services.events.ITelemetryService;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 import scala.concurrent.duration.FiniteDuration;
 
 import java.util.*;
@@ -111,10 +109,15 @@ public class EventPublishTests extends JavaTestKit {
     super(system);
   }
 
+  @Before
+  public void beforeEach() throws Exception {
+    TestEnv.resetRedisServices(system);
+  }
+
   @BeforeClass
   public static void setup() throws Exception {
     LocationService.initInterface();
-    system = ActorSystem.create();
+    system = ActorSystem.create("EventPublishTests");
     logger = Logging.getLogger(system, system);
 
     telemetryService = ITelemetryService.getTelemetryService(ITelemetryService.defaultName, system, timeout)
@@ -187,7 +190,7 @@ public class EventPublishTests extends JavaTestKit {
       Events.getEventTime()));
 
     // This is to give actors time to run
-    expectNoMsg(duration("100 milli"));
+    expectNoMsg(duration("200 milli"));
 
     // Ask our test subscriber for the published events
     resultSubscriber.tell(new TestSubscriber.GetResults(), self());

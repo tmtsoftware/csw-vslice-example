@@ -17,6 +17,7 @@ import csw.services.ccs.CommandStatus.NoLongerValid;
 import csw.services.ccs.Validation.WrongInternalStateIssue;
 import csw.services.loc.LocationService;
 import csw.services.pkg.Component.AssemblyInfo;
+import csw.services.sequencer.SequencerEnv;
 import csw.util.config.Configurations;
 import csw.util.config.Configurations.SetupConfig;
 import csw.util.config.Configurations.SetupConfigArg;
@@ -42,6 +43,7 @@ import static junit.framework.TestCase.assertTrue;
 public class TromboneAssemblyBasicTests extends JavaTestKit {
   private static ActorSystem system;
   private static LoggingAdapter logger;
+  private static String thName = "lgsTromboneHCD";
 
   private static AssemblyContext assemblyContext = AssemblyTestData.TestAssemblyContext;
   private static Timeout timeout = Timeout.durationToTimeout(FiniteDuration.apply(10, TimeUnit.SECONDS));
@@ -58,7 +60,7 @@ public class TromboneAssemblyBasicTests extends JavaTestKit {
   @BeforeClass
   public static void setup() throws Exception {
     LocationService.initInterface();
-    system = ActorSystem.create();
+    system = ActorSystem.create("TromboneAssemblyBasicTests");
     logger = Logging.getLogger(system, system);
     TestEnv.createTromboneAssemblyConfig(system);
     eventService = IEventService.getEventService(IEventService.defaultName, system, timeout)
@@ -70,16 +72,20 @@ public class TromboneAssemblyBasicTests extends JavaTestKit {
     hcdActors = cmd.getActors();
     if (hcdActors.size() == 0) logger.error("Failed to create trombone HCD");
     Thread.sleep(2000); // XXX FIXME Give time for location service update so we don't get previous value
+    SequencerEnv.resolveHcd(thName);
   }
 
   @AfterClass
   public static void teardown() throws InterruptedException {
     hcdActors.forEach(actorRef -> {
+      TestProbe probe = new TestProbe(system);
+      probe.watch(actorRef);
       actorRef.tell(HaltComponent, ActorRef.noSender());
+      probe.expectTerminated(actorRef, timeout.duration());
     });
     JavaTestKit.shutdownActorSystem(system);
     system = null;
-    Thread.sleep(7000); // XXX FIXME Make sure components have time to unregister from location service
+    Thread.sleep(10000); // XXX FIXME Make sure components have time to unregister from location service
   }
 
   Props getTromboneProps(AssemblyInfo assemblyInfo, Optional<ActorRef> supervisorIn) {
@@ -99,9 +105,8 @@ public class TromboneAssemblyBasicTests extends JavaTestKit {
 
   ActorRef newTrombone(ActorRef supervisor) {
     Props props = getTromboneProps(assemblyContext.info, Optional.of(supervisor));
-    ActorRef result = system.actorOf(props);
     expectNoMsg(duration("300 millis"));
-    return result;
+    return system.actorOf(props);
   }
 
   // --- low-level instrumented trombone assembly tests ---
@@ -227,7 +232,6 @@ public class TromboneAssemblyBasicTests extends JavaTestKit {
     TestProbe fakeClient = new TestProbe(system);
 
     fakeSupervisor.expectMsg(Initialized);
-    fakeSupervisor.expectNoMsg(duration("200 milli"));
     fakeSupervisor.send(tromboneAssembly, Running);
 
     double testMove = 90.0;
@@ -245,7 +249,7 @@ public class TromboneAssemblyBasicTests extends JavaTestKit {
     assertEquals(acceptedMsg.overall(), Accepted);
 
     // Second one is completion of the executed ones
-    CommandResult completeMsg = fakeClient.expectMsgClass(duration("3 seconds"), CommandResult.class);
+    CommandResult completeMsg = fakeClient.expectMsgClass(duration("10 seconds"), CommandResult.class);
     logger.info("msg2: " + completeMsg);
     assertEquals(completeMsg.overall(), AllCompleted);
     assertEquals(completeMsg.details().results().size(), sca.configs().size());
@@ -295,6 +299,7 @@ public class TromboneAssemblyBasicTests extends JavaTestKit {
 
     fakeSupervisor.expectMsg(Initialized);
     fakeSupervisor.expectNoMsg(duration("200 milli"));
+    fakeSupervisor.send(tromboneAssembly, Running);
     expectNoMsg(duration("200 millis"));
 
     SetupConfigArg datum = Configurations.createSetupConfigArg("testobsId",
@@ -372,7 +377,7 @@ public class TromboneAssemblyBasicTests extends JavaTestKit {
 
     // Now send the stop after a bit of delay to let it get going
     // This is a timing thing that may not work on all machines
-    fakeSupervisor.expectNoMsg(duration("200 millis"));
+    fakeSupervisor.expectNoMsg(duration("300 millis"));
     SetupConfigArg stop = Configurations.createSetupConfigArg("testobsId", new SetupConfig(assemblyContext.stopCK.prefix()));
     // Send the stop
     fakeClient.send(tromboneAssembly, new Submit(stop));
@@ -380,7 +385,7 @@ public class TromboneAssemblyBasicTests extends JavaTestKit {
     // Stop must be accepted too
     acceptedMsg = fakeClient.expectMsgClass(duration("3 seconds"), CommandResult.class);
     logger.info("acceptedmsg2: " + acceptedMsg);
-    assertEquals(completeMsg.overall(), AllCompleted);
+    assertEquals(acceptedMsg.overall(), Accepted);
 
     // Second one is completion of the stop
     completeMsg = fakeClient.expectMsgClass(duration("3 seconds"), CommandResult.class);

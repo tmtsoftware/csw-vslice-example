@@ -14,6 +14,7 @@ import csw.services.ccs.AssemblyController.Submit;
 import csw.services.ccs.CommandStatus.CommandResult;
 import csw.services.loc.LocationService;
 import csw.services.pkg.SupervisorExternal.SubscribeLifecycleCallback;
+import csw.services.sequencer.SequencerEnv;
 import csw.util.config.Configurations;
 import csw.util.config.Configurations.SetupConfig;
 import csw.util.config.Configurations.SetupConfigArg;
@@ -33,6 +34,7 @@ import java.util.stream.Collectors;
 
 import static csw.services.pkg.SupervisorExternal.LifecycleStateChanged;
 import static javacsw.services.ccs.JCommandStatus.*;
+import static javacsw.services.pkg.JSupervisor.HaltComponent;
 import static javacsw.services.pkg.JSupervisor.LifecycleRunning;
 import static junit.framework.TestCase.assertEquals;
 
@@ -40,6 +42,7 @@ import static junit.framework.TestCase.assertEquals;
 public class TromboneAssemblyCompTests extends JavaTestKit {
   private static ActorSystem system;
   private static LoggingAdapter logger;
+  private static String thName = "lgsTromboneHCD";
 
   private static AssemblyContext assemblyContext = AssemblyTestData.TestAssemblyContext;
   private static Timeout timeout = Timeout.durationToTimeout(FiniteDuration.apply(10, TimeUnit.SECONDS));
@@ -59,7 +62,7 @@ public class TromboneAssemblyCompTests extends JavaTestKit {
   @BeforeClass
   public static void setup() throws Exception {
     LocationService.initInterface();
-    system = ActorSystem.create();
+    system = ActorSystem.create("TromboneAssemblyCompTests");
     logger = Logging.getLogger(system, system);
     TestEnv.createTromboneAssemblyConfig(system);
 
@@ -70,6 +73,7 @@ public class TromboneAssemblyCompTests extends JavaTestKit {
     if (hcdActors.size() == 0) logger.error("Failed to create trombone HCD");
     else System.out.println("Created HCD actor: " + hcdActors);
     Thread.sleep(5000); // XXX FIXME Give time for location service update so we don't get previous value
+    SequencerEnv.resolveHcd(thName);
   }
 
   @AfterClass
@@ -77,17 +81,15 @@ public class TromboneAssemblyCompTests extends JavaTestKit {
     hcdActors.forEach(TromboneAssemblyCompTests::cleanup);
     JavaTestKit.shutdownActorSystem(system);
     system = null;
-    Thread.sleep(7000); // XXX FIXME Make sure components have time to unregister from location service
+    Thread.sleep(10000); // XXX FIXME Make sure components have time to unregister from location service
   }
 
   // Stop any actors created for a test to avoid conflict with other tests
-  private static void cleanup(ActorRef... a) {
+  private static void cleanup(ActorRef component) {
     TestProbe monitor = new TestProbe(system);
-    for(ActorRef actorRef : a) {
-      monitor.watch(actorRef);
-      system.stop(actorRef);
-      monitor.expectTerminated(actorRef, timeout.duration());
-    }
+    monitor.watch(component);
+    component.tell(HaltComponent, ActorRef.noSender());
+    monitor.expectTerminated(component, timeout.duration());
   }
 
   ActorRef newTrombone() {

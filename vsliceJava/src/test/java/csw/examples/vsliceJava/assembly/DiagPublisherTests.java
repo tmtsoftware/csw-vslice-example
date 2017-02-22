@@ -18,10 +18,7 @@ import csw.services.pkg.Supervisor;
 import csw.util.config.Events;
 import javacsw.services.events.ITelemetryService;
 import javacsw.services.pkg.JComponent;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 import scala.concurrent.duration.FiniteDuration;
 
 import java.net.URI;
@@ -136,10 +133,15 @@ public class DiagPublisherTests extends JavaTestKit {
     super(system);
   }
 
+  @Before
+  public void beforeEach() throws Exception {
+    TestEnv.resetRedisServices(system);
+  }
+
   @BeforeClass
   public static void setup() throws Exception {
     LocationService.initInterface();
-    system = ActorSystem.create();
+    system = ActorSystem.create("DiagPublisherTests");
     logger = Logging.getLogger(system, system);
     TestEnv.createTromboneAssemblyConfig(system);
     telemetryService = ITelemetryService.getTelemetryService(ITelemetryService.defaultName, system, timeout)

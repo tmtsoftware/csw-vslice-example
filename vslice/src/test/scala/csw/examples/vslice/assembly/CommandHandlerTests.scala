@@ -333,7 +333,7 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     val se = system.actorOf(SequentialExecutor.props(ch, sca, Some(fakeAssembly.ref)))
 
     //    Configurations.createSetupConfigArg("testobsId", SetupConfig(ac.stopCK))
-    Thread.sleep(20) // This is an arbitrary time to get things going before sending stop
+    Thread.sleep(100) // XXX FIXME: This is an arbitrary time to get things going before sending stop
 
     // This won't work
     //val se2 = system.actorOf(SequentialExecutor.props(sca2, Some(fakeAssembly.ref)))

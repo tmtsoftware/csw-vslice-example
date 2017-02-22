@@ -215,11 +215,11 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
       fakeClient.send(tromboneAssembly, Submit(sca))
 
       // This first one is the accept/verification
-      val acceptedMsg = fakeClient.expectMsgClass(3.seconds, classOf[CommandResult])
+      val acceptedMsg = fakeClient.expectMsgClass(10.seconds, classOf[CommandResult])
       acceptedMsg.overall shouldBe Accepted
 
       // Second one is completion of the executed ones
-      val completeMsg = fakeClient.expectMsgClass(3.seconds, classOf[CommandResult])
+      val completeMsg = fakeClient.expectMsgClass(10.seconds, classOf[CommandResult])
       logger.info("msg2: " + completeMsg)
       completeMsg.overall shouldBe AllCompleted
       completeMsg.details.results.size shouldBe sca.configs.size
@@ -273,12 +273,12 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
       fakeClient.send(tromboneAssembly, Submit(datum))
 
       // This first one is the accept/verification
-      var acceptedMsg = fakeClient.expectMsgClass(3.seconds, classOf[CommandResult])
+      val acceptedMsg = fakeClient.expectMsgClass(3.seconds, classOf[CommandResult])
       //logger.info("acceptedMsg: " + acceptedMsg)
       acceptedMsg.overall shouldBe Accepted
 
       // Second one is completion of the executed ones
-      var completeMsg = fakeClient.expectMsgClass(3.seconds, classOf[CommandResult])
+      val completeMsg = fakeClient.expectMsgClass(3.seconds, classOf[CommandResult])
       logger.info("completeMsg: " + completeMsg)
       completeMsg.overall shouldBe AllCompleted
 
@@ -290,15 +290,15 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
       fakeClient.send(tromboneAssembly, Submit(sca))
 
       // This first one is the accept/verification
-      acceptedMsg = fakeClient.expectMsgClass(3.seconds, classOf[CommandResult])
+      val acceptedMsg2 = fakeClient.expectMsgClass(3.seconds, classOf[CommandResult])
       //logger.info("acceptedMsg: " + acceptedMsg)
-      acceptedMsg.overall shouldBe Accepted
+      acceptedMsg2.overall shouldBe Accepted
 
       // Second one is completion of the executed ones - give this some extra time to complete
-      completeMsg = fakeClient.expectMsgClass(10.seconds, classOf[CommandResult])
+      val completeMsg2 = fakeClient.expectMsgClass(10.seconds, classOf[CommandResult])
       logger.info("completeMsg: " + completeMsg)
-      completeMsg.overall shouldBe AllCompleted
-      completeMsg.details.results.size shouldBe sca.configs.size
+      completeMsg2.overall shouldBe AllCompleted
+      completeMsg2.details.results.size shouldBe sca.configs.size
 
       cleanup(tromboneAssembly)
     }
@@ -335,8 +335,8 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
       acceptedMsg.overall shouldBe Accepted
 
       // Now send the stop after a bit of delay to let it get going
-      // This is a timing thing that may not work on all machines
-      fakeSupervisor.expectNoMsg(200.millis)
+      // XXX FIXME: This is a timing thing that may not work on all machines
+      fakeSupervisor.expectNoMsg(300.millis)
       val stop = Configurations.createSetupConfigArg("testobsId", SetupConfig(stopCK))
       // Send the stop
       fakeClient.send(tromboneAssembly, Submit(stop))
@@ -344,7 +344,7 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
       // Stop must be accepted too
       acceptedMsg = fakeClient.expectMsgClass(3.seconds, classOf[CommandResult])
       logger.info("acceptedmsg2: " + acceptedMsg)
-      completeMsg.overall shouldBe AllCompleted
+      acceptedMsg.overall shouldBe Accepted
 
       // Second one is completion of the stop
       completeMsg = fakeClient.expectMsgClass(3.seconds, classOf[CommandResult])

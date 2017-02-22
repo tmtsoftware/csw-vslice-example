@@ -59,7 +59,7 @@ public class EventSubscriberTests extends JavaTestKit {
   @BeforeClass
   public static void setup() throws Exception {
     LocationService.initInterface();
-    system = ActorSystem.create();
+    system = ActorSystem.create("EventSubscriberTests");
     logger = Logging.getLogger(system, system);
 
     eventService = IEventService.getEventService(IEventService.defaultName, system, timeout)

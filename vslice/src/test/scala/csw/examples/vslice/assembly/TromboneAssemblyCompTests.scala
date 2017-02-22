@@ -51,7 +51,7 @@ class TromboneAssemblyCompTests extends TestKit(TromboneAssemblyCompTests.system
     val cmd = ContainerCmd("vslice", Array("--standalone"), Map("" -> "tromboneHCD.conf"))
     hcdActors = cmd.actors
     expectNoMsg(5.seconds) // XXX FIXME Give time for location service update so we don't get previous value
-    resolveHcd(TromboneAssemblyBasicTests.thName)
+    resolveHcd(TromboneAssemblyCompTests.thName)
   }
 
   override def afterAll: Unit = {

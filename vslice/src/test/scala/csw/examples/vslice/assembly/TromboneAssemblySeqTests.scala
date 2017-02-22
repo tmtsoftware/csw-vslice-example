@@ -20,6 +20,8 @@ import scala.concurrent.duration._
 import csw.services.sequencer.SequencerEnv._
 import csw.util.config.UnitsOfMeasure.kilometers
 
+import scala.util.Try
+
 /**
  * TMT Source Code: 12/9/16.
  */
@@ -79,6 +81,10 @@ class TromboneAssemblySeqTests extends TestKit(TromboneAssemblySeqTests.system) 
 
   override def beforeAll: Unit = {
     TestEnv.createTromboneAssemblyConfig()
+
+    expectNoMsg(1.seconds) // XXX FIXME Give time for location service update so we don't get previous value
+    val xxx = Try(resolveAssembly(taName))
+    if (xxx.isSuccess) logger.error("XXX There is already an assembly registered from a previous test!")
 
     // Starts the assembly and HCD used in the test
     val cmd = ContainerCmd("vslice", Array("--standalone"), Map("" -> "tromboneContainer.conf"))

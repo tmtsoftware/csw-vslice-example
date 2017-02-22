@@ -1,6 +1,7 @@
 package csw.examples.vsliceJava.hcd;
 
 
+import akka.actor.Actor;
 import akka.actor.ActorRef;
 import akka.actor.PoisonPill;
 import akka.event.Logging;
@@ -86,6 +87,15 @@ public class TromboneHCDCompTests extends JavaTestKit {
     return Supervisor.apply(testInfo);
   }
 
+  // Stop any actors created for a test to avoid conflict with other tests
+  private void cleanup(ActorRef component) {
+    TestProbe monitor = new TestProbe(system);
+    monitor.watch(component);
+    component.tell(HaltComponent, ActorRef.noSender());
+    monitor.expectTerminated(component, timeout.duration());
+  }
+
+
   @SuppressWarnings("Duplicates")
   Vector<CurrentState> waitForMoveMsgs() {
     final CurrentState[] msgs =
@@ -138,7 +148,7 @@ public class TromboneHCDCompTests extends JavaTestKit {
 
     hcd.tell(JHcdController.Unsubscribe, self());
 
-    hcd.tell(PoisonPill.getInstance(), self());
+    cleanup(hcd);
     log.info("Done");
   }
 
@@ -169,7 +179,7 @@ public class TromboneHCDCompTests extends JavaTestKit {
     assertEquals(jvalue(jitem(config, startValueKey)).intValue(), 350);
 
     fakeAssembly.send(hcd, JHcdController.Unsubscribe);
-    hcd.tell(PoisonPill.getInstance(), self());
+    cleanup(hcd);
     log.info("Done");
   }
 
@@ -202,7 +212,7 @@ public class TromboneHCDCompTests extends JavaTestKit {
     assertEquals(jvalue(jitem(stats, moveCountKey)).intValue(), 1);
 
     send(hcd, JHcdController.Unsubscribe);
-    hcd.tell(PoisonPill.getInstance(), self());
+    cleanup(hcd);
     log.info("Done");
   }
 
@@ -242,7 +252,7 @@ public class TromboneHCDCompTests extends JavaTestKit {
     assertEquals(stats.item(moveCountKey).head(), 1);
     send(hcd, JHcdController.Unsubscribe);
 
-    hcd.tell(PoisonPill.getInstance(), self());
+    cleanup(hcd);
     log.info("Done");
   }
 
@@ -274,7 +284,7 @@ public class TromboneHCDCompTests extends JavaTestKit {
 
     send(hcd, JHcdController.Unsubscribe);
 
-    hcd.tell(PoisonPill.getInstance(), self());
+    cleanup(hcd);
     log.info("Done");
   }
 
@@ -308,7 +318,7 @@ public class TromboneHCDCompTests extends JavaTestKit {
 
     send(hcd, JHcdController.Unsubscribe);
 
-    hcd.tell(PoisonPill.getInstance(), self());
+    cleanup(hcd);
     log.info("Done");
   }
 
@@ -341,7 +351,7 @@ public class TromboneHCDCompTests extends JavaTestKit {
 
     send(hcd, JHcdController.Unsubscribe);
 
-    hcd.tell(PoisonPill.getInstance(), self());
+    cleanup(hcd);
     log.info("Done");
   }
 
@@ -423,7 +433,7 @@ public class TromboneHCDCompTests extends JavaTestKit {
 
     send(hcd, JHcdController.Unsubscribe);
 
-    hcd.tell(PoisonPill.getInstance(), self());
+    cleanup(hcd);
     log.info("Done");
   }
 
@@ -463,7 +473,7 @@ public class TromboneHCDCompTests extends JavaTestKit {
 
     send(hcd, JHcdController.Unsubscribe);
 
-    hcd.tell(PoisonPill.getInstance(), self());
+    cleanup(hcd);
     log.info("Done");
   }
 
@@ -502,6 +512,7 @@ public class TromboneHCDCompTests extends JavaTestKit {
         waitForMoveMsgs();
       }
     }
+    cleanup(hcd);
   }
 
   @Test
@@ -546,5 +557,6 @@ public class TromboneHCDCompTests extends JavaTestKit {
     assertEquals(jvalue(jitem(msgs.lastElement(), stateKey)), AXIS_IDLE);
     assertEquals(jvalue(jitem(msgs.lastElement(), inLowLimitKey)), false);
     assertEquals(jvalue(jitem(msgs.lastElement(), inHighLimitKey)), true);
+    cleanup(hcd);
   }
 }

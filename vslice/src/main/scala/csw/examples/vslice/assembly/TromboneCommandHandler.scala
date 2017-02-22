@@ -181,7 +181,6 @@ class TromboneCommandHandler(ac: AssemblyContext, tromboneHCDIn: Option[ActorRef
           executeMatch(context, idleMatcher, tromboneHCD, commandOriginator) {
             case Completed =>
               tromboneStateActor ! SetState(cmdContinuous, move(currentState), sodiumLayer(currentState), nss(currentState))
-              Thread.sleep(500) // XXX FIXME! Want to be sure state is actually set before replying!
             case Error(message) =>
               log.error(s"setElevation command failed with message: $message")
           }
@@ -214,7 +213,6 @@ class TromboneCommandHandler(ac: AssemblyContext, tromboneHCDIn: Option[ActorRef
       } {
         commandOriginator.foreach(_ ! cs)
         currentCommand ! PoisonPill
-        //        self ! CommandDone
         context.become(noFollowReceive())
       }
 

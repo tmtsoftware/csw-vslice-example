@@ -36,13 +36,11 @@ class TromboneHCDBasicTests extends TestKit(TromboneHCDBasicTests.system) with I
   override def afterAll: Unit = TestKit.shutdownActorSystem(system)
 
   // Stop any actors created for a test to avoid conflict with other tests
-  private def cleanup(a: ActorRef*): Unit = {
+  private def cleanup(actorRef: ActorRef): Unit = {
     val monitor = TestProbe()
-    a.foreach { actorRef =>
-      monitor.watch(actorRef)
-      system.stop(actorRef)
-      monitor.expectTerminated(actorRef)
-    }
+    monitor.watch(actorRef)
+    system.stop(actorRef)
+    monitor.expectTerminated(actorRef)
   }
 
   val troboneAssemblyPrefix = "nfiraos.ncc.trombone"

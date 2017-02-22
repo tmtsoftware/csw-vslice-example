@@ -26,10 +26,7 @@ import csw.util.config.JavaHelpers;
 import csw.util.config.StateVariable.CurrentState;
 import javacsw.services.events.IEventService;
 import javacsw.services.pkg.JComponent;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.*;
 import scala.concurrent.duration.FiniteDuration;
 
 import java.util.*;
@@ -123,10 +120,15 @@ public class FollowPositionTests extends JavaTestKit {
     super(system);
   }
 
-  @BeforeClass
+  @Before
+  public void beforeEach() throws Exception {
+    TestEnv.resetRedisServices(system);
+  }
+
+    @BeforeClass
   public static void setup() throws Exception {
     LocationService.initInterface();
-    system = ActorSystem.create();
+    system = ActorSystem.create("FollowPositionTests");
     logger = Logging.getLogger(system, system);
     TestEnv.createTromboneAssemblyConfig(system);
 
@@ -316,6 +318,7 @@ public class FollowPositionTests extends JavaTestKit {
       Optional.empty(), Optional.empty()));
     // create the subscriber that listens for events from TCS for zenith angle and focus error from RTC
     ActorRef tromboneEventSubscriber = system.actorOf(TromboneEventSubscriber.props(assemblyContext, nssUse, Optional.of(followActor), eventService));
+    expectNoMsg(duration("200 milli")); // Give actors time to start
 
     // This eventService is used to simulate the TCS and RTC publishing zenith angle and focus error
     IEventService tcsRtc = eventService;
