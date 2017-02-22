@@ -373,7 +373,7 @@ public class CommandHandlerTests extends JavaTestKit {
 
 //    Configurations.createSetupConfigArg("testobsId", new SetupConfig(ac.stopCK.prefix()));
     try {
-      Thread.sleep(20); // This is an arbitrary time to get things going before sending stop
+      Thread.sleep(100); // This is an arbitrary time to get things going before sending stop
     } catch (InterruptedException e) {
       e.printStackTrace();
     }

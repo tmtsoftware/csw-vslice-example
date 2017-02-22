@@ -1,6 +1,7 @@
 package csw.examples.vslice.assembly
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import akka.util.Timeout
 import csw.examples.vslice.assembly.TromboneStateActor.TromboneState
 import csw.examples.vslice.hcd.TromboneHCD._
 import csw.services.ccs.CommandStatus.{Completed, Error, NoLongerValid}
@@ -9,6 +10,10 @@ import csw.services.ccs.SequentialExecutor.{CommandStart, StopCurrentCommand}
 import csw.services.ccs.Validation.WrongInternalStateIssue
 import csw.util.config.Configurations.SetupConfig
 import csw.util.config.UnitsOfMeasure.encoder
+
+import scala.concurrent.Await
+import scala.concurrent.duration._
+import akka.pattern.ask
 
 /**
  * TMT Source Code: 10/22/16.
@@ -51,8 +56,8 @@ class MoveCommand(ac: AssemblyContext, sc: SetupConfig, tromboneHCD: ActorRef, s
   }
 
   private def sendState(setState: SetState): Unit = {
-    log.debug(s"Move send state: $setState")
-    stateActor.foreach(_ ! setState)
+    implicit val timeout = Timeout(5.seconds)
+    stateActor.foreach(actorRef => Await.ready(actorRef ? setState, timeout.duration))
   }
 }
 

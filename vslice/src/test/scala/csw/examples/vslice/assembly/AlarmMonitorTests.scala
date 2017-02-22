@@ -23,6 +23,7 @@ import org.scalatest.{BeforeAndAfterAll, _}
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
+import akka.pattern.ask
 
 /**
  * These tests are for the Trombone AlarmMonitor.
@@ -227,7 +228,7 @@ class AlarmMonitorTests extends TestKit(AlarmMonitorTests.system) with ImplicitS
     expectNoMsg(1.second)
 
     val needToSetStateForMoveCommand = system.actorOf(TromboneStateActor.props())
-    needToSetStateForMoveCommand ! SetState(cmdReady, moveIndexed, sodiumLayer = false, nss = false)
+    Await.ready(needToSetStateForMoveCommand ? SetState(cmdReady, moveIndexed, sodiumLayer = false, nss = false), timeout.duration)
     expectNoMsg(1.second)
 
     // Move to the 0 position

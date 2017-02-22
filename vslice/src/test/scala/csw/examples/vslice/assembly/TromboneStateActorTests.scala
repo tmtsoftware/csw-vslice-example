@@ -5,7 +5,7 @@ import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import csw.examples.vslice.TestEnv
 import csw.examples.vslice.assembly.TromboneStateActor.TromboneState
 import csw.services.loc.LocationService
-import org.scalatest.{BeforeAndAfterAll, FunSpecLike, Inspectors, _}
+import org.scalatest.{FunSpecLike, Inspectors, _}
 
 import scala.concurrent.duration._
 
@@ -135,23 +135,22 @@ class TromboneStateActorTests extends TestKit(TromboneStateActorTests.system) wi
 
     // Starts with default so ensure setting it doesn't cause publish
     tsa ! SetState(ts1)
-    expectNoMsg(200.milli)
-    // Delays are to give time to subscriber to run
+    expectMsgClass(classOf[StateWasSet])
     // Should publish (1)
     tsa ! SetState(ts2)
-    expectNoMsg(200.milli)
+    expectMsgClass(classOf[StateWasSet])
     // Try again should not be published
     tsa ! SetState(ts2)
-    expectNoMsg(200.milli)
+    expectMsgClass(classOf[StateWasSet])
     // Should publish (2)
     tsa ! SetState(ts3)
-    expectNoMsg(200.milli)
+    expectMsgClass(classOf[StateWasSet])
     // Should publish (3)
     tsa ! SetState(ts4)
-    expectNoMsg(200.milli)
+    expectMsgClass(classOf[StateWasSet])
     // Should publish (4)
     tsa ! SetState(ts5)
-    expectNoMsg(200.milli)
+    expectMsgClass(classOf[StateWasSet])
 
     tsub ! GetResults
     val result = expectMsgClass(classOf[TestSubscriber.Results])

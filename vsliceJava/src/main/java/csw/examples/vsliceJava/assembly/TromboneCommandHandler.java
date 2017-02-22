@@ -38,6 +38,7 @@ import static javacsw.services.ccs.JCommandStatus.Cancelled;
 import static javacsw.services.ccs.JCommandStatus.Completed;
 import static javacsw.util.config.JItems.*;
 import static scala.compat.java8.OptionConverters.toJava;
+import static akka.pattern.PatternsCS.ask;
 
 /**
  * TMT Source Code: 9/21/16.
@@ -142,8 +143,11 @@ class TromboneCommandHandler extends AbstractActor implements TromboneStateClien
 
         if (configKey.equals(ac.initCK)) {
           log.info("Init not fully implemented -- only sets state ready!");
-          tromboneStateActor.tell(new SetState(cmdItem(cmdReady), moveItem(moveUnindexed), sodiumItem(false), nssItem(false)), self());
-          Thread.sleep(500); // XXX FIXME! Want to be sure state is actually set before replying!
+          try {
+            ask(tromboneStateActor, new SetState(cmdItem(cmdReady), moveItem(moveUnindexed), sodiumItem(false), nssItem(false)), 5000).toCompletableFuture().get();
+          } catch (Exception e) {
+            log.error(e, "Error setting state");
+          }
           commandOriginator.ifPresent(actorRef -> actorRef.tell(Completed, self()));
 
         } else if (configKey.equals(ac.datumCK)) {
@@ -206,8 +210,11 @@ class TromboneCommandHandler extends AbstractActor implements TromboneStateClien
             log.info("Going to followReceive");
             context().become(followReceive(followCommandActor));
             // Note that this is where sodiumLayer is set allowing other commands that require this state
-            tromboneStateActor.tell(new SetState(cmdContinuous, moveMoving, sodiumLayer(currentState()), jvalue(nssItem)), self());
-            Thread.sleep(500); // XXX FIXME! Want to be sure state is actually set before replying!
+            try {
+              ask(tromboneStateActor, new SetState(cmdContinuous, moveMoving, sodiumLayer(currentState()), jvalue(nssItem)), 5000).toCompletableFuture().get();
+            } catch (Exception e) {
+              log.error(e, "Error setting state");
+            }
             commandOriginator.ifPresent(actorRef -> actorRef.tell(Completed, self()));
           }
 
@@ -242,7 +249,12 @@ class TromboneCommandHandler extends AbstractActor implements TromboneStateClien
         } else if (configKey.equals(ac.setAngleCK)) {
           // Unclear what to really do with state here
           // Everything else is the same
-          tromboneStateActor.tell(new SetState(cmdBusy, move(currentState()), sodiumLayer(currentState()), nss(currentState())), self());
+          // Wait to make sure state was set
+          try {
+            ask(tromboneStateActor, new SetState(cmdBusy, move(currentState()), sodiumLayer(currentState()), nss(currentState())), 5000).toCompletableFuture().get();
+          } catch (Exception e) {
+            log.error(e, "Error setting state");
+          }
 
           // At this point, parameters have been checked so direct access is okay
           // Send the SetElevation to the follow actor
@@ -251,11 +263,10 @@ class TromboneCommandHandler extends AbstractActor implements TromboneStateClien
           Timeout timeout = new Timeout(5, TimeUnit.SECONDS);
           executeMatch(context(), idleMatcher(), tromboneHCD, commandOriginator, timeout, status -> {
             if (status == Completed) {
-              tromboneStateActor.tell(new SetState(cmdContinuous, move(currentState()), sodiumLayer(currentState()), nss(currentState())), self());
               try {
-                Thread.sleep(500); // XXX FIXME! Want to be sure state is actually set before replying!
-              } catch (InterruptedException e) {
-                e.printStackTrace();
+                ask(tromboneStateActor, new SetState(cmdContinuous, move(currentState()), sodiumLayer(currentState()), nss(currentState())), 5000).toCompletableFuture().get();
+              } catch (Exception e) {
+                log.error(e, "Error setting state");
               }
             } else if (status instanceof Error)
               log.error("setElevation command failed with message: " + ((Error) status).message());
@@ -264,9 +275,11 @@ class TromboneCommandHandler extends AbstractActor implements TromboneStateClien
           // Stop the follower
           log.debug("Stop received while following");
           followActor.tell(new FollowCommand.StopFollowing(), self());
-          tromboneStateActor.tell(new SetState(cmdReady, moveIndexed, sodiumLayer(currentState()), nss(currentState())), self());
-          Thread.sleep(500); // XXX FIXME! Want to be sure state is actually set before replying!
-
+          try {
+            ask(tromboneStateActor, new SetState(cmdReady, moveIndexed, sodiumLayer(currentState()), nss(currentState())), 5000).toCompletableFuture().get();
+          } catch (Exception e) {
+            log.error(e, "Error setting state");
+          }
           // Go back to no follow state
           context().become(noFollowReceive());
           commandOriginator.ifPresent(actorRef -> actorRef.tell(Completed, self()));
@@ -287,6 +300,7 @@ class TromboneCommandHandler extends AbstractActor implements TromboneStateClien
           thenApply(reply -> {
             CommandStatus cs = (CommandStatus) reply;
             commandOriginator.ifPresent(actorRef -> actorRef.tell(cs, self()));
+            currentCommand.tell(PoisonPill.getInstance(), self());
             context().become(noFollowReceive());
             return null;
           });

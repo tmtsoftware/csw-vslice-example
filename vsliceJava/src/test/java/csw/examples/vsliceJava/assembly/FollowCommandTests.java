@@ -190,13 +190,14 @@ public class FollowCommandTests extends JavaTestKit {
           if (in instanceof CurrentState) {
             CurrentState cs = (CurrentState) in;
             if ((cs.prefix().contains(TromboneHCD.axisStatePrefix) && !JavaHelpers.jvalue(cs, positionKey).equals(dest))
-              || cs.prefix().equals(TromboneHCD.axisStatsPrefix))
+                    || cs.prefix().equals(TromboneHCD.axisStatsPrefix))
               return cs;
           }
           throw noMatch();
         }
       }.get(); // this extracts the received messages
 
+    logger.info("XXX Message count: " + msgs.length);
     CurrentState fmsg1 = expectMsgClass(timeout.duration(), CurrentState.class); // last one with current == target
     CurrentState fmsg2 = expectMsgClass(CurrentState.class); // the end event with IDLE
     List<CurrentState> allmsgs = new ArrayList<>();
@@ -455,7 +456,7 @@ public class FollowCommandTests extends JavaTestKit {
     eventService.subscribe(resultSubscriber2, false, assemblyContext.engStatusEventPrefix);
 
     // These are fake messages for the FollowActor that will be sent to simulate the TCS updating ZA
-    List<SystemEvent> tcsEvents = testZenithAngles.stream().limit(3).map(f ->
+    List<SystemEvent> tcsEvents = testZenithAngles.stream().map(f ->
       new SystemEvent(zaConfigKey.prefix()).add(za(f))).collect(Collectors.toList());
 
     // This should result in the length of tcsEvents being published, which is 15
@@ -538,7 +539,7 @@ public class FollowCommandTests extends JavaTestKit {
    * which sends them to the TromboneHCD, which replies with StateUpdates.
    * The FollowActor is also publishing eng and sodiumLayer StatusEvents, which are published to the event service
    * and subscribed to by test clients, that collect their events for checking at the end
-   * The first part is about starting the HCD and waiting for it to reach the runing lifecycle state where it can receive events.
+   * The first part is about starting the HCD and waiting for it to reach the running lifecycle state where it can receive events.
    * This test verifies that the updatehcd message works by sending None which causes the position updates to stop
    */
   @Test
@@ -564,7 +565,7 @@ public class FollowCommandTests extends JavaTestKit {
     IEventService tcsRtc = eventService;
 
     // These are fake messages for the FollowActor that will be sent to simulate the TCS updating ZA
-    List<SystemEvent> tcsEvents = testZenithAngles.stream().limit(3).map(f ->
+    List<SystemEvent> tcsEvents = testZenithAngles.stream().map(f ->
       new SystemEvent(zaConfigKey.prefix()).add(za(f))).collect(Collectors.toList());
 
     // This should result in the length of tcsEvents being published, which is 15

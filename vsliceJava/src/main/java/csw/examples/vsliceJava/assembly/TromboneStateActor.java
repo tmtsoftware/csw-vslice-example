@@ -39,6 +39,9 @@ public class TromboneStateActor extends AbstractActor {
         if (!ts.equals(currentState)) {
           context().system().eventStream().publish(ts);
           context().become(stateReceive(ts));
+          sender().tell(new StateWasSet(true), self());
+        } else {
+          sender().tell(new StateWasSet(false), self());
         }
       }).
       match(GetState.class, t -> sender().tell(currentState, self())).
@@ -209,5 +212,17 @@ public class TromboneStateActor extends AbstractActor {
    */
   public static class GetState {
   }
+
+  /**
+   * Reply to SetState message that indicates if the state was actually set
+   */
+  public static class StateWasSet {
+    final boolean wasSet;
+
+    public StateWasSet(boolean wasSet) {
+      this.wasSet = wasSet;
+    }
+  }
+
 }
 

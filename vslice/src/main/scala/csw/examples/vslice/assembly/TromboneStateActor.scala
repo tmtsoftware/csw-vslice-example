@@ -27,6 +27,9 @@ class TromboneStateActor extends Actor with ActorLogging {
       if (ts != currentState) {
         context.system.eventStream.publish(ts)
         context.become(stateReceive(ts))
+        sender() ! StateWasSet(true)
+      } else {
+        sender() ! StateWasSet(false)
       }
 
     case GetState =>
@@ -161,5 +164,10 @@ object TromboneStateActor {
    * A message that causes the current state to be sent back to the sender
    */
   case object GetState
+
+  /**
+   * Reply to the SetState message that indicates if the state was actually set (only if different than current state)
+   */
+  case class StateWasSet(wasSet: Boolean)
 
 }

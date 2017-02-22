@@ -26,6 +26,7 @@ import static javacsw.services.ccs.JCommandStatus.Completed;
 import static javacsw.util.config.JConfigDSL.sc;
 import static javacsw.util.config.JItems.*;
 import static javacsw.util.config.JUnitsOfMeasure.encoder;
+import static akka.pattern.PatternsCS.ask;
 
 /**
  * This actor implements the setElevation command.
@@ -90,7 +91,13 @@ public class SetElevationCommand extends AbstractActor {
   }
 
   private void sendState(SetState setState) {
-    stateActor.ifPresent(actorRef -> actorRef.tell(setState, self()));
+    stateActor.ifPresent(actorRef -> {
+      try {
+        ask(actorRef, setState, 5000).toCompletableFuture().get();
+      } catch (Exception e) {
+        log.error(e, "Error setting state");
+      }
+    });
   }
 
   public static Props props(AssemblyContext ac, SetupConfig sc, ActorRef tromboneHCD, TromboneState startState, Optional<ActorRef> stateActor) {

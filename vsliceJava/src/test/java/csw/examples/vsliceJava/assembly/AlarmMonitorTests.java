@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import static akka.pattern.PatternsCS.ask;
 import static csw.examples.vsliceJava.assembly.TromboneAlarmMonitor.highLimitAlarm;
 import static csw.examples.vsliceJava.assembly.TromboneAlarmMonitor.lowLimitAlarm;
 import static csw.examples.vsliceJava.assembly.TromboneStateActor.*;
@@ -266,7 +267,11 @@ public class AlarmMonitorTests extends JavaTestKit {
     expectNoMsg(FiniteDuration.create(1, TimeUnit.SECONDS));
 
     ActorRef needToSetStateForMoveCommand = system.actorOf(TromboneStateActor.props());
-    needToSetStateForMoveCommand.tell(new SetState(cmdReady, moveIndexed, false, false), self());
+    try {
+      ask(needToSetStateForMoveCommand, new SetState(cmdReady, moveIndexed, false, false), 5000).toCompletableFuture().get();
+    } catch (Exception e) {
+      logger.error(e, "Error setting state");
+    }
     expectNoMsg(FiniteDuration.create(1, TimeUnit.SECONDS));
 
     // Move to the 0 position

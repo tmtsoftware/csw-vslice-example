@@ -133,6 +133,7 @@ class FollowCommandTests extends TestKit(FollowCommandTests.system) with Implici
       // This is present to pick up the first status message
       case st @ CurrentState(ck, _) if ck.prefix.equals(TromboneHCD.axisStatsPrefix) => st
     }
+    logger.info("XXX Message count: " + msgs.length)
     val fmsg1 = tp.expectMsgClass(classOf[CurrentState]) // last one with current == target
     val fmsg2 = tp.expectMsgClass(classOf[CurrentState]) // the end event with IDLE
     val allmsgs = msgs :+ fmsg1 :+ fmsg2

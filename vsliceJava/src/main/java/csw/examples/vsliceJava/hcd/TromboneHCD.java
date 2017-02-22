@@ -272,7 +272,7 @@ public class TromboneHCD extends JHcdController {
   public static final BooleanKey inHighLimitKey = new BooleanKey("highLimit");
   public static final BooleanKey inHomeKey = new BooleanKey("homed");
 
-  public static final CurrentState defaultAxisState = cs(axisStatePrefix,
+  public static final CurrentState defaultAxisState = cs(axisStateCK.prefix(),
     jset(axisNameKey, tromboneAxisName),
     jset(stateKey, AXIS_IDLE),
     jset(positionKey, 0).withUnits(encoder),

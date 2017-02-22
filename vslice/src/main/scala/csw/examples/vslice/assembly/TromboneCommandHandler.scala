@@ -27,10 +27,12 @@ import scala.concurrent.duration._
 class TromboneCommandHandler(ac: AssemblyContext, tromboneHCDIn: Option[ActorRef], allEventPublisher: Option[ActorRef])
     extends Actor with ActorLogging with LocationSubscriberClient with TromboneStateClient {
 
+  import context.dispatcher
   import TromboneStateActor._
   import TromboneCommandHandler._
   import ac._
   implicit val system: ActorSystem = context.system
+  implicit val timeout = Timeout(5.seconds)
 
   //override val prefix = ac.info.prefix
   private val badHCDReference = context.system.deadLetters
@@ -86,8 +88,7 @@ class TromboneCommandHandler(ac: AssemblyContext, tromboneHCDIn: Option[ActorRef
       sc.configKey match {
         case ac.initCK =>
           log.info("Init not fully implemented -- only sets state ready!")
-          tromboneStateActor ! SetState(cmdItem(cmdReady), moveItem(moveUnindexed), sodiumItem(false), nssItem(false))
-          Thread.sleep(500) // XXX FIXME! Want to be sure state is actually set before replying!
+          Await.ready(tromboneStateActor ? SetState(cmdItem(cmdReady), moveItem(moveUnindexed), sodiumItem(false), nssItem(false)), timeout.duration)
           commandOriginator.foreach(_ ! Completed)
 
         case ac.datumCK =>
@@ -146,9 +147,9 @@ class TromboneCommandHandler(ac: AssemblyContext, tromboneHCDIn: Option[ActorRef
             log.info("Going to followReceive")
             context.become(followReceive(eventService.get, followCommandActor))
             // Note that this is where sodiumLayer is set allowing other commands that require this state
-            tromboneStateActor ! SetState(cmdContinuous, moveMoving, sodiumLayer(currentState), nssItem.head)
-            Thread.sleep(500) // XXX FIXME! Want to be sure state is actually set before replying!
-            commandOriginator.foreach(_ ! Completed)
+            (tromboneStateActor ? SetState(cmdContinuous, moveMoving, sodiumLayer(currentState), nssItem.head)).onComplete {
+              _ => commandOriginator.foreach(_ ! Completed)
+            }
           }
 
         case otherCommand =>
@@ -171,8 +172,9 @@ class TromboneCommandHandler(ac: AssemblyContext, tromboneHCDIn: Option[ActorRef
 
         case ac.setAngleCK =>
           // Unclear what to really do with state here
-          // Everything else is the same
-          tromboneStateActor ! SetState(cmdBusy, move(currentState), sodiumLayer(currentState), nss(currentState))
+          // Everything else is the same.
+          // Wait to make sure the state is set before continuing.
+          Await.ready(tromboneStateActor ? SetState(cmdBusy, move(currentState), sodiumLayer(currentState), nss(currentState)), timeout.duration)
 
           // At this point, parameters have been checked so direct access is okay
           // Send the SetAngle to the follow actor
@@ -180,7 +182,8 @@ class TromboneCommandHandler(ac: AssemblyContext, tromboneHCDIn: Option[ActorRef
           followActor ! SetZenithAngle(zenithAngleItem)
           executeMatch(context, idleMatcher, tromboneHCD, commandOriginator) {
             case Completed =>
-              tromboneStateActor ! SetState(cmdContinuous, move(currentState), sodiumLayer(currentState), nss(currentState))
+              // Wait to make sure the state is set before continuing.
+              Await.ready(tromboneStateActor ? SetState(cmdContinuous, move(currentState), sodiumLayer(currentState), nss(currentState)), timeout.duration)
             case Error(message) =>
               log.error(s"setElevation command failed with message: $message")
           }
@@ -189,8 +192,8 @@ class TromboneCommandHandler(ac: AssemblyContext, tromboneHCDIn: Option[ActorRef
           // Stop the follower
           log.debug(s"Stop received while following")
           followActor ! StopFollowing
-          tromboneStateActor ! SetState(cmdReady, moveIndexed, sodiumLayer(currentState), nss(currentState))
-          Thread.sleep(500) // XXX FIXME! Want to be sure state is actually set before replying!
+          // Wait to make sure the state is set before continuing.
+          Await.ready(tromboneStateActor ? SetState(cmdReady, moveIndexed, sodiumLayer(currentState), nss(currentState)), timeout.duration)
 
           // Go back to no follow state
           context.become(noFollowReceive())
@@ -205,7 +208,6 @@ class TromboneCommandHandler(ac: AssemblyContext, tromboneHCDIn: Option[ActorRef
   def actorExecutingReceive(currentCommand: ActorRef, commandOriginator: Option[ActorRef]): Receive = stateReceive orElse {
     case CommandStart =>
       import context.dispatcher
-      implicit val t = Timeout(5.seconds)
 
       // Execute the command actor asynchronously, pass the command status back, kill the actor and go back to waiting
       for {
@@ -223,9 +225,6 @@ class TromboneCommandHandler(ac: AssemblyContext, tromboneHCDIn: Option[ActorRef
     case ExecuteOne(SetupConfig(ac.stopCK, _), _) =>
       log.debug("actorExecutingReceive: ExecuteOneStop")
       closeDownMotionCommand(currentCommand, commandOriginator)
-
-    //    case CommandDone =>
-    //      context.become(noFollowReceive())
 
     case x => log.error(s"TromboneCommandHandler:actorExecutingReceive received an unknown message: $x")
   }
@@ -263,7 +262,5 @@ object TromboneCommandHandler {
   def posMatcher(position: Int): DemandMatcher =
     DemandMatcher(DemandState(axisStateCK).madd(stateKey -> TromboneHCD.AXIS_IDLE, positionKey -> position))
 
-  //  // message sent to self when a command completes
-  //  private case object CommandDone
 }
 

@@ -8,6 +8,11 @@ import csw.services.ccs.HcdController
 import csw.services.ccs.SequentialExecutor.{CommandStart, StopCurrentCommand}
 import csw.services.ccs.Validation.WrongInternalStateIssue
 import csw.util.config.Configurations.SetupConfig
+import akka.pattern.ask
+import akka.util.Timeout
+
+import scala.concurrent.Await
+import scala.concurrent.duration._
 
 /**
  * TMT Source Code: 10/21/16.
@@ -35,9 +40,14 @@ class DatumCommand(sc: SetupConfig, tromboneHCD: ActorRef, startState: TromboneS
     case StopCurrentCommand =>
       log.debug(">>  DATUM STOPPED")
       tromboneHCD ! HcdController.Submit(cancelSC)
+
+    case StateWasSet(b) => // ignore confirmation
   }
 
-  private def sendState(setState: SetState) = stateActor.foreach(_ ! setState)
+  private def sendState(setState: SetState): Unit = {
+    implicit val timeout = Timeout(5.seconds)
+    stateActor.foreach(actorRef => Await.ready(actorRef ? setState, timeout.duration))
+  }
 }
 
 object DatumCommand {

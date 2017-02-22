@@ -14,6 +14,7 @@ import csw.services.ccs.Validation;
 import javacsw.services.ccs.JSequentialExecutor;
 
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import static csw.examples.vsliceJava.assembly.TromboneStateActor.*;
@@ -22,6 +23,7 @@ import static csw.examples.vsliceJava.hcd.TromboneHCD.cancelSC;
 import static csw.services.ccs.CommandStatus.NoLongerValid;
 import static csw.util.config.Configurations.SetupConfig;
 import static javacsw.services.ccs.JCommandStatus.Completed;
+import static akka.pattern.PatternsCS.ask;
 
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public class DatumCommand extends AbstractActor {
@@ -60,7 +62,13 @@ public class DatumCommand extends AbstractActor {
   }
 
   private void sendState(SetState setState) {
-    stateActor.ifPresent(actorRef -> actorRef.tell(setState, self()));
+    stateActor.ifPresent(actorRef -> {
+      try {
+        ask(actorRef, setState, 5000).toCompletableFuture().get();
+      } catch (Exception e) {
+        log.error(e, "Error setting state");
+      }
+    });
   }
 
   public static Props props(SetupConfig sc, ActorRef tromboneHCD, TromboneState startState, Optional<ActorRef> stateActor) {
