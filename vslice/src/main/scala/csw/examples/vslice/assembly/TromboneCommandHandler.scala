@@ -215,8 +215,11 @@ class TromboneCommandHandler(ac: AssemblyContext, tromboneHCDIn: Option[ActorRef
       } {
         commandOriginator.foreach(_ ! cs)
         currentCommand ! PoisonPill
-        context.become(noFollowReceive())
+        self ! CommandDone
       }
+
+    case CommandDone =>
+      context.become(noFollowReceive())
 
     case SetupConfig(ac.stopCK, _) =>
       log.debug("actorExecutingReceive: Stop CK")
@@ -239,6 +242,9 @@ class TromboneCommandHandler(ac: AssemblyContext, tromboneHCDIn: Option[ActorRef
 }
 
 object TromboneCommandHandler {
+
+  // message sent too self when command completes
+  private case object CommandDone
 
   def props(assemblyContext: AssemblyContext, tromboneHCDIn: Option[ActorRef], allEventPublisher: Option[ActorRef]) =
     Props(new TromboneCommandHandler(assemblyContext, tromboneHCDIn, allEventPublisher))

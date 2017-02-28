@@ -42,6 +42,7 @@ import static junit.framework.TestCase.assertEquals;
 public class TromboneAssemblyCompTests extends JavaTestKit {
   private static ActorSystem system;
   private static LoggingAdapter logger;
+  private static String taName = "lgsTrombone";
   private static String thName = "lgsTromboneHCD";
 
   private static AssemblyContext assemblyContext = AssemblyTestData.TestAssemblyContext;
@@ -66,6 +67,8 @@ public class TromboneAssemblyCompTests extends JavaTestKit {
     logger = Logging.getLogger(system, system);
     TestEnv.createTromboneAssemblyConfig(system);
 
+    Thread.sleep(1000); // XXX Give time for location service update so we don't get previous value
+
     // Starts the HCD used in the test
     Map<String, String> configMap = Collections.singletonMap("", "tromboneHCD.conf");
     ContainerCmd cmd = new ContainerCmd("vsliceJava", new String[]{"--standalone"}, configMap);
@@ -81,7 +84,6 @@ public class TromboneAssemblyCompTests extends JavaTestKit {
     hcdActors.forEach(TromboneAssemblyCompTests::cleanup);
     JavaTestKit.shutdownActorSystem(system);
     system = null;
-    Thread.sleep(10000); // XXX FIXME Make sure components have time to unregister from location service
   }
 
   // Stop any actors created for a test to avoid conflict with other tests
@@ -90,6 +92,11 @@ public class TromboneAssemblyCompTests extends JavaTestKit {
     monitor.watch(component);
     component.tell(HaltComponent, ActorRef.noSender());
     monitor.expectTerminated(component, timeout.duration());
+    try {
+      Thread.sleep(1000); // XXX FIXME Make sure components have time to unregister from location service
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    }
   }
 
   ActorRef newTrombone() {
@@ -107,6 +114,7 @@ public class TromboneAssemblyCompTests extends JavaTestKit {
 
     tla.tell(new SubscribeLifecycleCallback(fakeSequencer.ref()), self());
     fakeSequencer.expectMsg(duration("10 seconds"), new LifecycleStateChanged(LifecycleRunning));
+    fakeSequencer.expectNoMsg(duration("3 seconds")); // wait for connections
     cleanup(tla);
   }
 

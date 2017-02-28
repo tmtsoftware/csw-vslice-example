@@ -82,7 +82,6 @@ class TromboneAssemblySeqTests extends TestKit(TromboneAssemblySeqTests.system) 
   override def beforeAll: Unit = {
     TestEnv.createTromboneAssemblyConfig()
 
-    expectNoMsg(1.seconds) // XXX FIXME Give time for location service update so we don't get previous value
     val xxx = Try(resolveAssembly(taName))
     if (xxx.isSuccess) logger.error("XXX There is already an assembly registered from a previous test!")
 
@@ -100,8 +99,11 @@ class TromboneAssemblySeqTests extends TestKit(TromboneAssemblySeqTests.system) 
     containerActors.foreach { actorRef =>
       actorRef ! UnsubscribeLifecycleCallback(probe.ref)
     }
-    expectNoMsg(10.seconds) // XXX FIXME Give time for location service update so we don't get previous value
-    resolveAssembly(taName)
+    try {
+      resolveAssembly(taName)
+    } catch {
+      case e: Exception => logger.error(s"Can't resolve assembly $taName: maybe previous test failed to unregister it from location service?")
+    }
   }
 
   // Stop any actors created for a test to avoid conflict with other tests

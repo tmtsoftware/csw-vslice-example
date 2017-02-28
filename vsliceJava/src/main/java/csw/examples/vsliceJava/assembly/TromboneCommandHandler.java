@@ -75,6 +75,8 @@ class TromboneCommandHandler extends AbstractActor implements TromboneStateClien
   @SuppressWarnings("FieldCanBeLocal")
   private TromboneStateActor.TromboneState internalState = TromboneStateActor.defaultTromboneState;
 
+  private static class CommandDone {}
+
   @Override
   public void setCurrentState(TromboneStateActor.TromboneState ts) {
     internalState = ts;
@@ -301,9 +303,13 @@ class TromboneCommandHandler extends AbstractActor implements TromboneStateClien
             CommandStatus cs = (CommandStatus) reply;
             commandOriginator.ifPresent(actorRef -> actorRef.tell(cs, self()));
             currentCommand.tell(PoisonPill.getInstance(), self());
-            context().become(noFollowReceive());
+            self().tell(new CommandDone(), self());
             return null;
           });
+      }).
+
+      match(CommandDone.class, t -> {
+            context().become(noFollowReceive());
       }).
 
       match(SetupConfig.class, t -> t.configKey().equals(ac.stopCK), t -> {

@@ -22,12 +22,14 @@ import org.scalatest.{BeforeAndAfterAll, _}
 import csw.services.sequencer.SequencerEnv._
 
 import scala.concurrent.duration._
+import scala.util.Try
 
 object TromboneAssemblyCompTests {
   LocationService.initInterface()
 
-  val system = ActorSystem("TromboneAssemblyCompTests")
-  val thName = "lgsTromboneHCD"
+  private val system = ActorSystem("TromboneAssemblyCompTests")
+  private val taName = "lgsTrombone"
+  private val thName = "lgsTromboneHCD"
 }
 
 class TromboneAssemblyCompTests extends TestKit(TromboneAssemblyCompTests.system) with ImplicitSender
@@ -47,17 +49,17 @@ class TromboneAssemblyCompTests extends TestKit(TromboneAssemblyCompTests.system
   override def beforeAll: Unit = {
     TestEnv.createTromboneAssemblyConfig()
 
+    expectNoMsg(1.seconds)
+
     // Starts the HCD used in the test
     val cmd = ContainerCmd("vslice", Array("--standalone"), Map("" -> "tromboneHCD.conf"))
     hcdActors = cmd.actors
-    expectNoMsg(5.seconds) // XXX FIXME Give time for location service update so we don't get previous value
     resolveHcd(TromboneAssemblyCompTests.thName)
   }
 
   override def afterAll: Unit = {
     hcdActors.foreach(cleanup)
     TestKit.shutdownActorSystem(system)
-    Thread.sleep(10000) // XXX FIXME Make sure components have time to unregister from location service
   }
 
   // Stop any actors created for a test to avoid conflict with other tests
@@ -65,7 +67,8 @@ class TromboneAssemblyCompTests extends TestKit(TromboneAssemblyCompTests.system
     val monitor = TestProbe()
     monitor.watch(component)
     component ! HaltComponent
-    monitor.expectTerminated(component)
+    monitor.expectTerminated(component, timeout.duration)
+    monitor.expectNoMsg(1.seconds)
   }
 
   describe("comp tests") {
@@ -76,6 +79,7 @@ class TromboneAssemblyCompTests extends TestKit(TromboneAssemblyCompTests.system
 
       tla ! SubscribeLifecycleCallback(fakeSequencer.ref)
       fakeSequencer.expectMsg(LifecycleStateChanged(LifecycleRunning))
+      fakeSequencer.expectNoMsg(3.seconds) // wait for connections
       cleanup(tla)
     }
 
