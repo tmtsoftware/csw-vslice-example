@@ -28,40 +28,48 @@ import static akka.pattern.PatternsCS.ask;
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public class DatumCommand extends AbstractActor {
 
-  private LoggingAdapter log = Logging.getLogger(getContext().system(), this);
+  private final LoggingAdapter log = Logging.getLogger(getContext().system(), this);
+  private final ActorRef tromboneHCD;
+  private final TromboneState startState;
   private final Optional<ActorRef> stateActor;
 
   private DatumCommand(SetupConfig sc, ActorRef tromboneHCD, TromboneState startState, Optional<ActorRef> stateActor) {
+    this.tromboneHCD = tromboneHCD;
+    this.startState = startState;
     this.stateActor = stateActor;
-
-    // Not using stateReceive since no state updates are needed here only writes
-    receive(ReceiveBuilder.
-      matchEquals(JSequentialExecutor.CommandStart(), t -> {
-        if (startState.cmd.head().equals(cmdUninitialized)) {
-          sender().tell(new NoLongerValid(new Validation.WrongInternalStateIssue("Assembly state of "
-            + startState.cmd + "/" + startState.move + " does not allow datum")), self());
-        } else {
-          ActorRef mySender = sender();
-          sendState(new SetState(cmdItem(cmdBusy), moveItem(moveIndexing), startState.sodiumLayer, startState.nss));
-          tromboneHCD.tell(new HcdController.Submit(new SetupConfig(axisDatumCK.prefix())), self());
-          Timeout timeout = new Timeout(5, TimeUnit.SECONDS);
-          TromboneCommandHandler.executeMatch(context(), TromboneCommandHandler.idleMatcher(), tromboneHCD,  Optional.of(mySender), timeout, status -> {
-            if (status == Completed)
-              sendState(new SetState(cmdReady, moveIndexed, false, false));
-            else if (status instanceof Error)
-              log.error("Data command match failed with error: " + ((Error)status).message());
-          });
-        }
-      }).
-      matchEquals(JSequentialExecutor.StopCurrentCommand(), t -> {
-        log.info(">> DATUM STOPPED");
-        tromboneHCD.tell(new HcdController.Submit(cancelSC), self());
-      }).
-      matchAny(t -> log.warning("Unknown message received: " + t)).
-      build());
   }
 
-  private void sendState(SetState setState) {
+  // Not using stateReceive since no state updates are needed here only writes
+  @Override
+  public Receive createReceive() {
+    return receiveBuilder().
+        matchEquals(JSequentialExecutor.CommandStart(), t -> {
+          if (startState.cmd.head().equals(cmdUninitialized)) {
+            sender().tell(new NoLongerValid(new Validation.WrongInternalStateIssue("Assembly state of "
+                + startState.cmd + "/" + startState.move + " does not allow datum")), self());
+          } else {
+            ActorRef mySender = sender();
+            sendState(new SetState(cmdItem(cmdBusy), moveItem(moveIndexing), startState.sodiumLayer, startState.nss));
+            tromboneHCD.tell(new HcdController.Submit(new SetupConfig(axisDatumCK.prefix())), self());
+            Timeout timeout = new Timeout(5, TimeUnit.SECONDS);
+            TromboneCommandHandler.executeMatch(getContext(), TromboneCommandHandler.idleMatcher(), tromboneHCD,  Optional.of(mySender), timeout, status -> {
+              if (status == Completed)
+                sendState(new SetState(cmdReady, moveIndexed, false, false));
+              else if (status instanceof Error)
+                log.error("Data command match failed with error: " + ((Error)status).message());
+            });
+          }
+        }).
+        matchEquals(JSequentialExecutor.StopCurrentCommand(), t -> {
+          log.info(">> DATUM STOPPED");
+          tromboneHCD.tell(new HcdController.Submit(cancelSC), self());
+        }).
+        matchAny(t -> log.warning("Unknown message received: " + t)).
+        build();
+  }
+
+
+    private void sendState(SetState setState) {
     stateActor.ifPresent(actorRef -> {
       try {
         ask(actorRef, setState, 5000).toCompletableFuture().get();

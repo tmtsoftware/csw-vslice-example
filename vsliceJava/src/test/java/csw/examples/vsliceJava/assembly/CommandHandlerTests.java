@@ -2,10 +2,9 @@ package csw.examples.vsliceJava.assembly;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
-import akka.actor.PoisonPill;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import akka.testkit.JavaTestKit;
+import akka.testkit.javadsl.TestKit;
 import akka.testkit.TestProbe;
 import akka.util.Timeout;
 import csw.examples.vsliceJava.TestEnv;
@@ -47,14 +46,13 @@ import static javacsw.services.ccs.JCommandStatus.*;
 import static javacsw.services.ccs.JSequentialExecutor.ExecuteOne;
 import static javacsw.services.loc.JConnectionType.AkkaType;
 import static javacsw.services.pkg.JComponent.DoNotRegister;
-import static javacsw.services.pkg.JSupervisor.ExComponentShutdown;
 import static javacsw.services.pkg.JSupervisor.HaltComponent;
 import static javacsw.services.pkg.JSupervisor.LifecycleRunning;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 
-@SuppressWarnings({"WeakerAccess", "OptionalUsedAsFieldOrParameterType", "MismatchedReadAndWriteOfArray"})
-public class CommandHandlerTests extends JavaTestKit {
+@SuppressWarnings({"WeakerAccess", "OptionalUsedAsFieldOrParameterType", "MismatchedReadAndWriteOfArray", "Duplicates"})
+public class CommandHandlerTests extends TestKit {
   private static ActorSystem system;
   private static LoggingAdapter logger;
   private static Timeout timeout = Timeout.durationToTimeout(FiniteDuration.apply(10, TimeUnit.SECONDS));
@@ -83,7 +81,7 @@ public class CommandHandlerTests extends JavaTestKit {
 
   @AfterClass
   public static void teardown() {
-    JavaTestKit.shutdownActorSystem(system);
+    TestKit.shutdownActorSystem(system);
     system = null;
   }
 

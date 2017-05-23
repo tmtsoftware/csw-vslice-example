@@ -5,11 +5,8 @@ import akka.actor.*;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.japi.Creator;
-import akka.japi.pf.ReceiveBuilder;
 import csw.services.ts.AbstractTimeServiceScheduler;
 import csw.services.ts.TimeService;
-import scala.PartialFunction;
-import scala.runtime.BoxedUnit;
 
 import java.util.Optional;
 
@@ -66,18 +63,21 @@ public class SingleAxisSimulator extends AbstractTimeServiceScheduler {
       throw new AssertionError("home position must be greater than lowUser value: " + axisConfig.lowUser);
     if (axisConfig.home >= axisConfig.highUser)
       throw new AssertionError("home position must be less than highUser value: " + axisConfig.highUser);
-
-    receive(idleReceive());
   }
 
-  // Short-cut to forward a messaage to the optional replyTo actor
+  @Override
+  public Receive createReceive() {
+    return idleReceive();
+  }
+
+    // Short-cut to forward a messaage to the optional replyTo actor
   void update(Optional<ActorRef> replyTo, Object msg) {
     replyTo.ifPresent(actorRef -> actorRef.tell(msg, self()));
   }
 
   // Actor state while working (after receiving the initial PublisherInfo message)
-  PartialFunction<Object, BoxedUnit> idleReceive() {
-    return ReceiveBuilder
+  Receive idleReceive() {
+    return receiveBuilder()
 
       .matchEquals(InitialState.instance, e -> sender().tell(getState(), self()))
 
@@ -118,8 +118,8 @@ public class SingleAxisSimulator extends AbstractTimeServiceScheduler {
         log.debug("AxisHome: " + axisState);
         update(replyTo, AxisStarted.instance);
         Props props = MotionWorker.props(current, axisConfig.home, 100, self(), false);
-        ActorRef mw = context().actorOf(props, "homeWorker");
-        context().become(homeReceive(mw));
+        ActorRef mw = getContext().actorOf(props, "homeWorker");
+        getContext().become(homeReceive(mw));
         mw.tell(MotionWorker.Start.instance, self());
         // Stats
         moveCount++;
@@ -142,8 +142,8 @@ public class SingleAxisSimulator extends AbstractTimeServiceScheduler {
         int clampedTargetPosition = SingleAxisSimulator.limitMove(axisConfig, e.position);
         // The 200 ms here is the time for one step, so a 10 step move takes 2 seconds
         Props props = MotionWorker.props(current, clampedTargetPosition, axisConfig.stepDelayMS, self(), e.diagFlag);
-        ActorRef mw = context().actorOf(props, "moveWorker-" + System.currentTimeMillis());
-        context().become(moveReceive(mw));
+        ActorRef mw = getContext().actorOf(props, "moveWorker-" + System.currentTimeMillis());
+        getContext().become(moveReceive(mw));
         mw.tell(MotionWorker.Start.instance, self());
         // Stats
         moveCount++;
@@ -171,8 +171,8 @@ public class SingleAxisSimulator extends AbstractTimeServiceScheduler {
   }
 
   // This receive is used when executing a Home command
-  PartialFunction<Object, BoxedUnit> homeReceive(ActorRef worker) {
-    return ReceiveBuilder
+  Receive homeReceive(ActorRef worker) {
+    return receiveBuilder()
       .match(MotionWorker.Start.class, e -> {
         log.debug("Home Start");
       })
@@ -182,15 +182,15 @@ public class SingleAxisSimulator extends AbstractTimeServiceScheduler {
         update(replyTo, getState());
       })
       .match(MotionWorker.End.class, e -> {
-        context().become(idleReceive());
+        getContext().become(idleReceive());
         self().tell(new HomeComplete(e.finalpos), self());
       })
       .matchAny(x -> log.warning("Unexpected message in homeReceive: " + x))
       .build();
   }
 
-  PartialFunction<Object, BoxedUnit> moveReceive(ActorRef worker) {
-    return ReceiveBuilder
+  Receive moveReceive(ActorRef worker) {
+    return receiveBuilder()
       .match(MotionWorker.Start.class, e -> log.debug("Move Start"))
       .match(CancelMove.class, e -> {
         worker.tell(MotionWorker.Cancel.instance, self());
@@ -211,7 +211,7 @@ public class SingleAxisSimulator extends AbstractTimeServiceScheduler {
       })
       .match(MotionWorker.End.class, e -> {
         log.debug("Move End");
-        context().become(idleReceive());
+        getContext().become(idleReceive());
         self().tell(new MoveComplete(e.finalpos), self());
       })
       .matchAny(x -> log.warning("Unexpected message in moveReceive: " + x))
@@ -489,8 +489,8 @@ class MotionWorker extends AbstractTimeServiceScheduler {
   }
 
   @Override
-  public PartialFunction<Object, BoxedUnit> receive() {
-    return ReceiveBuilder
+  public Receive createReceive() {
+    return receiveBuilder()
       .match(Start.class, e -> {
         if (diagFlag) diag("Starting", start, numSteps);
         replyTo.tell(e, self());
@@ -529,7 +529,7 @@ class MotionWorker extends AbstractTimeServiceScheduler {
         replyTo.tell(e, self());
         if (diagFlag) diag("End", e.finalpos, numSteps);
         // When the actor has nothing else to do, it should stop
-        context().stop(self());
+        getContext().stop(self());
       })
       .matchAny(x -> log.warning("Unexpected message in MotionWorker: " + x))
       .build();

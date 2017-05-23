@@ -1,7 +1,7 @@
 package csw.examples.vsliceJava.assembly;
 
 
-import akka.actor.AbstractActor;
+import akka.actor.*;
 import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
@@ -22,9 +22,12 @@ public class TromboneStateActor extends AbstractActor {
   private LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
   private TromboneStateActor() {
-    receive(stateReceive(new TromboneState(cmdDefault, moveDefault, sodiumLayerDefault, nssDefault)));
   }
 
+  @Override
+  public Receive createReceive() {
+    return stateReceive(new TromboneState(cmdDefault, moveDefault, sodiumLayerDefault, nssDefault));
+  }
 
   /**
    * This stateReceive must be added to the actor's receive chain.
@@ -32,13 +35,13 @@ public class TromboneStateActor extends AbstractActor {
    *
    * @return Akka Receive partial function
    */
-  private PartialFunction<Object, BoxedUnit> stateReceive(TromboneState currentState) {
-    return ReceiveBuilder.
+  private Receive stateReceive(TromboneState currentState) {
+    return receiveBuilder().
       match(SetState.class, t -> {
         TromboneState ts = t.tromboneState;
         if (!ts.equals(currentState)) {
-          context().system().eventStream().publish(ts);
-          context().become(stateReceive(ts));
+          getContext().system().eventStream().publish(ts);
+          getContext().become(stateReceive(ts));
           sender().tell(new StateWasSet(true), self());
         } else {
           sender().tell(new StateWasSet(false), self());

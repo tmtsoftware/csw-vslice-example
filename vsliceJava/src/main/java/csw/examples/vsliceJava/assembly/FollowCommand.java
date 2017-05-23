@@ -88,35 +88,37 @@ class FollowCommand extends AbstractActor {
     this.initialElevation = initialElevation;
     this.eventPublisher = eventPublisher;
     this.eventService = eventService;
-
-    tromboneControl = context().actorOf(TromboneControl.props(ac, tromboneHCDIn), "trombonecontrol");
-    ActorRef initialFollowActor = createFollower(initialElevation, nssInUseIn, tromboneControl, eventPublisher, eventPublisher);
-    ActorRef initialEventSubscriber = createEventSubscriber(nssInUseIn, initialFollowActor, eventService);
-
-    receive(followReceive(nssInUseIn, initialFollowActor, initialEventSubscriber, tromboneHCDIn));
+    tromboneControl = getContext().actorOf(TromboneControl.props(ac, tromboneHCDIn), "trombonecontrol");
   }
 
-  private PartialFunction<Object, BoxedUnit> followReceive(BooleanItem nssInUse, ActorRef followActor,
-                                                           ActorRef eventSubscriber, Optional<ActorRef> tromboneHCD) {
+  @Override
+  public Receive createReceive() {
+    ActorRef initialFollowActor = createFollower(initialElevation, nssInUseIn, tromboneControl, eventPublisher, eventPublisher);
+    ActorRef initialEventSubscriber = createEventSubscriber(nssInUseIn, initialFollowActor, eventService);
+    return followReceive(nssInUseIn, initialFollowActor, initialEventSubscriber, tromboneHCDIn);
+  }
+
+  private Receive followReceive(BooleanItem nssInUse, ActorRef followActor,
+                                ActorRef eventSubscriber, Optional<ActorRef> tromboneHCD) {
     //noinspection CodeBlock2Expr
-    return ReceiveBuilder.
+    return receiveBuilder().
       match(StopFollowing.class, t -> {
         log.info("Receive stop following in Follow Command");
         // Send this so that unsubscriptions happen, need to check if needed
-        context().stop(eventSubscriber);
-        context().stop(followActor);
-        context().stop(self());
+        getContext().stop(eventSubscriber);
+        getContext().stop(followActor);
+        getContext().stop(self());
       }).
       match(UpdateNssInUse.class, t -> {
         if (t.nssInUse != nssInUse) {
           // First stop the currents so we can create new ones
-          context().stop(eventSubscriber);
-          context().stop(followActor);
+          getContext().stop(eventSubscriber);
+          getContext().stop(followActor);
           // Note that follower has the option of a different publisher for events and telemetry, but this is primarily useful for testing
           ActorRef newFollowActor = createFollower(initialElevation, t.nssInUse, tromboneControl, eventPublisher, eventPublisher);
           ActorRef newEventSubscriber = createEventSubscriber(t.nssInUse, newFollowActor, eventService);
           // Set a new receive method with updated actor values, prefer this over vars or globals
-          context().become(followReceive(t.nssInUse, newFollowActor, newEventSubscriber, tromboneHCD));
+          getContext().become(followReceive(t.nssInUse, newFollowActor, newEventSubscriber, tromboneHCD));
         }
       }).
       match(SetZenithAngle.class, t -> {
@@ -126,7 +128,7 @@ class FollowCommand extends AbstractActor {
       }).match(TromboneAssembly.UpdateTromboneHCD.class, upd -> {
           // Note that this is an option so it can be None
           // Set a new receive method with updated actor values and new HCD, prefer this over vars or globals
-        context().become(followReceive(nssInUse, followActor, eventSubscriber, upd.tromboneHCD));
+        getContext().become(followReceive(nssInUse, followActor, eventSubscriber, upd.tromboneHCD));
         // Also update the trombone control with the new HCD reference
         tromboneControl.tell(new TromboneAssembly.UpdateTromboneHCD(upd.tromboneHCD), self());
       }).
@@ -139,11 +141,11 @@ class FollowCommand extends AbstractActor {
 
 
   private ActorRef createFollower(DoubleItem initialElevation, BooleanItem nssInUse, ActorRef tromboneControl, Optional<ActorRef> eventPublisher, Optional<ActorRef> telemetryPublisher) {
-    return context().actorOf(FollowActor.props(ac, initialElevation, nssInUse, Optional.of(tromboneControl), eventPublisher, eventPublisher), "follower");
+    return getContext().actorOf(FollowActor.props(ac, initialElevation, nssInUse, Optional.of(tromboneControl), eventPublisher, eventPublisher), "follower");
   }
 
   private ActorRef createEventSubscriber(BooleanItem nssItem, ActorRef followActor, IEventService eventService) {
-    return context().actorOf(TromboneEventSubscriber.props(ac, nssItem, Optional.of(followActor), eventService), "eventsubscriber");
+    return getContext().actorOf(TromboneEventSubscriber.props(ac, nssItem, Optional.of(followActor), eventService), "eventsubscriber");
   }
 
   // --- static defs ---

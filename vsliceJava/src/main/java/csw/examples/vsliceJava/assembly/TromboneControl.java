@@ -6,11 +6,8 @@ import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.japi.Creator;
-import akka.japi.pf.ReceiveBuilder;
 import csw.examples.vsliceJava.hcd.TromboneHCD;
 import csw.util.config.DoubleItem;
-import scala.PartialFunction;
-import scala.runtime.BoxedUnit;
 
 import java.util.Optional;
 
@@ -35,6 +32,7 @@ class TromboneControl extends AbstractActor {
   private LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
   private final AssemblyContext ac;
+  private final Optional<ActorRef> tromboneHCDIn;
 
   /**
    * Constructor
@@ -44,18 +42,22 @@ class TromboneControl extends AbstractActor {
    */
   private TromboneControl(AssemblyContext ac, Optional<ActorRef> tromboneHCDIn) {
     this.ac = ac;
+    this.tromboneHCDIn = tromboneHCDIn;
     log.info("TromboneIn: ========> " + tromboneHCDIn);
-
-    // Initial receive - start with initial values
-    receive(controlReceive(tromboneHCDIn));
   }
 
-  private PartialFunction<Object, BoxedUnit> controlReceive(Optional<ActorRef> tromboneHCD) {
-    return ReceiveBuilder.
+  @Override
+  public Receive createReceive() {
+    // Initial receive - start with initial values
+    return controlReceive(tromboneHCDIn);
+  }
+
+    private Receive controlReceive(Optional<ActorRef> tromboneHCD) {
+    return receiveBuilder().
       match(GoToStagePosition.class, t -> {
         DoubleItem newPosition = t.stagePosition;
         // It should be correct, but check
-        assert (newPosition.units() == ac.stagePositionUnits);
+        assert (newPosition.units() == AssemblyContext.stagePositionUnits);
 
         // Convert to encoder units
         int encoderPosition = Algorithms.stagePositionToEncoder(ac.controlConfig, jvalue(newPosition));
@@ -69,7 +71,7 @@ class TromboneControl extends AbstractActor {
         // Send command to HCD here
         tromboneHCD.ifPresent(actorRef -> actorRef.tell(new Submit(TromboneHCD.positionSC(encoderPosition)), self()));
       }).
-      match(TromboneAssembly.UpdateTromboneHCD.class, t -> context().become(controlReceive(t.tromboneHCD))).
+      match(TromboneAssembly.UpdateTromboneHCD.class, t -> getContext().become(controlReceive(t.tromboneHCD))).
       matchAny(t -> log.warning("Unexpected message received in TromboneControl:controlReceive: " + t)).
       build();
   }

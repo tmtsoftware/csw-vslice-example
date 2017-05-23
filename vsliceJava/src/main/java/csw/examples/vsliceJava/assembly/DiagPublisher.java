@@ -6,7 +6,6 @@ import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.japi.Creator;
-import akka.japi.pf.ReceiveBuilder;
 import csw.examples.vsliceJava.hcd.TromboneHCD;
 import csw.services.loc.LocationService;
 import csw.services.ts.AbstractTimeServiceScheduler;
@@ -54,7 +53,8 @@ public class DiagPublisher extends AbstractTimeServiceScheduler implements ILoca
 
   LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
-//  private final ActorRef currentStateReceiver;
+  private final Optional<ActorRef> tromboneHCDIn;
+  //  private final ActorRef currentStateReceiver;
   private final Optional<ActorRef> eventPublisher;
   private final String hcdName;
 
@@ -66,7 +66,7 @@ public class DiagPublisher extends AbstractTimeServiceScheduler implements ILoca
    * @param eventPublisher     initial actorRef of an instance of the TrombonePublisher as [[scala.Option]]
    */
   private DiagPublisher(AssemblyContext assemblyContext, Optional<ActorRef> tromboneHCDIn, Optional<ActorRef> eventPublisher) {
-//    this.currentStateReceiver = currentStateReceiver;
+    this.tromboneHCDIn = tromboneHCDIn;
     this.eventPublisher = eventPublisher;
 
     subscribeToLocationUpdates();
@@ -76,28 +76,32 @@ public class DiagPublisher extends AbstractTimeServiceScheduler implements ILoca
 
     // This works because we only have one HCD
     this.hcdName = assemblyContext.info.getConnections().get(0).name();
-
-    // Start in operations mode - 0 is initial stateMessageCounter value
-    receive(operationsReceive(/*currentStateReceiver,*/ 0, tromboneHCDIn));
   }
 
-  /**
-   * The receive method in operations state.
-   * <p>
-   * In operations state every 5th AxisUpdate message from the HCD is published as a status event. It sends an AxisStateUpdate message
-   * to the event publisher
-   *
-   * @param stateMessageCounter the number of messages received by the diag publisher
-   * @param tromboneHCD         the trombone HCD ActorRef as an Option
-   * @return Receive partial function
-   */
-  private PartialFunction<Object, BoxedUnit> operationsReceive(int stateMessageCounter, Optional<ActorRef> tromboneHCD) {
+  @Override
+  public Receive createReceive() {
+    // Start in operations mode - 0 is initial stateMessageCounter value
+    return operationsReceive(0, tromboneHCDIn);
+  }
+
+
+    /**
+     * The receive method in operations state.
+     * <p>
+     * In operations state every 5th AxisUpdate message from the HCD is published as a status event. It sends an AxisStateUpdate message
+     * to the event publisher
+     *
+     * @param stateMessageCounter the number of messages received by the diag publisher
+     * @param tromboneHCD         the trombone HCD ActorRef as an Option
+     * @return Receive partial function
+     */
+  private Receive operationsReceive(int stateMessageCounter, Optional<ActorRef> tromboneHCD) {
     //noinspection CodeBlock2Expr
-    return ReceiveBuilder.
+    return receiveBuilder().
       match(CurrentState.class, cs -> {
         if (cs.configKey().equals(TromboneHCD.axisStateCK)) {
           if (stateMessageCounter % operationsSkipCount == 0) publishStateUpdate(cs);
-          context().become(operationsReceive(stateMessageCounter + 1, tromboneHCD));
+          getContext().become(operationsReceive(stateMessageCounter + 1, tromboneHCD));
         }
       }).
       match(TimeForAxisStats.class, t -> {
@@ -110,10 +114,10 @@ public class DiagPublisher extends AbstractTimeServiceScheduler implements ILoca
         // If the DiagnosticMode message is received, begin collecting axis stats messages based on a timer and query to HCD
         // The cancelToken allows turning off the timer when
         Cancellable cancelToken = scheduleOnce(localTimeNow().plusSeconds(diagnosticAxisStatsPeriod), self(), new TimeForAxisStats(diagnosticAxisStatsPeriod));
-        context().become(diagnosticReceive(stateMessageCounter, tromboneHCD, cancelToken));
+        getContext().become(diagnosticReceive(stateMessageCounter, tromboneHCD, cancelToken));
       }).
       match(TromboneAssembly.UpdateTromboneHCD.class, t -> {
-        context().become(operationsReceive(stateMessageCounter, t.tromboneHCD));
+        getContext().become(operationsReceive(stateMessageCounter, t.tromboneHCD));
       }).
       match(Location.class, location -> {
 
@@ -123,18 +127,18 @@ public class DiagPublisher extends AbstractTimeServiceScheduler implements ILoca
             log.info("operationsReceive updated actorRef: " + rloc.getActorRef());
             Optional<ActorRef> newHcdActorRef = rloc.getActorRef();
             newHcdActorRef.ifPresent(actorRef -> actorRef.tell(JHcdController.Subscribe, self()));
-            context().become(operationsReceive(stateMessageCounter, newHcdActorRef));
+            getContext().become(operationsReceive(stateMessageCounter, newHcdActorRef));
           }
 
         } else if (location instanceof LocationService.Unresolved) {
           if (Objects.equals(location.connection().name(), hcdName)) {
             log.info("operationsReceive got unresolve for trombone HCD");
-            context().become(operationsReceive(stateMessageCounter, Optional.empty()));
+            getContext().become(operationsReceive(stateMessageCounter, Optional.empty()));
           }
         } else if (location instanceof LocationService.UnTrackedLocation) {
           if (Objects.equals(location.connection().name(), hcdName)) {
             log.info("operationsReceive got untrack for trombone HCD");
-            context().become(operationsReceive(stateMessageCounter, Optional.empty()));
+            getContext().become(operationsReceive(stateMessageCounter, Optional.empty()));
           }
         }
       }).
@@ -150,13 +154,13 @@ public class DiagPublisher extends AbstractTimeServiceScheduler implements ILoca
    * @param cancelToken         a token that allows the current timer to be cancelled
    * @return Receive partial function
    */
-  private PartialFunction<Object, BoxedUnit> diagnosticReceive(int stateMessageCounter,
-                                                               Optional<ActorRef> tromboneHCD, Cancellable cancelToken) {
-    return ReceiveBuilder.
+  private Receive diagnosticReceive(int stateMessageCounter,
+                  Optional<ActorRef> tromboneHCD, Cancellable cancelToken) {
+    return receiveBuilder().
       match(CurrentState.class, cs -> {
         if (cs.configKey().equals(TromboneHCD.axisStateCK)) {
           if (stateMessageCounter % diagnosticSkipCount == 0) publishStateUpdate(cs);
-          context().become(diagnosticReceive(stateMessageCounter + 1, tromboneHCD, cancelToken));
+          getContext().become(diagnosticReceive(stateMessageCounter + 1, tromboneHCD, cancelToken));
         } else if (cs.configKey().equals(TromboneHCD.axisStatsCK)) {
           // Here when a CurrentState is received with the axisStats configKey, the axis statistics are published as an event
           publishStatsUpdate(cs);
@@ -168,7 +172,7 @@ public class DiagPublisher extends AbstractTimeServiceScheduler implements ILoca
         // This shows how to periodically query the HCD
         tromboneHCD.ifPresent(actorRef -> actorRef.tell(GetAxisStats, self()));
         Cancellable canceltoken = scheduleOnce(localTimeNow().plusSeconds(t.periodInSeconds), self(), new TimeForAxisStats(t.periodInSeconds));
-        context().become(diagnosticReceive(stateMessageCounter, tromboneHCD, canceltoken));
+        getContext().become(diagnosticReceive(stateMessageCounter, tromboneHCD, canceltoken));
       }).
       match(DiagnosticState.class, t -> {
         // Do nothing, already in this mode
@@ -176,11 +180,11 @@ public class DiagPublisher extends AbstractTimeServiceScheduler implements ILoca
       match(OperationsState.class, t -> {
         // Switch to Operations State
         cancelToken.cancel();
-        context().become(operationsReceive(stateMessageCounter, tromboneHCD));
+        getContext().become(operationsReceive(stateMessageCounter, tromboneHCD));
       }).
       match(TromboneAssembly.UpdateTromboneHCD.class, t -> {
         // The actor ref of the trombone HCD has changed
-        context().become(diagnosticReceive(stateMessageCounter, t.tromboneHCD, cancelToken));
+        getContext().become(diagnosticReceive(stateMessageCounter, t.tromboneHCD, cancelToken));
       }).
       match(Location.class, location -> {
 
@@ -190,19 +194,19 @@ public class DiagPublisher extends AbstractTimeServiceScheduler implements ILoca
             log.info("diagnosticReceive updated actorRef: " + rloc.getActorRef());
             Optional<ActorRef> newHcdActorRef = rloc.getActorRef();
             newHcdActorRef.ifPresent(actorRef -> actorRef.tell(JHcdController.Subscribe, self()));
-            context().become(diagnosticReceive(stateMessageCounter, newHcdActorRef, cancelToken));
+            getContext().become(diagnosticReceive(stateMessageCounter, newHcdActorRef, cancelToken));
           }
 
         } else if (location instanceof LocationService.Unresolved) {
           if (Objects.equals(location.connection().name(), hcdName)) {
             log.info("diagnosticReceive got unresolve for trombone HCD");
-            context().become(diagnosticReceive(stateMessageCounter, Optional.empty(), cancelToken));
+            getContext().become(diagnosticReceive(stateMessageCounter, Optional.empty(), cancelToken));
           }
 
         } else if (location instanceof LocationService.UnTrackedLocation) {
           if (Objects.equals(location.connection().name(), hcdName)) {
             log.info("diagnosticReceive got untrack for trombone HCD");
-            context().become(diagnosticReceive(stateMessageCounter, Optional.empty(), cancelToken));
+            getContext().become(diagnosticReceive(stateMessageCounter, Optional.empty(), cancelToken));
           }
         }
       }).

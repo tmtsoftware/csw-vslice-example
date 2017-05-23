@@ -6,7 +6,6 @@ import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.japi.Creator;
-import akka.japi.pf.ReceiveBuilder;
 import akka.util.Timeout;
 import csw.examples.vsliceJava.hcd.TromboneHCD;
 import csw.services.alarms.AlarmKey;
@@ -14,9 +13,7 @@ import csw.services.alarms.AlarmModel;
 import csw.util.config.JavaHelpers;
 import javacsw.services.alarms.IAlarmService;
 import javacsw.services.ccs.JHcdController;
-import scala.PartialFunction;
 import scala.Unit;
-import scala.runtime.BoxedUnit;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -48,7 +45,8 @@ import static javacsw.services.alarms.JAlarmModel.JSeverityLevel.Warning;
  */
 @SuppressWarnings("unused")
 public class TromboneAlarmMonitor extends AbstractActor {
-  LoggingAdapter log = Logging.getLogger(getContext().system(), this);
+  private final LoggingAdapter log = Logging.getLogger(getContext().system(), this);
+  private final IAlarmService alarmService;
 
   /**
    * Constructor
@@ -56,6 +54,7 @@ public class TromboneAlarmMonitor extends AbstractActor {
    * @param currentStateReceiver the currentStateReceiver that delivers CurrentState messages either through an HCD or a CurrentStateReceiver.
    */
   private TromboneAlarmMonitor(ActorRef currentStateReceiver, IAlarmService alarmService) {
+    this.alarmService = alarmService;
 
     // Set the alarms to okay so that the Alarm Service client will update the alarms while this actor is alive
     sendLowLimitAlarm(alarmService, Okay);
@@ -63,32 +62,35 @@ public class TromboneAlarmMonitor extends AbstractActor {
 
     // Subscribe this
     currentStateReceiver.tell(JHcdController.Subscribe, self());
-
-    receive(monitorReceive(alarmService));
   }
 
-  /**
-   * monitorReceive watches the CurrentState events for in low limit or in high limit set and sets
-   * the alarms in the Alarm Service.
-   *
-   * @param alarmService the instance of AlarmService
-   * @return the actor Receive partial function
-   */
-    private PartialFunction<Object, BoxedUnit> monitorReceive(IAlarmService alarmService) {
-      return ReceiveBuilder.
+  @Override
+  public Receive createReceive() {
+    return monitorReceive(alarmService);
+  }
+
+    /**
+      * monitorReceive watches the CurrentState events for in low limit or in high limit set and sets
+      * the alarms in the Alarm Service.
+      *
+      * @param alarmService the instance of AlarmService
+      * @return the actor Receive partial function
+      */
+    private Receive monitorReceive(IAlarmService alarmService) {
+      return receiveBuilder().
         match(CurrentState.class, cs -> {
           if (cs.configKey().equals(TromboneHCD.axisStateCK)) {
             boolean inLowLimit = JavaHelpers.jvalue(cs, inLowLimitKey);
             if (inLowLimit) {
               log.info("TromboneAssembly Alarm Monitor received a encoder low limit from the trombone HCD");
               sendLowLimitAlarm(alarmService, Warning);
-              context().become(inAlarmStateReceive(alarmService, lowLimitAlarm));
+              getContext().become(inAlarmStateReceive(alarmService, lowLimitAlarm));
             }
             boolean inHighLimit = JavaHelpers.jvalue(cs, inHighLimitKey);
             if (inHighLimit) {
               log.info("TromboneAssembly Alarm Monitor received a encoder high limit from the trombone HCD");
               sendHighLimitAlarm(alarmService, Warning);
-              context().become(inAlarmStateReceive(alarmService, highLimitAlarm));
+              getContext().become(inAlarmStateReceive(alarmService, highLimitAlarm));
             }
           } else log.warning("AlarmMonitor:monitorReceive received an unexpected message: " + cs);
         }).
@@ -96,8 +98,8 @@ public class TromboneAlarmMonitor extends AbstractActor {
         build();
   }
 
-  private PartialFunction<Object, BoxedUnit> inAlarmStateReceive(IAlarmService alarmService, AlarmKey alarmKey) {
-    return ReceiveBuilder.
+  private Receive inAlarmStateReceive(IAlarmService alarmService, AlarmKey alarmKey) {
+    return receiveBuilder().
       match(CurrentState.class, cs -> {
         if (cs.configKey().equals(TromboneHCD.axisStateCK)) {
           if (alarmKey.equals(lowLimitAlarm)) {
@@ -106,7 +108,7 @@ public class TromboneAlarmMonitor extends AbstractActor {
               log.info("TromboneAssembly Alarm Monitor low limit for the trombone HCD is cleared");
               sendLowLimitAlarm(alarmService, Okay);
               // Go back to monitor State once the alarm has been cleared
-              context().become(monitorReceive(alarmService));
+              getContext().become(monitorReceive(alarmService));
             }
 
           } else if (alarmKey.equals(highLimitAlarm)) {
@@ -115,7 +117,7 @@ public class TromboneAlarmMonitor extends AbstractActor {
               log.info("TromboneAssembly Alarm Monitor high limit for the trombone HCD is cleared");
               sendHighLimitAlarm(alarmService, Okay);
               // Go back to monitor State
-              context().become(monitorReceive(alarmService));
+              getContext().become(monitorReceive(alarmService));
             }
           }
 

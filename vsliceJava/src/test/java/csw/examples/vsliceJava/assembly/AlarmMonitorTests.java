@@ -4,7 +4,7 @@ import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import akka.testkit.JavaTestKit;
+import akka.testkit.javadsl.TestKit;
 import akka.testkit.TestProbe;
 import akka.util.Timeout;
 import csw.examples.vsliceJava.TestEnv;
@@ -40,7 +40,6 @@ import static javacsw.services.alarms.JAlarmModel.JSeverityLevel.Warning;
 import static javacsw.services.ccs.JCommandStatus.Completed;
 import static javacsw.services.loc.JConnectionType.AkkaType;
 import static javacsw.services.pkg.JComponent.DoNotRegister;
-import static javacsw.services.pkg.JSupervisor.ExComponentShutdown;
 import static javacsw.services.pkg.JSupervisor.HaltComponent;
 import static javacsw.services.pkg.JSupervisor.LifecycleRunning;
 import static javacsw.util.config.JConfigDSL.cs;
@@ -52,8 +51,8 @@ import static org.junit.Assert.assertEquals;
 /**
  * These tests are for the Trombone AlarmMonitor.
  */
-@SuppressWarnings({"unused", "OptionalUsedAsFieldOrParameterType", "WeakerAccess"})
-public class AlarmMonitorTests extends JavaTestKit {
+@SuppressWarnings({"unused", "OptionalUsedAsFieldOrParameterType", "WeakerAccess", "Duplicates"})
+public class AlarmMonitorTests extends TestKit {
   private static ActorSystem system;
   private static LoggingAdapter logger;
 
@@ -98,7 +97,7 @@ public class AlarmMonitorTests extends JavaTestKit {
 
   @AfterClass
   public static void teardown() {
-    JavaTestKit.shutdownActorSystem(system);
+    TestKit.shutdownActorSystem(system);
     system = null;
   }
 

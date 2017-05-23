@@ -4,8 +4,8 @@ import akka.actor.*;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.japi.Creator;
-import akka.japi.pf.ReceiveBuilder;
-import akka.testkit.JavaTestKit;
+import akka.japi.JavaPartialFunction;
+import akka.testkit.javadsl.TestKit;
 import akka.testkit.TestActorRef;
 import akka.testkit.TestProbe;
 import akka.util.Timeout;
@@ -24,6 +24,7 @@ import scala.concurrent.duration.FiniteDuration;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.Vector;
 import java.util.concurrent.TimeUnit;
@@ -51,7 +52,7 @@ import static junit.framework.TestCase.assertTrue;
  * Diag Pubisher Tests
  */
 @SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "unused", "FieldCanBeLocal", "WeakerAccess"})
-public class DiagPublisherTests extends JavaTestKit {
+public class DiagPublisherTests extends TestKit {
 
   @SuppressWarnings("WeakerAccess")
  /*
@@ -98,20 +99,25 @@ public class DiagPublisherTests extends JavaTestKit {
     Vector<StatusEvent> statmsgs = new Vector<>();
 
     public TestSubscriber() {
-      receive(ReceiveBuilder.
-        match(SystemEvent.class, event -> {
-          sysmsgs.add(event);
-          log.debug("Received system event: " + event);
-        }).
-        match(Events.StatusEvent.class, event -> {
-          statmsgs.add(event);
-          log.debug("Received status event: " + event);
-        }).
-        match(GetSysResults.class, t -> sender().tell(new SysResults(sysmsgs), self())).
-        match(GetStatusResults.class, t -> sender().tell(new StatusResults(statmsgs), self())).
-        matchAny(t -> log.warning("Unknown message received: " + t)).
-        build());
     }
+
+    @Override
+    public Receive createReceive() {
+      return receiveBuilder().
+          match(SystemEvent.class, event -> {
+            sysmsgs.add(event);
+            log.debug("Received system event: " + event);
+          }).
+          match(Events.StatusEvent.class, event -> {
+            statmsgs.add(event);
+            log.debug("Received status event: " + event);
+          }).
+          match(GetSysResults.class, t -> sender().tell(new SysResults(sysmsgs), self())).
+          match(GetStatusResults.class, t -> sender().tell(new StatusResults(statmsgs), self())).
+          matchAny(t -> log.warning("Unknown message received: " + t)).
+          build();
+    }
+
   }
 
 
@@ -150,7 +156,7 @@ public class DiagPublisherTests extends JavaTestKit {
 
   @AfterClass
   public static void teardown() {
-    JavaTestKit.shutdownActorSystem(system);
+    TestKit.shutdownActorSystem(system);
     system = null;
   }
 
@@ -357,19 +363,16 @@ public class DiagPublisherTests extends JavaTestKit {
 
     dp.tell(new DiagnosticState(), self());
 
-    final AxisStatsUpdate[] msgs =
-      new ReceiveWhile<AxisStatsUpdate>(AxisStatsUpdate.class, FiniteDuration.apply(3200, TimeUnit.MILLISECONDS)) {
-        protected AxisStatsUpdate match(Object in) {
+    final List<AxisStatsUpdate> msgs =
+      receiveWhile(duration("3200 milliseconds"), in -> {
           if (in instanceof AxisStatsUpdate) {
-            return (AxisStatsUpdate) in;
+            return (AxisStatsUpdate)in;
           } else {
-            throw noMatch();
+            throw JavaPartialFunction.noMatch();
           }
-        }
-      }.get(); // this extracts the received messages
+      });
 
-
-    assertEquals(3, msgs.length);
+    assertEquals(3, msgs.size());
 
     // Now turn them off
     dp.tell(new OperationsState(), self());

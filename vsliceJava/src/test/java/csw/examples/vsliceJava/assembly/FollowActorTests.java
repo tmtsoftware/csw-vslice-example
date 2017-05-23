@@ -4,9 +4,9 @@ import akka.actor.*;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.japi.Creator;
+import akka.japi.JavaPartialFunction;
 import akka.japi.Pair;
-import akka.japi.pf.ReceiveBuilder;
-import akka.testkit.JavaTestKit;
+import akka.testkit.javadsl.TestKit;
 import akka.testkit.TestActorRef;
 import akka.testkit.TestProbe;
 import akka.util.Timeout;
@@ -53,7 +53,7 @@ import static javacsw.util.config.JUnitsOfMeasure.*;
 import static junit.framework.TestCase.assertEquals;
 
 @SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "unused", "FieldCanBeLocal", "WeakerAccess"})
-public class FollowActorTests extends JavaTestKit {
+public class FollowActorTests extends TestKit {
 
   @SuppressWarnings("WeakerAccess")
  /*
@@ -88,19 +88,24 @@ public class FollowActorTests extends JavaTestKit {
     Vector<EventServiceEvent> msgs = new Vector<>();
 
     public TestSubscriber() {
-      receive(ReceiveBuilder.
-        match(SystemEvent.class, event -> {
-          msgs.add(event);
-          log.info("RECEIVED System " + event.info().source() + "  event: " + event);
-        }).
-        match(Events.StatusEvent.class, event -> {
-          msgs.add(event);
-          log.info("RECEIVED Status " + event.info().source() + " event: " + event);
-        }).
-        match(GetResults.class, t -> sender().tell(new Results(msgs), self())).
-        matchAny(t -> log.warning("Unknown message received: " + t)).
-        build());
     }
+
+    @Override
+    public Receive createReceive() {
+      return receiveBuilder().
+          match(SystemEvent.class, event -> {
+            msgs.add(event);
+            log.info("RECEIVED System " + event.info().source() + "  event: " + event);
+          }).
+          match(Events.StatusEvent.class, event -> {
+            msgs.add(event);
+            log.info("RECEIVED Status " + event.info().source() + " event: " + event);
+          }).
+          match(GetResults.class, t -> sender().tell(new Results(msgs), self())).
+          matchAny(t -> log.warning("Unknown message received: " + t)).
+          build();
+    }
+
   }
 
   private static ActorSystem system;
@@ -149,7 +154,7 @@ public class FollowActorTests extends JavaTestKit {
 
   @AfterClass
   public static void teardown() {
-    JavaTestKit.shutdownActorSystem(system);
+    TestKit.shutdownActorSystem(system);
     system = null;
   }
 
@@ -398,23 +403,21 @@ public class FollowActorTests extends JavaTestKit {
    * @return A sequence of CurrentState messages
    */
   List<CurrentState> expectMoveMsgsWithDest(int dest) {
-    final CurrentState[] msgs =
-      new ReceiveWhile<CurrentState>(CurrentState.class, duration("5 seconds")) {
-        protected CurrentState match(Object in) {
+    final List<CurrentState> msgs =
+      receiveWhile(duration("5 seconds"), in -> {
           if (in instanceof CurrentState) {
             CurrentState cs = (CurrentState) in;
             if ((cs.prefix().contains(TromboneHCD.axisStatePrefix) && !JavaHelpers.jvalue(cs, positionKey).equals(dest))
               || cs.prefix().equals(TromboneHCD.axisStatsPrefix))
               return cs;
           }
-          throw noMatch();
-        }
-      }.get(); // this extracts the received messages
+            throw JavaPartialFunction.noMatch();
+      });
 
     CurrentState fmsg1 = expectMsgClass(CurrentState.class); // last one with current == target
     CurrentState fmsg2 = expectMsgClass(CurrentState.class); // the the end event with IDLE
     List<CurrentState> allmsgs = new ArrayList<>();
-    allmsgs.addAll(Arrays.asList(msgs));
+    allmsgs.addAll(msgs);
     allmsgs.add(fmsg1);
     allmsgs.add(fmsg2);
     return allmsgs;

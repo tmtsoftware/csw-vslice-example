@@ -2,11 +2,10 @@ package csw.examples.vsliceJava.assembly;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
-import akka.actor.PoisonPill;
 import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import akka.testkit.JavaTestKit;
+import akka.testkit.javadsl.TestKit;
 import akka.testkit.TestProbe;
 import akka.util.Timeout;
 import csw.examples.vsliceJava.TestEnv;
@@ -40,7 +39,7 @@ import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
 
 @SuppressWarnings({"WeakerAccess", "OptionalUsedAsFieldOrParameterType", "MismatchedReadAndWriteOfArray"})
-public class TromboneAssemblyBasicTests extends JavaTestKit {
+public class TromboneAssemblyBasicTests extends TestKit {
   private static ActorSystem system;
   private static LoggingAdapter logger;
   private static String thName = "lgsTromboneHCD";
@@ -83,7 +82,7 @@ public class TromboneAssemblyBasicTests extends JavaTestKit {
       actorRef.tell(HaltComponent, ActorRef.noSender());
       probe.expectTerminated(actorRef, timeout.duration());
     });
-    JavaTestKit.shutdownActorSystem(system);
+    TestKit.shutdownActorSystem(system);
     system = null;
     Thread.sleep(10000); // XXX FIXME Make sure components have time to unregister from location service
   }

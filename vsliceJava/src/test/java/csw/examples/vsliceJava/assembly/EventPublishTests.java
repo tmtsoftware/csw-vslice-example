@@ -8,8 +8,7 @@ import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.japi.Creator;
 import akka.japi.Pair;
-import akka.japi.pf.ReceiveBuilder;
-import akka.testkit.JavaTestKit;
+import akka.testkit.javadsl.TestKit;
 import akka.testkit.TestProbe;
 import akka.util.Timeout;
 import csw.examples.vsliceJava.TestEnv;
@@ -37,7 +36,7 @@ import static javacsw.util.config.JItems.jset;
 import static junit.framework.TestCase.assertEquals;
 
 @SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "unused", "FieldCanBeLocal", "WeakerAccess"})
-public class EventPublishTests extends JavaTestKit {
+public class EventPublishTests extends TestKit {
 
   @SuppressWarnings("WeakerAccess")
  /*
@@ -72,19 +71,24 @@ public class EventPublishTests extends JavaTestKit {
     Vector<EventServiceEvent> msgs = new Vector<>();
 
     public TestSubscriber() {
-      receive(ReceiveBuilder.
-        match(SystemEvent.class, event -> {
-          msgs.add(event);
-          log.info("-------->RECEIVED System " + event.info().source() + "  event: " + event);
-        }).
-        match(Events.StatusEvent.class, event -> {
-          msgs.add(event);
-          log.info("-------->RECEIVED Status " + event.info().source() + " event: " + event);
-        }).
-        match(GetResults.class, t -> sender().tell(new Results(msgs), self())).
-        matchAny(t -> log.warning("Unknown message received: " + t)).
-        build());
     }
+
+    @Override
+    public Receive createReceive() {
+      return receiveBuilder().
+          match(SystemEvent.class, event -> {
+            msgs.add(event);
+            log.info("-------->RECEIVED System " + event.info().source() + "  event: " + event);
+          }).
+          match(Events.StatusEvent.class, event -> {
+            msgs.add(event);
+            log.info("-------->RECEIVED Status " + event.info().source() + " event: " + event);
+          }).
+          match(GetResults.class, t -> sender().tell(new Results(msgs), self())).
+          matchAny(t -> log.warning("Unknown message received: " + t)).
+          build();
+    }
+
   }
 
   private static ActorSystem system;
@@ -129,7 +133,7 @@ public class EventPublishTests extends JavaTestKit {
 
   @AfterClass
   public static void teardown() {
-    JavaTestKit.shutdownActorSystem(system);
+    TestKit.shutdownActorSystem(system);
     system = null;
   }
 
@@ -270,10 +274,10 @@ public class EventPublishTests extends JavaTestKit {
     // Create the trombone publisher for publishing SystemEvents to AOESW
     ActorRef publisherActorRef = system.actorOf(TrombonePublisher.props(assemblyContext, Optional.of(eventService), Optional.of(telemetryService)));
     // Create the calculator actor and give it the actor ref of the publisher for sending calculated events
-    ActorRef followActorRef = system.actorOf(FollowActor.props(assemblyContext, initialElevation, assemblyContext.setNssInUse(false),
+    ActorRef followActorRef = system.actorOf(FollowActor.props(assemblyContext, initialElevation, setNssInUse(false),
       Optional.empty(), Optional.of(publisherActorRef), Optional.empty()));
     // create the subscriber that listens for events from TCS for zenith angle and focus error from RTC
-    ActorRef es = system.actorOf(TromboneEventSubscriber.props(assemblyContext, assemblyContext.setNssInUse(false),
+    ActorRef es = system.actorOf(TromboneEventSubscriber.props(assemblyContext, setNssInUse(false),
       Optional.of(followActorRef), eventService));
     // This injects the event service location
 //    ResolvedTcpLocation evLocation = new ResolvedTcpLocation(IEventService.eventServiceConnection(), "localhost", 7777);

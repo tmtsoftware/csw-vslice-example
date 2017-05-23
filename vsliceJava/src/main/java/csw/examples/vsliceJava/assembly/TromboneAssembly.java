@@ -5,7 +5,6 @@ import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.japi.Creator;
-import akka.japi.pf.ReceiveBuilder;
 import akka.util.Timeout;
 import com.typesafe.config.Config;
 import csw.services.ccs.AssemblyMessages;
@@ -22,8 +21,6 @@ import javacsw.services.events.IEventService;
 import javacsw.services.events.ITelemetryService;
 import javacsw.services.loc.JLocationSubscriberActor;
 import javacsw.services.ccs.JAssemblyController;
-import scala.PartialFunction;
-import scala.runtime.BoxedUnit;
 
 import java.io.File;
 import java.util.List;
@@ -89,9 +86,12 @@ public class TromboneAssembly extends JAssemblyController {
     this.supervisor = supervisor;
 
     ac = initialize(info);
+  }
 
+  @Override
+  public Receive createReceive() {
     // Initial receive - start with initial values
-    receive(initializingReceive());
+    return initializingReceive();
   }
 
   private AssemblyContext initialize(Component.AssemblyInfo info) {
@@ -103,17 +103,17 @@ public class TromboneAssembly extends JAssemblyController {
       // Start tracking the components we command
       log.info("Connections: " + info.connections());
 
-      ActorRef trackerSubscriber = context().actorOf(LocationSubscriberActor.props());
+      ActorRef trackerSubscriber = getContext().actorOf(LocationSubscriberActor.props());
       trackerSubscriber.tell(JLocationSubscriberActor.Subscribe, self());
 
       // This actor handles all telemetry and system event publishing
-      ActorRef eventPublisher = context().actorOf(TrombonePublisher.props(assemblyContext, Optional.empty(), Optional.empty()));
+      ActorRef eventPublisher = getContext().actorOf(TrombonePublisher.props(assemblyContext, Optional.empty(), Optional.empty()));
 
       // Setup command handler for assembly - note that CommandHandler connects directly to tromboneHCD here, not state receiver
-      commandHandler = context().actorOf(TromboneCommandHandler.props(assemblyContext, tromboneHCD, Optional.of(eventPublisher)));
+      commandHandler = getContext().actorOf(TromboneCommandHandler.props(assemblyContext, tromboneHCD, Optional.of(eventPublisher)));
 
       // This sets up the diagnostic data publisher
-      diagPublsher = context().actorOf(DiagPublisher.props(assemblyContext, tromboneHCD, Optional.of(eventPublisher)));
+      diagPublsher = getContext().actorOf(DiagPublisher.props(assemblyContext, tromboneHCD, Optional.of(eventPublisher)));
 
       // This tracks the HCD
       LocationSubscriberActor.trackConnections(info.connections(), trackerSubscriber);
@@ -136,19 +136,19 @@ public class TromboneAssembly extends JAssemblyController {
    *
    * @return Receive is a partial function
    */
-  private PartialFunction<Object, BoxedUnit> initializingReceive() {
-    return locationReceive().orElse(ReceiveBuilder.
+  private Receive initializingReceive() {
+    return locationReceive().orElse(receiveBuilder().
       matchEquals(Running, location -> {
         // When Running is received, transition to running Receive
         log.info("becoming runningReceive");
-        context().become(runningReceive());
+        getContext().become(runningReceive());
       }).
       matchAny(t -> log.warning("Unexpected message in TromboneAssembly:initializingReceive: " + t)).
       build());
   }
 
-  private PartialFunction<Object, BoxedUnit> locationReceive() {
-    return ReceiveBuilder.
+  private Receive locationReceive() {
+    return receiveBuilder().
       match(Location.class, location ->    {
           if (location instanceof ResolvedAkkaLocation) {
             ResolvedAkkaLocation l = (ResolvedAkkaLocation) location;
@@ -168,21 +168,21 @@ public class TromboneAssembly extends JAssemblyController {
             if (location.connection().equals(IEventService.eventServiceConnection())) {
               log.info("Assembly received ES connection: " + t);
               // Setting var here!
-              eventService = Optional.of(IEventService.getEventService(t.host(), t.port(), context().system()));
+              eventService = Optional.of(IEventService.getEventService(t.host(), t.port(), getContext().system()));
               log.info("Event Service at: " + eventService);
             }
 
             if (location.connection().equals(ITelemetryService.telemetryServiceConnection())) {
               log.info("Assembly received TS connection: " + t);
               // Setting var here!
-              telemetryService = Optional.of(ITelemetryService.getTelemetryService(t.host(), t.port(), context().system()));
+              telemetryService = Optional.of(ITelemetryService.getTelemetryService(t.host(), t.port(), getContext().system()));
               log.info("Telemetry Service at: " + telemetryService);
             }
 
             if (location.connection().equals(IAlarmService.alarmServiceConnection(IAlarmService.defaultName))) {
               log.info("Assembly received AS connection: " + t);
               // Setting var here!
-              alarmService = Optional.of(IAlarmService.getAlarmService(t.host(), t.port(), context().system()));
+              alarmService = Optional.of(IAlarmService.getAlarmService(t.host(), t.port(), getContext().system()));
               log.info("Alarm Service at: " + alarmService);
             }
 
@@ -203,13 +203,13 @@ public class TromboneAssembly extends JAssemblyController {
   }
 
   // Receive partial function used when in Running state
-  private PartialFunction<Object, BoxedUnit> runningReceive() {
-    return locationReceive().orElse(diagReceive()).orElse(controllerReceive()).orElse(lifecycleReceivePF()).orElse(unhandledPF());
+  private Receive runningReceive() {
+    return locationReceive().orElse(diagReceive()).orElse(jControllerReceive()).orElse(lifecycleReceivePF()).orElse(unhandledPF());
   }
 
   // Receive partial function for handling the diagnostic commands
-  private PartialFunction<Object, BoxedUnit> diagReceive() {
-    return ReceiveBuilder.
+  private Receive diagReceive() {
+    return receiveBuilder().
       match(AssemblyMessages.DiagnosticMode.class, t -> {
         log.debug("Received diagnostic mode: " + t.hint());
         diagPublsher.tell(new DiagPublisher.DiagnosticState(), self());
@@ -222,8 +222,8 @@ public class TromboneAssembly extends JAssemblyController {
   }
 
 
-  private PartialFunction<Object, BoxedUnit> lifecycleReceivePF() {
-    return ReceiveBuilder.
+  private Receive lifecycleReceivePF() {
+    return receiveBuilder().
       matchEquals(Running, t -> {
         // Already running so ignore
       }).
@@ -246,8 +246,8 @@ public class TromboneAssembly extends JAssemblyController {
   }
 
   // Catchall unhandled message receive
-  private PartialFunction<Object, BoxedUnit> unhandledPF() {
-    return ReceiveBuilder.
+  private Receive unhandledPF() {
+    return receiveBuilder().
       matchAny(t -> log.warning("Unexpected message in TromboneAssembly:unhandledPF: " + t)).
       build();
   }
@@ -279,7 +279,7 @@ public class TromboneAssembly extends JAssemblyController {
 
   // Convenience method to create a new SequentialExecutor
   private ActorRef newExecutor(ActorRef commandHandler, SetupConfigArg sca, Optional<ActorRef> commandOriginator) {
-    return context().actorOf(SequentialExecutor.props(commandHandler, sca, commandOriginator));
+    return getContext().actorOf(SequentialExecutor.props(commandHandler, sca, commandOriginator));
   }
 
   // Holds the assembly configurations
@@ -299,7 +299,7 @@ public class TromboneAssembly extends JAssemblyController {
     // Get the trombone config file from the config service, or use the given resource file if that doesn't work
     Timeout timeout = new Timeout(3, TimeUnit.SECONDS);
     Optional<Config> configOpt = JConfigServiceClient.getConfigFromConfigService(tromboneConfigFile,
-      Optional.empty(), Optional.of(resource), context().system(), timeout).get();
+      Optional.empty(), Optional.of(resource), getContext().system(), timeout).get();
     if (configOpt.isPresent())
       return new TromboneConfigs(new TromboneCalculationConfig(configOpt.get()),
         new TromboneControlConfig(configOpt.get()));

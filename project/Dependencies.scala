@@ -2,20 +2,20 @@ import sbt._
 
 object Dependencies {
 
-  val Version = "0.4-SNAPSHOT"
-  val scalaVersion = "2.12.1"
-  val akkaVersion = "2.4.16"
+  val cswVersion = "0.5"
+  val scalaVersion = "2.12.2"
+  val akkaVersion = "2.5.1"
 
-  val pkg = "org.tmt" %% "pkg" % Version
-  val cs = "org.tmt" %% "cs" % Version
-  val ccs = "org.tmt" %% "ccs" % Version
-  val log = "org.tmt" %% "log" % Version
-  val ts = "org.tmt" %% "ts" % Version
-  val alarms = "org.tmt" %% "alarms" % Version
-  val events = "org.tmt" %% "events" % Version
-  val containerCmd = "org.tmt" %% "containercmd" % Version
-  val seqSupport = "org.tmt" %% "seqsupport" % Version
-  val javacsw = "org.tmt" %% "javacsw" % Version
+  val pkg = "org.tmt" %% "pkg" % cswVersion
+  val cs = "org.tmt" %% "cs" % cswVersion
+  val ccs = "org.tmt" %% "ccs" % cswVersion
+  val log = "org.tmt" %% "log" % cswVersion
+  val ts = "org.tmt" %% "ts" % cswVersion
+  val alarms = "org.tmt" %% "alarms" % cswVersion
+  val events = "org.tmt" %% "events" % cswVersion
+  val containerCmd = "org.tmt" %% "containercmd" % cswVersion
+  val seqSupport = "org.tmt" %% "seqsupport" % cswVersion
+  val javacsw = "org.tmt" %% "javacsw" % cswVersion
 
   val scalaJava8Compat = "org.scala-lang.modules" %% "scala-java8-compat" % "0.8.0"
 

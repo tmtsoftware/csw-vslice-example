@@ -5,14 +5,11 @@ import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.japi.Creator;
-import akka.japi.pf.ReceiveBuilder;
 import csw.services.loc.LocationService;
 import csw.util.config.*;
 import javacsw.services.events.IEventService;
 import javacsw.services.events.ITelemetryService;
 import javacsw.services.pkg.ILocationSubscriberClient;
-import scala.PartialFunction;
-import scala.runtime.BoxedUnit;
 
 import java.util.Optional;
 
@@ -39,12 +36,14 @@ import static javacsw.util.config.JItems.jadd;
  */
 @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
 public class TrombonePublisher extends AbstractActor implements TromboneStateClient, ILocationSubscriberClient {
-  LoggingAdapter log = Logging.getLogger(getContext().system(), this);
+  private final LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
   private final AssemblyContext assemblyContext;
 
   @SuppressWarnings("FieldCanBeLocal")
   private TromboneStateActor.TromboneState internalState = TromboneStateActor.defaultTromboneState;
+  private final Optional<IEventService> eventServiceIn;
+  private final Optional<ITelemetryService> telemetryServiceIn;
 
   @Override
   public void setCurrentState(TromboneStateActor.TromboneState ts) {
@@ -73,21 +72,26 @@ public class TrombonePublisher extends AbstractActor implements TromboneStateCli
    * @param telemetryServiceIn optional Telemetryservice for testing with telemetry service
    */
   public TrombonePublisher(AssemblyContext assemblyContext, Optional<IEventService> eventServiceIn, Optional<ITelemetryService> telemetryServiceIn) {
-    context().system().eventStream().subscribe(self(), TromboneState.class);
+    this.eventServiceIn = eventServiceIn;
+    this.telemetryServiceIn = telemetryServiceIn;
+    getContext().system().eventStream().subscribe(self(), TromboneState.class);
     subscribeToLocationUpdates();
     this.assemblyContext = assemblyContext;
 
-      // This actor subscribes to TromboneState using the EventBus
-      context().system().eventStream().subscribe(self(), TromboneState.class);
+    // This actor subscribes to TromboneState using the EventBus
+    getContext().system().eventStream().subscribe(self(), TromboneState.class);
 
     log.info("Event Service in: " + eventServiceIn);
     log.info("Telemetry Service in: " + telemetryServiceIn);
-
-    receive(publishingEnabled(eventServiceIn, telemetryServiceIn));
   }
 
-  private PartialFunction<Object, BoxedUnit> publishingEnabled(Optional<IEventService> eventService, Optional<ITelemetryService> telemetryService) {
-    return ReceiveBuilder.
+  @Override
+  public Receive createReceive() {
+    return publishingEnabled(eventServiceIn, telemetryServiceIn);
+  }
+
+    private Receive publishingEnabled(Optional<IEventService> eventService, Optional<ITelemetryService> telemetryService) {
+    return receiveBuilder().
       match(AOESWUpdate.class, t ->
           publishAOESW(eventService, t.naElevation, t.naRange)).
 
@@ -117,24 +121,24 @@ public class TrombonePublisher extends AbstractActor implements TromboneStateCli
       // Verify that it is the event service
       if (location.connection().equals(IEventService.eventServiceConnection())) {
         log.debug("TrombonePublisher received connection: " + t);
-        Optional<IEventService> newEventService = Optional.of(IEventService.getEventService(t.host(), t.port(), context().system()));
+        Optional<IEventService> newEventService = Optional.of(IEventService.getEventService(t.host(), t.port(), getContext().system()));
         log.debug("Event Service at: " + newEventService);
-        context().become(publishingEnabled(newEventService, currentTelemetryService));
+        getContext().become(publishingEnabled(newEventService, currentTelemetryService));
       }
 
       if (location.connection().equals(ITelemetryService.telemetryServiceConnection())) {
         log.debug("TrombonePublisher received connection: " + t);
-        Optional<ITelemetryService> newTelemetryService = Optional.of(ITelemetryService.getTelemetryService(t.host(), t.port(), context().system()));
+        Optional<ITelemetryService> newTelemetryService = Optional.of(ITelemetryService.getTelemetryService(t.host(), t.port(), getContext().system()));
         log.debug("Telemetry Service at: " + newTelemetryService);
-        context().become(publishingEnabled(currentEventService, newTelemetryService));
+        getContext().become(publishingEnabled(currentEventService, newTelemetryService));
       }
 
     } else if (location instanceof LocationService.Unresolved) {
       log.debug("Unresolved: " + location.connection());
       if (location.connection().equals(IEventService.eventServiceConnection()))
-        context().become(publishingEnabled(Optional.empty(), currentTelemetryService));
+        getContext().become(publishingEnabled(Optional.empty(), currentTelemetryService));
       else if (location.connection().equals(ITelemetryService.telemetryServiceConnection()))
-        context().become(publishingEnabled(currentEventService, Optional.empty()));
+        getContext().become(publishingEnabled(currentEventService, Optional.empty()));
 
     } else  {
       log.info("TrombonePublisher received some other location: " + location);

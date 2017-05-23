@@ -1,7 +1,8 @@
 package csw.examples.vsliceJava.hcd;
 
 import akka.actor.*;
-import akka.testkit.JavaTestKit;
+import akka.japi.JavaPartialFunction;
+import akka.testkit.javadsl.TestKit;
 import akka.testkit.TestActorRef;
 import akka.util.Timeout;
 import csw.services.loc.LocationService;
@@ -13,6 +14,7 @@ import scala.concurrent.duration.FiniteDuration;
 import csw.examples.vsliceJava.hcd.SingleAxisSimulator.*;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.Vector;
 import java.util.concurrent.TimeUnit;
@@ -25,7 +27,7 @@ import static csw.examples.vsliceJava.hcd.MotionWorker.*;
 
 
 @SuppressWarnings({"unused", "SameParameterValue", "WeakerAccess"})
-public class SingleAxisSimulatorTests extends JavaTestKit {
+public class SingleAxisSimulatorTests extends TestKit {
   private static ActorSystem system;
   Timeout timeout = Timeout.durationToTimeout(FiniteDuration.apply(60, TimeUnit.SECONDS));
 
@@ -51,7 +53,7 @@ public class SingleAxisSimulatorTests extends JavaTestKit {
 
   @AfterClass
   public static void teardown() {
-    JavaTestKit.shutdownActorSystem(system);
+    TestKit.shutdownActorSystem(system);
     system = null;
   }
 
@@ -61,19 +63,17 @@ public class SingleAxisSimulatorTests extends JavaTestKit {
     // Get AxisStarted
     allMsgs.add(expectMsgEquals(Start.instance));
     // Receive updates until axis idle then get the last one
-    final MotionWorkerMsgs[] moveMsgs =
-      new ReceiveWhile<Tick>(Tick.class, duration("5 seconds")) {
-        protected Tick match(Object in) {
+    final List<MotionWorkerMsgs> moveMsgs =
+      receiveWhile(duration("5 seconds"), in -> {
           if (in instanceof Tick) {
             return (Tick) in;
           } else {
-            throw noMatch();
+            throw JavaPartialFunction.noMatch();
           }
-        }
-      }.get(); // this extracts the received messages
+      });
 
     MotionWorkerMsgs endMsg = expectMsgClass(End.class); // last one
-    Collections.addAll(allMsgs, moveMsgs);
+    allMsgs.addAll(moveMsgs);
     allMsgs.add(endMsg);
 
     if (diagFlag) System.out.println("LLMoveMsgs: " + allMsgs);
@@ -86,19 +86,17 @@ public class SingleAxisSimulatorTests extends JavaTestKit {
     // Get AxisStarted
     expectMsgEquals(AxisStarted.instance);
     // Receive updates until axis idle then get the last one
-    final AxisUpdate[] msgs =
-      new ReceiveWhile<AxisUpdate>(AxisUpdate.class, duration("5 second")) {
-        protected AxisUpdate match(Object in) {
+    final List<AxisUpdate> msgs =
+      receiveWhile(duration("5 second"), in -> {
           if (in instanceof AxisUpdate && ((AxisUpdate) in).state == AXIS_MOVING) {
             return (AxisUpdate) in;
           } else {
-            throw noMatch();
+            throw JavaPartialFunction.noMatch();
           }
-        }
-      }.get(); // this extracts the received messages
+      });
 
     AxisUpdate fmsg = expectMsgClass(AxisUpdate.class); // last one
-    Collections.addAll(allMsgs, msgs);
+    allMsgs.addAll(msgs);
     allMsgs.add(fmsg);
 
     if (diagFlag) System.out.println("MoveMsgs: " + allMsgs);
@@ -109,20 +107,18 @@ public class SingleAxisSimulatorTests extends JavaTestKit {
   private Vector<AxisResponse> expectMoveMsgsWithDest(int target, boolean diagFlag) {
     Vector<AxisResponse> allMsgs = new Vector<>();
     // Receive updates until axis idle then get the last one
-    final AxisResponse[] msgs =
-      new ReceiveWhile<AxisResponse>(AxisResponse.class, duration("5 second")) {
-        protected AxisResponse match(Object in) {
+    final List<AxisResponse> msgs =
+      receiveWhile(duration("5 second"), in -> {
           if (in instanceof AxisStarted || in instanceof AxisUpdate && ((AxisUpdate) in).current != target) {
             return (AxisResponse) in;
           } else {
-            throw noMatch();
+            throw JavaPartialFunction.noMatch();
           }
-        }
-      }.get(); // this extracts the received messages
+      });
 
     AxisUpdate fmsg1 = expectMsgClass(AxisUpdate.class); // last one when target == current
     AxisUpdate fmsg2 = expectMsgClass(AxisUpdate.class); // then the End event with the IDLE
-    Collections.addAll(allMsgs, msgs);
+    allMsgs.addAll(msgs);
     allMsgs.add(fmsg1);
     allMsgs.add(fmsg2);
 
@@ -331,18 +327,16 @@ public class SingleAxisSimulatorTests extends JavaTestKit {
       // Get AxisStarted
       expectMsgEquals(AxisStarted.instance);
       // Receive updates until axis idle then get the last one
-      final AxisUpdate[] msgs =
-        new ReceiveWhile<AxisUpdate>(AxisUpdate.class, duration("5 second")) {
-          protected AxisUpdate match(Object in) {
+      final List<AxisUpdate> msgs =
+        receiveWhile(duration("5 second"), in -> {
             if (in instanceof AxisUpdate && ((AxisUpdate) in).state == AXIS_MOVING) {
               return (AxisUpdate) in;
             } else {
-              throw noMatch();
+              throw JavaPartialFunction.noMatch();
             }
-          }
-        }.get(); // this extracts the received messages
+        });
       AxisUpdate fmsg = expectMsgClass(AxisUpdate.class); // last one
-      Collections.addAll(allMsgs, msgs);
+      allMsgs.addAll(msgs);
       allMsgs.add(fmsg);
 
       // System.out.println("MoveMsgs: " + allMsgs);

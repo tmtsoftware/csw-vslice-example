@@ -5,7 +5,7 @@ import akka.actor.ActorSystem;
 import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import akka.testkit.JavaTestKit;
+import akka.testkit.javadsl.TestKit;
 import akka.testkit.TestActorRef;
 import akka.testkit.TestProbe;
 import akka.util.Timeout;
@@ -36,7 +36,7 @@ import static junit.framework.TestCase.assertTrue;
 import static csw.examples.vsliceJava.assembly.TromboneEventSubscriber.UpdateNssInUse;
 
 @SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "unused", "FieldCanBeLocal", "WeakerAccess"})
-public class EventSubscriberTests extends JavaTestKit {
+public class EventSubscriberTests extends TestKit {
 
   private static ActorSystem system;
   private static LoggingAdapter logger;
@@ -69,7 +69,7 @@ public class EventSubscriberTests extends JavaTestKit {
 
   @AfterClass
   public static void teardown() {
-    JavaTestKit.shutdownActorSystem(system);
+    TestKit.shutdownActorSystem(system);
     system = null;
   }
 

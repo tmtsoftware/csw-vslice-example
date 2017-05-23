@@ -2,10 +2,9 @@ package csw.examples.vsliceJava.assembly;
 
 import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
-import akka.actor.PoisonPill;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import akka.testkit.JavaTestKit;
+import akka.testkit.javadsl.TestKit;
 import akka.testkit.TestProbe;
 import akka.util.Timeout;
 import csw.examples.vsliceJava.TestEnv;
@@ -39,7 +38,7 @@ import static javacsw.services.pkg.JSupervisor.LifecycleRunning;
 import static junit.framework.TestCase.assertEquals;
 
 @SuppressWarnings({"WeakerAccess", "OptionalUsedAsFieldOrParameterType", "MismatchedReadAndWriteOfArray"})
-public class TromboneAssemblyCompTests extends JavaTestKit {
+public class TromboneAssemblyCompTests extends TestKit {
   private static ActorSystem system;
   private static LoggingAdapter logger;
   private static String taName = "lgsTrombone";
@@ -82,7 +81,7 @@ public class TromboneAssemblyCompTests extends JavaTestKit {
   @AfterClass
   public static void teardown() throws InterruptedException {
     hcdActors.forEach(TromboneAssemblyCompTests::cleanup);
-    JavaTestKit.shutdownActorSystem(system);
+    TestKit.shutdownActorSystem(system);
     system = null;
   }
 

@@ -7,9 +7,6 @@ import csw.util.config.BooleanItem;
 import csw.util.config.DoubleItem;
 import csw.util.config.Events.*;
 import akka.japi.Creator;
-import akka.japi.pf.ReceiveBuilder;
-import scala.PartialFunction;
-import scala.runtime.BoxedUnit;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -56,7 +53,7 @@ public class FollowActor extends AbstractActor {
   private final Optional<ActorRef> engPublisher;
 
   private final TromboneCalculationConfig calculationConfig;
-  public final DoubleItem initialElevation;
+  final DoubleItem initialElevation;
 
   /**
    * Constructor
@@ -77,19 +74,19 @@ public class FollowActor extends AbstractActor {
     this.engPublisher = engPublisher;
 
     calculationConfig = ac.calculationConfig;
-
-    // In this implementation, these vars are needed to support the setElevation and setAngle commands which require an update
-    DoubleItem initialFocusError = jset(ac.focusErrorKey, 0.0).withUnits(ac.focusErrorUnits);
-    DoubleItem initialZenithAngle = jset(ac.zenithAngleKey, 0.0).withUnits(ac.zenithAngleUnits);
-
-//    DoubleItem nSSModeZenithAngle = jset(ac.zenithAngleKey, 0.0).withUnits(ac.zenithAngleUnits);
-
-    // Initial receive - start with initial values
-    receive(followingReceive(initialElevation, initialFocusError, initialZenithAngle));
   }
 
-  private PartialFunction<Object, BoxedUnit> followingReceive(DoubleItem cElevation, DoubleItem cFocusError, DoubleItem cZenithAngle) {
-    return ReceiveBuilder.
+  @Override
+  public Receive createReceive() {
+    // Initial receive - start with initial values
+    // In this implementation, these vars are needed to support the setElevation and setAngle commands which require an update
+    DoubleItem initialFocusError = jset(AssemblyContext.focusErrorKey, 0.0).withUnits(AssemblyContext.focusErrorUnits);
+    DoubleItem initialZenithAngle = jset(AssemblyContext.zenithAngleKey, 0.0).withUnits(AssemblyContext.zenithAngleUnits);
+    return followingReceive(initialElevation, initialFocusError, initialZenithAngle);
+  }
+
+    private Receive followingReceive(DoubleItem cElevation, DoubleItem cFocusError, DoubleItem cZenithAngle) {
+    return receiveBuilder().
       match(StopFollowing.class, t -> {
         // do nothing
       }).
@@ -97,7 +94,7 @@ public class FollowActor extends AbstractActor {
         log.info("Got an Update Event: " + t);
         // Not really using the time here
         // Units checks - should not happen, so if so, flag an error and skip calculation
-        if (t.zenithAngle.units() != ac.zenithAngleUnits || t.focusError.units() != ac.focusErrorUnits) {
+        if (t.zenithAngle.units() != AssemblyContext.zenithAngleUnits || t.focusError.units() != AssemblyContext.focusErrorUnits) {
           log.error("Ignoring event data received with improper units: zenithAngle: " + t.zenithAngle.units() + ", focusError: " + t.focusError.units());
         } else if (!verifyZenithAngle(t.zenithAngle) || !verifyFocusError(calculationConfig, t.focusError)) {
           log.error("Ignoring out of range event data: zenithAngle: " + t.zenithAngle + ", focusError: " + t.focusError);
@@ -110,8 +107,8 @@ public class FollowActor extends AbstractActor {
 
           // Post a SystemEvent for AOESW if not inNSSMode according to spec
           if (!jvalue(inNSSMode)) {
-            sendAOESWUpdate(jset(ac.naElevationKey, newElevation).withUnits(ac.naElevationUnits),
-              jset(ac.naRangeDistanceKey, totalRangeDistance).withUnits(ac.naRangeDistanceUnits));
+            sendAOESWUpdate(jset(AssemblyContext.naElevationKey, newElevation).withUnits(AssemblyContext.naElevationUnits),
+              jset(AssemblyContext.naRangeDistanceKey, totalRangeDistance).withUnits(AssemblyContext.naRangeDistanceUnits));
           }
 
           DoubleItem newTrombonePosition = calculateNewTrombonePosition(calculationConfig, cElevation, t.focusError, t.zenithAngle);
@@ -124,14 +121,14 @@ public class FollowActor extends AbstractActor {
 
           // Call again with new values - avoiding globals
           // I should be using newElevation, but it doesn't work well without changes in other values, so I'm not updating
-          context().become(followingReceive(cElevation, t.focusError, t.zenithAngle));
+          getContext().become(followingReceive(cElevation, t.focusError, t.zenithAngle));
         }
       }).
       match(SetElevation.class, t -> {
         // This updates the current elevation and then causes an internal update to move things
         log.info("Got elevation: " + t.elevation);
         // Restart the receive with the new value for elevation and the current values for others
-        context().become(followingReceive(t.elevation, cFocusError, cZenithAngle));
+        getContext().become(followingReceive(t.elevation, cFocusError, cZenithAngle));
         self().tell(new UpdatedEventData(cZenithAngle, cFocusError, new EventTime(Instant.now())), self());
       }).
       match(SetZenithAngle.class, t -> {
@@ -151,7 +148,7 @@ public class FollowActor extends AbstractActor {
     log.debug("totalRange: " + totalRangeDistance);
 
     double stagePosition = rangeDistanceToStagePosition(totalRangeDistance);
-    return ac.spos(stagePosition);
+    return AssemblyContext.spos(stagePosition);
   }
 
   //

@@ -51,7 +51,7 @@ import java.util.concurrent.CompletableFuture;
  * - Handles incoming commands
  * - Generates CurrentState for the Assembly
  */
-@SuppressWarnings({"unused", "CodeBlock2Expr", "OptionalUsedAsFieldOrParameterType", "WeakerAccess"})
+@SuppressWarnings({"unused", "CodeBlock2Expr", "OptionalUsedAsFieldOrParameterType", "WeakerAccess", "ConstantConditions"})
 public class TromboneHCD extends JHcdController {
   private LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
@@ -96,27 +96,28 @@ public class TromboneHCD extends JHcdController {
     } catch (Exception ex) {
       supervisor.tell(new Supervisor.InitializeFailure(ex.getMessage()), self());
     }
-
-    // --
-
-    // Receive actor messages
-    receive(initializingReceive());
   }
 
-  private PartialFunction<Object, BoxedUnit> initializingReceive() {
-    return publisherReceive().orElse(ReceiveBuilder
-      .matchEquals(Running, e -> {
-        // When Running is received, transition to running Receive
-        log.debug("received Running");
-        context().become(runningReceive());
-      })
-      .matchAny(x -> log.warning("Unexpected message in TromboneHCD (Not running yet): " + x))
-      .build());
+  @Override
+  public Receive createReceive() {
+    return initializingReceive();
+  }
+
+  private Receive initializingReceive() {
+    Receive r = receiveBuilder().
+        matchEquals(Running, e -> {
+          // When Running is received, transition to running Receive
+          log.debug("received Running");
+          getContext().become(runningReceive());
+        }).
+        matchAny(x -> log.warning("Unexpected message in TromboneHCD (Not running yet): " + x)).
+        build();
+    return jPublisherReceive().orElse(r);
   }
 
 
-  private PartialFunction<Object, BoxedUnit> runningReceive() {
-    return controllerReceive().orElse(ReceiveBuilder
+  private Receive runningReceive() {
+    return jControllerReceive().orElse(receiveBuilder()
       .matchEquals(Running, e -> {
         log.info("Received Running");
       })
@@ -213,7 +214,7 @@ public class TromboneHCD extends JHcdController {
   }
 
   private ActorRef setupAxis(AxisConfig ac) {
-    return context().actorOf(SingleAxisSimulator.props(ac, Optional.of(self())), "Test1");
+    return getContext().actorOf(SingleAxisSimulator.props(ac, Optional.of(self())), "Test1");
   }
 
   // -- Utility functions
@@ -222,7 +223,7 @@ public class TromboneHCD extends JHcdController {
   private CompletableFuture<AxisConfig> getAxisConfig() {
     //noinspection OptionalGetWithoutIsPresent
     return JConfigServiceClient.getConfigFromConfigService(tromboneConfigFile, Optional.empty(),
-      Optional.of(resource), context().system(), timeout).thenApply(config -> new AxisConfig(config.get()));
+      Optional.of(resource), getContext().system(), timeout).thenApply(config -> new AxisConfig(config.get()));
   }
 
   // --- Static defs ---

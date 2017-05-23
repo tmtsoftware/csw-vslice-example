@@ -1,10 +1,11 @@
 package csw.examples.vsliceJava.hcd;
 
 import akka.actor.ActorRef;
+import akka.japi.JavaPartialFunction;
 import akka.testkit.TestActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
-import akka.testkit.JavaTestKit;
+import akka.testkit.javadsl.TestKit;
 import akka.testkit.TestProbe;
 import akka.util.Timeout;
 import csw.examples.vsliceJava.TestEnv;
@@ -34,7 +35,7 @@ import static javacsw.services.pkg.JSupervisor.*;
 import static org.junit.Assert.*;
 
 @SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "unused", "WeakerAccess"})
-public class TromboneHCDBasicTests extends JavaTestKit {
+public class TromboneHCDBasicTests extends TestKit {
   private static ActorSystem system;
   Timeout timeout = Timeout.durationToTimeout(FiniteDuration.apply(60, TimeUnit.SECONDS));
 
@@ -61,7 +62,7 @@ public class TromboneHCDBasicTests extends JavaTestKit {
 
   @AfterClass
   public static void teardown() {
-    JavaTestKit.shutdownActorSystem(system);
+    TestKit.shutdownActorSystem(system);
     system = null;
   }
 
@@ -138,9 +139,8 @@ public class TromboneHCDBasicTests extends JavaTestKit {
   }
 
   Vector<CurrentState> waitForMoveMsgs() {
-    final CurrentState[] msgs =
-      new ReceiveWhile<CurrentState>(CurrentState.class, duration("5 seconds")) {
-        protected CurrentState match(Object in) {
+    final List<CurrentState> msgs =
+      receiveWhile(duration("5 seconds"), in -> {
           if (in instanceof CurrentState) {
             CurrentState cs = (CurrentState) in;
             if (cs.prefix().contains(TromboneHCD.axisStatePrefix) && jvalue(jitem(cs, stateKey)).name().equals(AXIS_MOVING.name())) {
@@ -151,21 +151,19 @@ public class TromboneHCDBasicTests extends JavaTestKit {
               return cs;
             }
           }
-          throw noMatch();
-        }
-      }.get(); // this extracts the received messages
+          throw JavaPartialFunction.noMatch();
+      });
 
     CurrentState fmsg = expectMsgClass(CurrentState.class); // last one
 
-    Vector<CurrentState> allmsgs = new Vector<>(Arrays.asList(msgs));
+    Vector<CurrentState> allmsgs = new Vector<>(msgs);
     allmsgs.add(fmsg);
     return allmsgs;
   }
 
   List<CurrentState> waitForAllMsgs() {
-    final CurrentState[] msgs =
-      new ReceiveWhile<CurrentState>(CurrentState.class, duration("5 seconds")) {
-        protected CurrentState match(Object in) {
+    final List<CurrentState> msgs =
+      receiveWhile(duration("5 seconds"), in -> {
           if (in instanceof CurrentState) {
             CurrentState cs = (CurrentState) in;
             if (cs.prefix().contains(TromboneHCD.axisStatePrefix)) {
@@ -176,13 +174,12 @@ public class TromboneHCDBasicTests extends JavaTestKit {
               return cs;
             }
           }
-          throw noMatch();
-        }
-      }.get(); // this extracts the received messages
+          throw JavaPartialFunction.noMatch();
+      });
 
     CurrentState fmsg = expectMsgClass(CurrentState.class); // last one
 
-    List<CurrentState> allmsgs = Arrays.asList(msgs);
+    List<CurrentState> allmsgs = new ArrayList<>(msgs);
     allmsgs.add(fmsg);
     return allmsgs;
   }

@@ -6,14 +6,11 @@ import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.japi.Creator;
-import akka.japi.pf.ReceiveBuilder;
 import csw.services.events.EventService;
 import csw.util.config.BooleanItem;
 import csw.util.config.DoubleItem;
 import javacsw.services.events.IEventService;
 import javacsw.services.pkg.ILocationSubscriberClient;
-import scala.PartialFunction;
-import scala.runtime.BoxedUnit;
 
 import java.util.Arrays;
 import java.util.Optional;
@@ -61,21 +58,24 @@ public class TromboneEventSubscriber extends AbstractActor implements ILocationS
     this.nssInUseIn = nssInUseIn;
     this.followActor = followActor;
 
-    nssZenithAngle = ac.za(0.0);
-    initialZenithAngle = jvalue(nssInUseIn) ? nssZenithAngle : ac.za(0.0);
-    initialFocusError = ac.fe(0.0);
+    nssZenithAngle = AssemblyContext.za(0.0);
+    initialZenithAngle = jvalue(nssInUseIn) ? nssZenithAngle : AssemblyContext.za(0.0);
+    initialFocusError = AssemblyContext.fe(0.0);
     nssInUseGlobal = nssInUseIn;
 
     // This var is needed to capture the Monitor used for subscriptions
     subscribeMonitor = startupSubscriptions(eventService);
-
-    receive(subscribeReceive(nssInUseIn, initialZenithAngle, initialFocusError));
   }
 
-  private EventMonitor startupSubscriptions(IEventService eventService) {
+  @Override
+  public Receive createReceive() {
+    return subscribeReceive(nssInUseIn, initialZenithAngle, initialFocusError);
+  }
+
+    private EventMonitor startupSubscriptions(IEventService eventService) {
     // Always subscribe to focus error
     // Create the subscribeMonitor here
-    EventMonitor subscribeMonitor = subscribeKeys(eventService, ac.feConfigKey);
+    EventMonitor subscribeMonitor = subscribeKeys(eventService, AssemblyContext.feConfigKey);
     log.info("FeMonitor actor: " + subscribeMonitor.actorRef());
 
     log.info("nssInuse: " + nssInUseIn);
@@ -83,29 +83,29 @@ public class TromboneEventSubscriber extends AbstractActor implements ILocationS
     // But only subscribe to ZA if nss is not in use
     if (!jvalue(nssInUseIn)) {
       // NSS not inuse so subscribe to ZA
-      subscribeKeys(subscribeMonitor, ac.zaConfigKey);
+      subscribeKeys(subscribeMonitor, AssemblyContext.zaConfigKey);
     }
     return subscribeMonitor;
   }
 
-  private PartialFunction<Object, BoxedUnit> subscribeReceive(BooleanItem cNssInUse, DoubleItem cZenithAngle, DoubleItem cFocusError) {
-    return ReceiveBuilder.
+  private Receive subscribeReceive(BooleanItem cNssInUse, DoubleItem cZenithAngle, DoubleItem cFocusError) {
+    return receiveBuilder().
 
       match(SystemEvent.class, event -> {
-        if (event.info().source().equals(ac.zaConfigKey)) {
-          DoubleItem newZenithAngle = jitem(event, ac.zenithAngleKey);
+        if (event.info().source().equals(AssemblyContext.zaConfigKey)) {
+          DoubleItem newZenithAngle = jitem(event, AssemblyContext.zenithAngleKey);
           log.info("Received ZA: " + event);
           updateFollowActor(newZenithAngle, cFocusError, event.info().eventTime());
           // Pass the new values to the next message
-          context().become(subscribeReceive(cNssInUse, newZenithAngle, cFocusError));
+          getContext().become(subscribeReceive(cNssInUse, newZenithAngle, cFocusError));
 
-        } else if (event.info().source().equals(ac.feConfigKey)) {
+        } else if (event.info().source().equals(AssemblyContext.feConfigKey)) {
           // Update focusError state and then update calculator
           log.info("Received FE: " + event);
-          DoubleItem newFocusError = jitem(event, ac.focusErrorKey);
+          DoubleItem newFocusError = jitem(event, AssemblyContext.focusErrorKey);
           updateFollowActor(cZenithAngle, newFocusError, event.info().eventTime());
           // Pass the new values to the next message
-          context().become(subscribeReceive(cNssInUse, cZenithAngle, newFocusError));
+          getContext().become(subscribeReceive(cNssInUse, cZenithAngle, newFocusError));
 
         } else log.info("GsubscribeReceive in TromboneEventSubscriber received an unknown SystemEvent: " + event.info().source());
       }).
@@ -113,7 +113,7 @@ public class TromboneEventSubscriber extends AbstractActor implements ILocationS
       match(FollowActor.StopFollowing.class, t -> {
         subscribeMonitor.stop();
         // Kill this subscriber
-        context().stop(self());
+        getContext().stop(self());
       }).
 
       // This is an engineering command to allow checking subscriber
@@ -121,11 +121,11 @@ public class TromboneEventSubscriber extends AbstractActor implements ILocationS
         BooleanItem nssInUseUpdate = t.nssInUse;
         if (!nssInUseUpdate.equals(cNssInUse)) {
           if (jvalue(nssInUseUpdate)) {
-            unsubscribeKeys(subscribeMonitor, ac.zaConfigKey);
-            context().become(subscribeReceive(nssInUseUpdate, nssZenithAngle, cFocusError));
+            unsubscribeKeys(subscribeMonitor, AssemblyContext.zaConfigKey);
+            getContext().become(subscribeReceive(nssInUseUpdate, nssZenithAngle, cFocusError));
           } else {
-            subscribeKeys(subscribeMonitor, ac.zaConfigKey);
-            context().become(subscribeReceive(nssInUseUpdate, cZenithAngle, cFocusError));
+            subscribeKeys(subscribeMonitor, AssemblyContext.zaConfigKey);
+            getContext().become(subscribeReceive(nssInUseUpdate, cZenithAngle, cFocusError));
           }
           // Need to update the global for shutting down event subscriptions
           nssInUseGlobal = nssInUseUpdate;
@@ -192,10 +192,10 @@ public class TromboneEventSubscriber extends AbstractActor implements ILocationS
     });
   }
 
-  public static class UpdateNssInUse {
+  static class UpdateNssInUse {
     final BooleanItem nssInUse;
 
-    public UpdateNssInUse(BooleanItem nssInUse) {
+    UpdateNssInUse(BooleanItem nssInUse) {
       this.nssInUse = nssInUse;
     }
   }
