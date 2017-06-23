@@ -17,8 +17,8 @@ import csw.services.pkg.Component.{DoNotRegister, HcdInfo}
 import csw.services.pkg.Supervisor
 import csw.services.pkg.Supervisor.{HaltComponent, LifecyclePreparingToShutdown, LifecycleRunning, LifecycleShutdown}
 import csw.services.pkg.SupervisorExternal.{ExComponentShutdown, LifecycleStateChanged, SubscribeLifecycleCallback}
-import csw.util.config.StateVariable.CurrentState
-import csw.util.config.UnitsOfMeasure.encoder
+import csw.util.param.StateVariable.CurrentState
+import csw.util.param.UnitsOfMeasure.encoder
 import org.scalatest.{BeforeAndAfterAll, _}
 
 import scala.concurrent.Await

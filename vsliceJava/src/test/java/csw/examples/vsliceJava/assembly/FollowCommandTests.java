@@ -15,10 +15,10 @@ import csw.examples.vsliceJava.hcd.TromboneHCD;
 import csw.services.loc.LocationService;
 import csw.services.pkg.Component;
 import csw.services.pkg.Supervisor;
-import csw.util.config.BooleanItem;
-import csw.util.config.DoubleItem;
-import csw.util.config.Events;
-import csw.util.config.JavaHelpers;
+import csw.util.param.BooleanParameter;
+import csw.util.param.DoubleParameter;
+import csw.util.param.Events;
+import csw.util.param.JavaHelpers;
 import javacsw.services.events.IEventService;
 import javacsw.services.events.ITelemetryService;
 import javacsw.services.pkg.JComponent;
@@ -35,15 +35,15 @@ import static csw.examples.vsliceJava.assembly.AssemblyTestData.*;
 import static csw.examples.vsliceJava.hcd.TromboneHCD.*;
 import static csw.services.pkg.SupervisorExternal.LifecycleStateChanged;
 import static csw.services.pkg.SupervisorExternal.SubscribeLifecycleCallback;
-import static csw.util.config.Events.*;
-import static csw.util.config.StateVariable.CurrentState;
+import static csw.util.param.Events.*;
+import static csw.util.param.StateVariable.CurrentState;
 import static javacsw.services.loc.JConnectionType.AkkaType;
 import static javacsw.services.pkg.JComponent.DoNotRegister;
 import static javacsw.services.pkg.JSupervisor.HaltComponent;
 import static javacsw.services.pkg.JSupervisor.LifecycleRunning;
-import static javacsw.util.config.JItems.jadd;
-import static javacsw.util.config.JItems.jset;
-import static javacsw.util.config.JPublisherActor.Subscribe;
+import static javacsw.util.param.JParameters.jadd;
+import static javacsw.util.param.JParameters.jset;
+import static javacsw.util.param.JPublisherActor.Subscribe;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
 
@@ -152,16 +152,16 @@ public class FollowCommandTests extends TestKit {
   }
 
   // Used for creating followers
-  DoubleItem initialElevation = naElevation(assemblyContext.calculationConfig.defaultInitialElevation);
+  DoubleParameter initialElevation = naElevation(assemblyContext.calculationConfig.defaultInitialElevation);
 
-  TestActorRef<FollowCommand> newTestFollowCommand(BooleanItem nssInUse, Optional<ActorRef> tromboneHCD, Optional<ActorRef> eventPublisher) {
+  TestActorRef<FollowCommand> newTestFollowCommand(BooleanParameter nssInUse, Optional<ActorRef> tromboneHCD, Optional<ActorRef> eventPublisher) {
     Props props = FollowCommand.props(assemblyContext, initialElevation, nssInUse, tromboneHCD, eventPublisher, eventService);
     TestActorRef<FollowCommand> a = TestActorRef.create(system, props);
     expectNoMsg(duration("200 milli")); // give the new actor time to subscribe before any test publishing...
     return a;
   }
 
-  ActorRef newFollowCommand(BooleanItem isNssInUse, Optional<ActorRef> tromboneHCD, Optional<ActorRef> eventPublisher) {
+  ActorRef newFollowCommand(BooleanParameter isNssInUse, Optional<ActorRef> tromboneHCD, Optional<ActorRef> eventPublisher) {
     Props props = FollowCommand.props(assemblyContext, initialElevation, isNssInUse, tromboneHCD, eventPublisher, eventService);
     ActorRef a = system.actorOf(props);
     expectNoMsg(duration("200 milli")); // give the new actor time to subscribe before any test publishing...
@@ -316,7 +316,7 @@ public class FollowCommandTests extends TestKit {
     tcsRtc.publish(new SystemEvent(focusErrorPrefix).add(fe(testFE)));
 
     // These are fake messages for the FollowActor that will be sent to simulate the TCS updating ZA
-    List<SystemEvent> tcsEvents = testZenithAngles.stream().map(f -> new SystemEvent(zaConfigKey.prefix()).add(za(f)))
+    List<SystemEvent> tcsEvents = testZenithAngles.stream().map(f -> new SystemEvent(zaPrefix.prefix()).add(za(f)))
       .collect(Collectors.toList());
 
     // This should result in the length of tcsEvents being published, which is 15
@@ -458,7 +458,7 @@ public class FollowCommandTests extends TestKit {
 
     // These are fake messages for the FollowActor that will be sent to simulate the TCS updating ZA
     List<SystemEvent> tcsEvents = testZenithAngles.stream().map(f ->
-      new SystemEvent(zaConfigKey.prefix()).add(za(f))).collect(Collectors.toList());
+      new SystemEvent(zaPrefix.prefix()).add(za(f))).collect(Collectors.toList());
 
     // This should result in the length of tcsEvents being published, which is 15
     // Since nss is in use, no events will be published because za is not subscribed to
@@ -567,7 +567,7 @@ public class FollowCommandTests extends TestKit {
 
     // These are fake messages for the FollowActor that will be sent to simulate the TCS updating ZA
     List<SystemEvent> tcsEvents = testZenithAngles.stream().map(f ->
-      new SystemEvent(zaConfigKey.prefix()).add(za(f))).collect(Collectors.toList());
+      new SystemEvent(zaPrefix.prefix()).add(za(f))).collect(Collectors.toList());
 
     // This should result in the length of tcsEvents being published, which is 15
     tcsEvents.forEach(f -> {

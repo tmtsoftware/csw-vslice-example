@@ -10,7 +10,7 @@ import akka.util.Timeout;
 import csw.examples.vsliceJava.hcd.TromboneHCD;
 import csw.services.alarms.AlarmKey;
 import csw.services.alarms.AlarmModel;
-import csw.util.config.JavaHelpers;
+import csw.util.param.JavaHelpers;
 import javacsw.services.alarms.IAlarmService;
 import javacsw.services.ccs.JHcdController;
 import scala.Unit;
@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 
 import static csw.examples.vsliceJava.hcd.TromboneHCD.inHighLimitKey;
 import static csw.examples.vsliceJava.hcd.TromboneHCD.inLowLimitKey;
-import static csw.util.config.StateVariable.CurrentState;
+import static csw.util.param.StateVariable.CurrentState;
 import static javacsw.services.alarms.JAlarmModel.JSeverityLevel.Okay;
 import static javacsw.services.alarms.JAlarmModel.JSeverityLevel.Warning;
 
@@ -79,7 +79,7 @@ public class TromboneAlarmMonitor extends AbstractActor {
     private Receive monitorReceive(IAlarmService alarmService) {
       return receiveBuilder().
         match(CurrentState.class, cs -> {
-          if (cs.configKey().equals(TromboneHCD.axisStateCK)) {
+          if (cs.prefix().equals(TromboneHCD.axisStateCK)) {
             boolean inLowLimit = JavaHelpers.jvalue(cs, inLowLimitKey);
             if (inLowLimit) {
               log.info("TromboneAssembly Alarm Monitor received a encoder low limit from the trombone HCD");
@@ -101,7 +101,7 @@ public class TromboneAlarmMonitor extends AbstractActor {
   private Receive inAlarmStateReceive(IAlarmService alarmService, AlarmKey alarmKey) {
     return receiveBuilder().
       match(CurrentState.class, cs -> {
-        if (cs.configKey().equals(TromboneHCD.axisStateCK)) {
+        if (cs.prefix().equals(TromboneHCD.axisStateCK)) {
           if (alarmKey.equals(lowLimitAlarm)) {
             boolean inLowLimit = JavaHelpers.jvalue(cs, inLowLimitKey);
             if (!inLowLimit) {

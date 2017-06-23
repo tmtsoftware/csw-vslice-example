@@ -5,8 +5,8 @@ import csw.examples.vslice.assembly.TrombonePublisher.{AOESWUpdate, AxisStateUpd
 import csw.services.events.{EventService, TelemetryService}
 import csw.services.loc.LocationService.{Location, ResolvedTcpLocation, Unresolved}
 import csw.services.loc.LocationSubscriberClient
-import csw.util.config._
-import csw.util.config.Events.{StatusEvent, SystemEvent}
+import csw.util.param._
+import csw.util.param.Events.{StatusEvent, SystemEvent}
 
 import scala.util.Failure
 
@@ -88,7 +88,7 @@ class TrombonePublisher(assemblyContext: AssemblyContext, eventServiceIn: Option
     }
   }
 
-  private def publishAOESW(eventService: Option[EventService], elevationItem: DoubleItem, rangeItem: DoubleItem) = {
+  private def publishAOESW(eventService: Option[EventService], elevationItem: DoubleParameter, rangeItem: DoubleParameter) = {
     val se = SystemEvent(aoSystemEventPrefix).madd(elevationItem, rangeItem)
     log.debug(s"System publish of $aoSystemEventPrefix: $se")
     eventService.foreach(_.publish(se).onComplete {
@@ -97,7 +97,7 @@ class TrombonePublisher(assemblyContext: AssemblyContext, eventServiceIn: Option
     })
   }
 
-  private def publishEngr(telemetryService: Option[TelemetryService], rtcFocusError: DoubleItem, stagePosition: DoubleItem, zenithAngle: DoubleItem) = {
+  private def publishEngr(telemetryService: Option[TelemetryService], rtcFocusError: DoubleParameter, stagePosition: DoubleParameter, zenithAngle: DoubleParameter) = {
     val ste = StatusEvent(engStatusEventPrefix).madd(rtcFocusError, stagePosition, zenithAngle)
     log.info(s"Status publish of $engStatusEventPrefix: $ste")
     telemetryService.foreach(_.publish(ste).onComplete {
@@ -116,7 +116,7 @@ class TrombonePublisher(assemblyContext: AssemblyContext, eventServiceIn: Option
     })
   }
 
-  private def publishAxisState(telemetryService: Option[TelemetryService], axisName: StringItem, position: IntItem, state: ChoiceItem, inLowLimit: BooleanItem, inHighLimit: BooleanItem, inHome: BooleanItem) = {
+  private def publishAxisState(telemetryService: Option[TelemetryService], axisName: StringParameter, position: IntParameter, state: ChoiceParameter, inLowLimit: BooleanParameter, inHighLimit: BooleanParameter, inHome: BooleanParameter) = {
     val ste = StatusEvent(axisStateEventPrefix).madd(axisName, position, state, inLowLimit, inHighLimit, inHome)
     log.debug(s"Axis state publish of $axisStateEventPrefix: $ste")
     telemetryService.foreach(_.publish(ste).onComplete {
@@ -125,7 +125,7 @@ class TrombonePublisher(assemblyContext: AssemblyContext, eventServiceIn: Option
     })
   }
 
-  def publishAxisStats(telemetryService: Option[TelemetryService], axisName: StringItem, datumCount: IntItem, moveCount: IntItem, homeCount: IntItem, limitCount: IntItem, successCount: IntItem, failureCount: IntItem, cancelCount: IntItem): Unit = {
+  def publishAxisStats(telemetryService: Option[TelemetryService], axisName: StringParameter, datumCount: IntParameter, moveCount: IntParameter, homeCount: IntParameter, limitCount: IntParameter, successCount: IntParameter, failureCount: IntParameter, cancelCount: IntParameter): Unit = {
     val ste = StatusEvent(axisStatsEventPrefix).madd(axisName, datumCount, moveCount, homeCount, limitCount, successCount, failureCount, cancelCount)
     log.debug(s"Axis stats publish of $axisStatsEventPrefix: $ste")
     telemetryService.foreach(_.publish(ste).onComplete {
@@ -145,18 +145,18 @@ object TrombonePublisher {
    * @param naElevation elevation update
    * @param naRange range update
    */
-  case class AOESWUpdate(naElevation: DoubleItem, naRange: DoubleItem)
+  case class AOESWUpdate(naElevation: DoubleParameter, naRange: DoubleParameter)
 
   /**
    * Used by actors wishing to cause an engineering event update
-   * @param focusError focus error value as DoubleItem
-   * @param stagePosition stage position as a DoubleItem
-   * @param zenithAngle zenith angle update as a DoubleItem
+   * @param focusError focus error value as DoubleParameter
+   * @param stagePosition stage position as a DoubleParameter
+   * @param zenithAngle zenith angle update as a DoubleParameter
    */
-  case class EngrUpdate(focusError: DoubleItem, stagePosition: DoubleItem, zenithAngle: DoubleItem)
+  case class EngrUpdate(focusError: DoubleParameter, stagePosition: DoubleParameter, zenithAngle: DoubleParameter)
 
-  case class AxisStateUpdate(axisName: StringItem, position: IntItem, state: ChoiceItem, inLowLimit: BooleanItem, inHighLimit: BooleanItem, inHome: BooleanItem)
+  case class AxisStateUpdate(axisName: StringParameter, position: IntParameter, state: ChoiceParameter, inLowLimit: BooleanParameter, inHighLimit: BooleanParameter, inHome: BooleanParameter)
 
-  case class AxisStatsUpdate(axisName: StringItem, initCount: IntItem, moveCount: IntItem, homeCount: IntItem, limitCount: IntItem, successCount: IntItem, failCount: IntItem, cancelCount: IntItem)
+  case class AxisStatsUpdate(axisName: StringParameter, initCount: IntParameter, moveCount: IntParameter, homeCount: IntParameter, limitCount: IntParameter, successCount: IntParameter, failCount: IntParameter, cancelCount: IntParameter)
 
 }

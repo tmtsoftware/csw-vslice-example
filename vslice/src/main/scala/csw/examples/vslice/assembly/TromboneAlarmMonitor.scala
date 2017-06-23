@@ -7,7 +7,7 @@ import csw.examples.vslice.hcd.TromboneHCD._
 import csw.services.alarms.AlarmModel.SeverityLevel.{Okay, Warning}
 import csw.services.alarms.{AlarmKey, AlarmModel, AlarmService}
 import csw.services.ccs.HcdController
-import csw.util.config.StateVariable.CurrentState
+import csw.util.param.StateVariable.CurrentState
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -61,7 +61,7 @@ class TromboneAlarmMonitor(currentStateReceiver: ActorRef, alarmService: AlarmSe
    * @return the actor Receive partial function
    */
   def monitorReceive(alarmService: AlarmService): Receive = {
-    case cs: CurrentState if cs.configKey == TromboneHCD.axisStateCK =>
+    case cs: CurrentState if cs.prefix == TromboneHCD.axisStateCK =>
       val inLowLimit = cs(inLowLimitKey)
       if (inLowLimit.head) {
         log.info(s"TromboneAssembly Alarm Monitor received a encoder low limit from the trombone HCD")
@@ -80,7 +80,7 @@ class TromboneAlarmMonitor(currentStateReceiver: ActorRef, alarmService: AlarmSe
 
   def inAlarmStateReceive(alarmService: AlarmService, alarmKey: AlarmKey): Receive = {
     // One of our keys
-    case cs: CurrentState if cs.configKey == TromboneHCD.axisStateCK =>
+    case cs: CurrentState if cs.prefix == TromboneHCD.axisStateCK =>
       alarmKey match {
         case `lowLimitAlarm` =>
           val inLowLimit = cs(inLowLimitKey)

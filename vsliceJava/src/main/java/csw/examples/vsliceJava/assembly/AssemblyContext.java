@@ -3,17 +3,17 @@ package csw.examples.vsliceJava.assembly;
 import com.typesafe.config.Config;
 import csw.services.loc.ComponentId;
 import csw.services.loc.ComponentType;
-import csw.util.config.*;
-import csw.util.config.BooleanKey;
-import csw.util.config.DoubleKey;
-import csw.util.config.StringKey;
+import csw.util.param.*;
+import csw.util.param.BooleanKey;
+import csw.util.param.DoubleKey;
+import csw.util.param.StringKey;
 
 import static csw.services.pkg.Component.AssemblyInfo;
-import static csw.util.config.Configurations.ConfigKey;
-import static csw.util.config.Configurations.SetupConfig;
-import static javacsw.util.config.JConfigDSL.sc;
-import static javacsw.util.config.JItems.*;
-import static javacsw.util.config.JUnitsOfMeasure.*;
+import static csw.util.param.Parameters.Prefix;
+import static csw.util.param.Parameters.Setup;
+import static javacsw.util.param.JParameterSetDsl.setup;
+import static javacsw.util.param.JParameters.*;
+import static javacsw.util.param.JUnitsOfMeasure.*;
 
 /**
  * TMT Source Code: 10/4/16.
@@ -39,63 +39,63 @@ public class AssemblyContext {
   // Public command configurations
   // Init submit command
   public final String initPrefix;
-  public final ConfigKey initCK;
+  public final Prefix initCK;
 
   // Dataum submit command
   public final String datumPrefix;
-  public final ConfigKey datumCK;
+  public final Prefix datumCK;
 
   // Stop submit command
   public final String stopPrefix;
-  public final ConfigKey stopCK;
+  public final Prefix stopCK;
 
   // Move submit command
   public final String movePrefix;
-  public final ConfigKey moveCK;
+  public final Prefix moveCK;
 
-  public SetupConfig moveSC(double position) {
+  public Setup moveSC(double position) {
     return sc(moveCK.prefix(), jset(stagePositionKey, position).withUnits(stagePositionUnits));
   }
 
   // Position submit command
   public final String positionPrefix;
-  public final ConfigKey positionCK;
+  public final Prefix positionCK;
 
-  public SetupConfig positionSC(double rangeDistance) {
+  public Setup positionSC(double rangeDistance) {
     return sc(positionCK.prefix(), jset(naRangeDistanceKey, rangeDistance).withUnits(naRangeDistanceUnits));
   }
 
   // setElevation submit command
   public final String setElevationPrefix;
-  public final ConfigKey setElevationCK;
+  public final Prefix setElevationCK;
 
-  public SetupConfig setElevationSC(double elevation) {
+  public Setup setElevationSC(double elevation) {
     return sc(setElevationCK.prefix(), naElevation(elevation));
   }
 
   // setAngle submit command
   public final String setAnglePrefx;
-  public final ConfigKey setAngleCK;
+  public final Prefix setAngleCK;
 
-  public SetupConfig setAngleSC(double zenithAngle) {
+  public Setup setAngleSC(double zenithAngle) {
     return jadd(sc(setAngleCK.prefix()), za(zenithAngle));
   }
 
   // Follow submit command
   public final String followPrefix;
-  public final ConfigKey followCK;
+  public final Prefix followCK;
   public static final BooleanKey nssInUseKey = BooleanKey("nssInUse");
 
-  public static BooleanItem setNssInUse(boolean value) {
+  public static BooleanParameter setNssInUse(boolean value) {
     return jset(nssInUseKey, value);
   }
 
-  public SetupConfig followSC(boolean nssInUse) {
+  public Setup followSC(boolean nssInUse) {
     return sc(followCK.prefix(), jset(nssInUseKey, nssInUse));
   }
 
   // A list of all commands
-  public final ConfigKey[] allCommandKeys;
+  public final Prefix[] allCommandKeys;
 
   // Shared key values --
   // Used by setElevation, setAngle
@@ -106,51 +106,51 @@ public class AssemblyContext {
   public static final DoubleKey focusErrorKey = DoubleKey("focus");
   public static final UnitsOfMeasure.Units focusErrorUnits = micrometers;
 
-  public static DoubleItem fe(double error) {
+  public static DoubleParameter fe(double error) {
     return jset(focusErrorKey, error).withUnits(focusErrorUnits);
   }
 
   public static final DoubleKey zenithAngleKey = DoubleKey("zenithAngle");
   public static final UnitsOfMeasure.Units zenithAngleUnits = degrees;
 
-  public static DoubleItem za(double angle) {
+  public static DoubleParameter za(double angle) {
     return jset(zenithAngleKey, angle).withUnits(zenithAngleUnits);
   }
 
   public static final DoubleKey naRangeDistanceKey = DoubleKey("rangeDistance");
   public static final UnitsOfMeasure.Units naRangeDistanceUnits = kilometers;
 
-  public static DoubleItem rd(double rangedistance) {
+  public static DoubleParameter rd(double rangedistance) {
     return jset(naRangeDistanceKey, rangedistance).withUnits(naRangeDistanceUnits);
   }
 
   public static final DoubleKey naElevationKey = DoubleKey("elevation");
   public static final UnitsOfMeasure.Units naElevationUnits = kilometers;
-  public static DoubleItem naElevation(Double elevation) {
+  public static DoubleParameter naElevation(Double elevation) {
     return jset(naElevationKey, elevation).withUnits(naElevationUnits);
   }
 
   public static final DoubleKey initialElevationKey = DoubleKey("initialElevation");
   public static final UnitsOfMeasure.Units initialElevationUnits = kilometers;
-  public static DoubleItem iElevation(double elevation) {
+  public static DoubleParameter iElevation(double elevation) {
     return jset(initialElevationKey, elevation).withUnits(initialElevationUnits);
   }
 
   public static final DoubleKey stagePositionKey = DoubleKey("stagePosition");
   public static final UnitsOfMeasure.Units stagePositionUnits = millimeters;
 
-  public static DoubleItem spos(double pos) {
+  public static DoubleParameter spos(double pos) {
     return jset(stagePositionKey, pos).withUnits(stagePositionUnits);
   }
 
   // ---------- Keys used by TromboneEventSubscriber and Others
   // This is the zenith angle from TCS
   public static final String zenithAnglePrefix = "TCS.tcsPk.zenithAngle";
-  public static final ConfigKey zaConfigKey = new ConfigKey(zenithAnglePrefix);
+  public static final Prefix zaPrefix = new Prefix(zenithAnglePrefix);
 
   // This is the focus error from RTC
   public static final String focusErrorPrefix = "RTC.focusError";
-  public static final ConfigKey feConfigKey = new ConfigKey(focusErrorPrefix);
+  public static final Prefix fePrefix = new Prefix(focusErrorPrefix);
 
   // ----------- Keys, etc. used by trombonePublisher, calculator, comamnds
   public final String aoSystemEventPrefix;
@@ -178,38 +178,38 @@ public class AssemblyContext {
     // Public command configurations
     // Init submit command
     initPrefix = componentPrefix + ".init";
-    initCK = new ConfigKey(initPrefix);
+    initCK = new Prefix(initPrefix);
 
     // Dataum submit command
     datumPrefix = componentPrefix + ".datum";
-    datumCK = new ConfigKey(datumPrefix);
+    datumCK = new Prefix(datumPrefix);
 
     // Stop submit command
     stopPrefix = componentPrefix + ".stop";
-    stopCK = new ConfigKey(stopPrefix);
+    stopCK = new Prefix(stopPrefix);
 
     // Move submit command
     movePrefix = componentPrefix + ".move";
-    moveCK = new ConfigKey(movePrefix);
+    moveCK = new Prefix(movePrefix);
 
     // Position submit command
     positionPrefix = componentPrefix + ".position";
-    positionCK = new ConfigKey(positionPrefix);
+    positionCK = new Prefix(positionPrefix);
 
     // setElevation submit command
     setElevationPrefix = componentPrefix + ".setElevation";
-    setElevationCK = new ConfigKey(setElevationPrefix);
+    setElevationCK = new Prefix(setElevationPrefix);
 
     // setAngle submit command
     setAnglePrefx = componentPrefix + ".setAngle";
-    setAngleCK = new ConfigKey(setAnglePrefx);
+    setAngleCK = new Prefix(setAnglePrefx);
 
     // Follow submit command
     followPrefix = componentPrefix + ".follow";
-    followCK = new ConfigKey(followPrefix);
+    followCK = new Prefix(followPrefix);
 
     // A list of all commands
-    allCommandKeys = new ConfigKey[]{initCK, datumCK, stopCK, moveCK, positionCK, setElevationCK, setAngleCK, followCK};
+    allCommandKeys = new Prefix[]{initCK, datumCK, stopCK, moveCK, positionCK, setElevationCK, setAngleCK, followCK};
 
     // ----------- Keys, etc. used by trombonePublisher, calculator, comamnds
     aoSystemEventPrefix = componentPrefix + ".sodiumLayer";

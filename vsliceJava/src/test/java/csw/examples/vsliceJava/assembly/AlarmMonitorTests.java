@@ -34,7 +34,7 @@ import static csw.examples.vsliceJava.hcd.TromboneHCD.*;
 import static csw.services.alarms.AlarmModel.CurrentSeverity;
 import static csw.services.pkg.SupervisorExternal.LifecycleStateChanged;
 import static csw.services.pkg.SupervisorExternal.SubscribeLifecycleCallback;
-import static csw.util.config.StateVariable.CurrentState;
+import static csw.util.param.StateVariable.CurrentState;
 import static javacsw.services.alarms.JAlarmModel.JSeverityLevel.Okay;
 import static javacsw.services.alarms.JAlarmModel.JSeverityLevel.Warning;
 import static javacsw.services.ccs.JCommandStatus.Completed;
@@ -42,10 +42,10 @@ import static javacsw.services.loc.JConnectionType.AkkaType;
 import static javacsw.services.pkg.JComponent.DoNotRegister;
 import static javacsw.services.pkg.JSupervisor.HaltComponent;
 import static javacsw.services.pkg.JSupervisor.LifecycleRunning;
-import static javacsw.util.config.JConfigDSL.cs;
-import static javacsw.util.config.JItems.jadd;
-import static javacsw.util.config.JItems.jset;
-import static javacsw.util.config.JUnitsOfMeasure.encoder;
+import static javacsw.util.param.JParameterSetDsl.cs;
+import static javacsw.util.param.JParameters.jadd;
+import static javacsw.util.param.JParameters.jset;
+import static javacsw.util.param.JUnitsOfMeasure.encoder;
 import static org.junit.Assert.assertEquals;
 
 /**

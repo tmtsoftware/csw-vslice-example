@@ -14,9 +14,9 @@ import csw.services.ccs.CommandStatus.CommandResult;
 import csw.services.loc.LocationService;
 import csw.services.pkg.SupervisorExternal.SubscribeLifecycleCallback;
 import csw.services.sequencer.SequencerEnv;
-import csw.util.config.Configurations;
-import csw.util.config.Configurations.SetupConfig;
-import csw.util.config.Configurations.SetupConfigArg;
+import csw.util.param.Parameters;
+import csw.util.param.Parameters.Setup;
+import csw.util.param.Parameters.SetupArg;
 import javacsw.services.pkg.JSupervisor;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -128,8 +128,8 @@ public class TromboneAssemblyCompTests extends TestKit {
 
     fakeSequencer.expectNoMsg(duration("3 seconds")); // wait for connections
 
-    SetupConfigArg sca = Configurations.createSetupConfigArg("testobsId",
-      new SetupConfig(assemblyContext.initCK.prefix()), new SetupConfig(assemblyContext.datumCK.prefix()));
+    SetupArg sca = Parameters.createSetupArg("testobsId",
+      new Setup(assemblyContext.initCK.prefix()), new Setup(assemblyContext.datumCK.prefix()));
 
     fakeSequencer.send(tla, new Submit(sca));
 
@@ -157,8 +157,8 @@ public class TromboneAssemblyCompTests extends TestKit {
 
     fakeSequencer.expectNoMsg(duration("3 seconds")); // wait for connections
 
-    SetupConfigArg datum = Configurations.createSetupConfigArg("testobsId",
-      new SetupConfig(assemblyContext.initCK.prefix()), new SetupConfig(assemblyContext.datumCK.prefix()));
+    SetupArg datum = Parameters.createSetupArg("testobsId",
+      new Setup(assemblyContext.initCK.prefix()), new Setup(assemblyContext.datumCK.prefix()));
 
     fakeSequencer.send(tla, new Submit(datum));
 
@@ -173,10 +173,10 @@ public class TromboneAssemblyCompTests extends TestKit {
 
     // This will send a config arg with 10 position commands
     int[] testRangeDistance = new int[]{90, 100, 110, 120, 130, 140, 150, 160, 170, 180};
-    List<SetupConfig> positionConfigs = Arrays.stream(testRangeDistance).mapToObj(f -> assemblyContext.positionSC(f))
+    List<Setup> positionConfigs = Arrays.stream(testRangeDistance).mapToObj(f -> assemblyContext.positionSC(f))
       .collect(Collectors.toList());
 
-    SetupConfigArg sca = Configurations.createSetupConfigArg("testobsId", positionConfigs);
+    SetupArg sca = Parameters.createSetupArg("testobsId", positionConfigs);
     fakeSequencer.send(tla, new Submit(sca));
 
     // This first one is the accept/verification

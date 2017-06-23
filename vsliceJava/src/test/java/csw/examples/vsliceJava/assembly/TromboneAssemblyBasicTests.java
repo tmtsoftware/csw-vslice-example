@@ -17,10 +17,10 @@ import csw.services.ccs.Validation.WrongInternalStateIssue;
 import csw.services.loc.LocationService;
 import csw.services.pkg.Component.AssemblyInfo;
 import csw.services.sequencer.SequencerEnv;
-import csw.util.config.Configurations;
-import csw.util.config.Configurations.SetupConfig;
-import csw.util.config.Configurations.SetupConfigArg;
-import csw.util.config.Events.SystemEvent;
+import csw.util.param.Parameters;
+import csw.util.param.Parameters.Setup;
+import csw.util.param.Parameters.SetupArg;
+import csw.util.param.Events.SystemEvent;
 import javacsw.services.events.IEventService;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -138,7 +138,7 @@ public class TromboneAssemblyBasicTests extends TestKit {
     fakeSupervisor.expectMsg(Initialized);
     fakeSupervisor.send(tromboneAssembly, Running);
 
-    SetupConfigArg sca = Configurations.createSetupConfigArg("testobsId", new SetupConfig(assemblyContext.datumCK.prefix()));
+    SetupArg sca = Parameters.createSetupArg("testobsId", new Setup(assemblyContext.datumCK.prefix()));
 
     fakeClient.send(tromboneAssembly, new Submit(sca));
 
@@ -168,9 +168,9 @@ public class TromboneAssemblyBasicTests extends TestKit {
     fakeSupervisor.expectMsg(Initialized);
     fakeSupervisor.send(tromboneAssembly, Running);
 
-    SetupConfigArg sca = Configurations.createSetupConfigArg("testobsId",
-      new SetupConfig(assemblyContext.initCK.prefix()),
-      new SetupConfig(assemblyContext.datumCK.prefix()));
+    SetupArg sca = Parameters.createSetupArg("testobsId",
+      new Setup(assemblyContext.initCK.prefix()),
+      new Setup(assemblyContext.datumCK.prefix()));
 
     fakeClient.send(tromboneAssembly, new Submit(sca));
 
@@ -201,8 +201,8 @@ public class TromboneAssemblyBasicTests extends TestKit {
 
     // Sending an Init first so we can see the dataum issue
     double testPosition = 90.0;
-    SetupConfigArg sca = Configurations.createSetupConfigArg("testobsId",
-      new SetupConfig(assemblyContext.initCK.prefix()), assemblyContext.moveSC(testPosition));
+    SetupArg sca = Parameters.createSetupArg("testobsId",
+      new Setup(assemblyContext.initCK.prefix()), assemblyContext.moveSC(testPosition));
 
     fakeClient.send(tromboneAssembly, new Submit(sca));
 
@@ -235,9 +235,9 @@ public class TromboneAssemblyBasicTests extends TestKit {
 
     double testMove = 90.0;
     double testMove2 = 100.0;
-    SetupConfigArg sca = Configurations.createSetupConfigArg("testobsId",
-      new SetupConfig(assemblyContext.initCK.prefix()),
-      new SetupConfig(assemblyContext.datumCK.prefix()),
+    SetupArg sca = Parameters.createSetupArg("testobsId",
+      new Setup(assemblyContext.initCK.prefix()),
+      new Setup(assemblyContext.datumCK.prefix()),
       assemblyContext.moveSC(testMove),
       assemblyContext.moveSC(testMove2));
 
@@ -268,9 +268,9 @@ public class TromboneAssemblyBasicTests extends TestKit {
     fakeSupervisor.send(tromboneAssembly, Running);
 
     double testRangeDistance = 125.0;
-    SetupConfigArg sca = Configurations.createSetupConfigArg("testobsId",
-      new SetupConfig(assemblyContext.initCK.prefix()),
-      new SetupConfig(assemblyContext.datumCK.prefix()),
+    SetupArg sca = Parameters.createSetupArg("testobsId",
+      new Setup(assemblyContext.initCK.prefix()),
+      new Setup(assemblyContext.datumCK.prefix()),
       assemblyContext.positionSC(testRangeDistance));
 
     fakeClient.send(tromboneAssembly, new Submit(sca));
@@ -301,9 +301,9 @@ public class TromboneAssemblyBasicTests extends TestKit {
     fakeSupervisor.send(tromboneAssembly, Running);
     expectNoMsg(duration("200 millis"));
 
-    SetupConfigArg datum = Configurations.createSetupConfigArg("testobsId",
-      new SetupConfig(assemblyContext.initCK.prefix()),
-      new SetupConfig(assemblyContext.datumCK.prefix()));
+    SetupArg datum = Parameters.createSetupArg("testobsId",
+      new Setup(assemblyContext.initCK.prefix()),
+      new Setup(assemblyContext.datumCK.prefix()));
     fakeClient.send(tromboneAssembly, new Submit(datum));
 
     // This first one is the accept/verification
@@ -318,10 +318,10 @@ public class TromboneAssemblyBasicTests extends TestKit {
 
     // This will send a config arg with 10 position commands
     int[] testRangeDistance = new int[]{90, 100, 110, 120, 130, 140, 150, 160, 170, 180};
-    List<SetupConfig> positionConfigs = Arrays.stream(testRangeDistance).mapToObj(f -> assemblyContext.positionSC(f))
+    List<Setup> positionConfigs = Arrays.stream(testRangeDistance).mapToObj(f -> assemblyContext.positionSC(f))
       .collect(Collectors.toList());
 
-    SetupConfigArg sca = Configurations.createSetupConfigArg("testobsId", positionConfigs);
+    SetupArg sca = Parameters.createSetupArg("testobsId", positionConfigs);
     fakeClient.send(tromboneAssembly, new Submit(sca));
 
     // This first one is the accept/verification
@@ -349,9 +349,9 @@ public class TromboneAssemblyBasicTests extends TestKit {
     fakeSupervisor.expectNoMsg(duration("200 milli"));
     fakeSupervisor.send(tromboneAssembly, Running);
 
-    SetupConfigArg datum = Configurations.createSetupConfigArg("testobsId",
-      new SetupConfig(assemblyContext.initCK.prefix()),
-      new SetupConfig(assemblyContext.datumCK.prefix()));
+    SetupArg datum = Parameters.createSetupArg("testobsId",
+      new Setup(assemblyContext.initCK.prefix()),
+      new Setup(assemblyContext.datumCK.prefix()));
     fakeClient.send(tromboneAssembly, new Submit(datum));
 
     // This first one is the accept/verification
@@ -366,7 +366,7 @@ public class TromboneAssemblyBasicTests extends TestKit {
 
     // Now start a long move
     double testMove = 150.1;
-    SetupConfigArg sca = Configurations.createSetupConfigArg("testobsId", assemblyContext.moveSC(testMove));
+    SetupArg sca = Parameters.createSetupArg("testobsId", assemblyContext.moveSC(testMove));
     // Send the move
     fakeClient.send(tromboneAssembly, new Submit(sca));
 
@@ -377,7 +377,7 @@ public class TromboneAssemblyBasicTests extends TestKit {
     // Now send the stop after a bit of delay to let it get going
     // This is a timing thing that may not work on all machines
     fakeSupervisor.expectNoMsg(duration("300 millis"));
-    SetupConfigArg stop = Configurations.createSetupConfigArg("testobsId", new SetupConfig(assemblyContext.stopCK.prefix()));
+    SetupArg stop = Parameters.createSetupArg("testobsId", new Setup(assemblyContext.stopCK.prefix()));
     // Send the stop
     fakeClient.send(tromboneAssembly, new Submit(stop));
 
@@ -411,9 +411,9 @@ public class TromboneAssemblyBasicTests extends TestKit {
     fakeSupervisor.expectNoMsg(duration("200 milli"));
     fakeSupervisor.send(tromboneAssembly, Running);
 
-    SetupConfigArg datum = Configurations.createSetupConfigArg("testobsId",
-      new SetupConfig(assemblyContext.initCK.prefix()),
-      new SetupConfig(assemblyContext.datumCK.prefix()));
+    SetupArg datum = Parameters.createSetupArg("testobsId",
+      new Setup(assemblyContext.initCK.prefix()),
+      new Setup(assemblyContext.datumCK.prefix()));
     fakeClient.send(tromboneAssembly, new Submit(datum));
 
     // This first one is the accept/verification
@@ -426,7 +426,7 @@ public class TromboneAssemblyBasicTests extends TestKit {
     assertEquals(completeMsg.overall(), AllCompleted);
 
     double testEl = 150.0;
-    SetupConfigArg sca = Configurations.createSetupConfigArg("testobsId", assemblyContext.setElevationSC(testEl));
+    SetupArg sca = Parameters.createSetupArg("testobsId", assemblyContext.setElevationSC(testEl));
 
     // Send the setElevation
     fakeClient.send(tromboneAssembly, new Submit(sca));
@@ -456,9 +456,9 @@ public class TromboneAssemblyBasicTests extends TestKit {
     fakeSupervisor.expectNoMsg(duration("200 milli"));
     fakeSupervisor.send(tromboneAssembly, Running);
 
-    SetupConfigArg datum = Configurations.createSetupConfigArg("testobsId",
-      new SetupConfig(assemblyContext.initCK.prefix()),
-      new SetupConfig(assemblyContext.datumCK.prefix()));
+    SetupArg datum = Parameters.createSetupArg("testobsId",
+      new Setup(assemblyContext.initCK.prefix()),
+      new Setup(assemblyContext.datumCK.prefix()));
     fakeClient.send(tromboneAssembly, new Submit(datum));
 
     // This first one is the accept/verification
@@ -472,7 +472,7 @@ public class TromboneAssemblyBasicTests extends TestKit {
 
     // Now try a setAngle
     double setAngleValue = 22.0;
-    SetupConfigArg sca2 = Configurations.createSetupConfigArg("testobsId", assemblyContext.setAngleSC(setAngleValue));
+    SetupArg sca2 = Parameters.createSetupArg("testobsId", assemblyContext.setAngleSC(setAngleValue));
     // Send the command
     fakeClient.send(tromboneAssembly, new Submit(sca2));
 
@@ -504,9 +504,9 @@ public class TromboneAssemblyBasicTests extends TestKit {
     fakeSupervisor.expectNoMsg(duration("200 milli"));
     fakeSupervisor.send(tromboneAssembly, Running);
 
-    SetupConfigArg datum = Configurations.createSetupConfigArg("testobsId",
-      new SetupConfig(assemblyContext.initCK.prefix()),
-      new SetupConfig(assemblyContext.datumCK.prefix()));
+    SetupArg datum = Parameters.createSetupArg("testobsId",
+      new Setup(assemblyContext.initCK.prefix()),
+      new Setup(assemblyContext.datumCK.prefix()));
     fakeClient.send(tromboneAssembly, new Submit(datum));
 
     // This first one is the accept/verification
@@ -519,9 +519,9 @@ public class TromboneAssemblyBasicTests extends TestKit {
     assertEquals(completeMsg.overall(), AllCompleted);
 
     double testEl = 150.0;
-    SetupConfigArg sca = Configurations.createSetupConfigArg("testobsId",
+    SetupArg sca = Parameters.createSetupArg("testobsId",
       assemblyContext.setElevationSC(testEl), assemblyContext.followSC(false),
-      new SetupConfig(assemblyContext.stopCK.prefix()));
+      new Setup(assemblyContext.stopCK.prefix()));
 
     // Send the setElevation
     fakeClient.send(tromboneAssembly, new Submit(sca));
@@ -551,9 +551,9 @@ public class TromboneAssemblyBasicTests extends TestKit {
     fakeSupervisor.expectNoMsg(duration("200 milli"));
     fakeSupervisor.send(tromboneAssembly, Running);
 
-    SetupConfigArg datum = Configurations.createSetupConfigArg("testobsId",
-      new SetupConfig(assemblyContext.initCK.prefix()),
-      new SetupConfig(assemblyContext.datumCK.prefix()));
+    SetupArg datum = Parameters.createSetupArg("testobsId",
+      new Setup(assemblyContext.initCK.prefix()),
+      new Setup(assemblyContext.datumCK.prefix()));
     fakeClient.send(tromboneAssembly, new Submit(datum));
 
     // This first one is the accept/verification
@@ -566,7 +566,7 @@ public class TromboneAssemblyBasicTests extends TestKit {
     assertEquals(completeMsg.overall(), AllCompleted);
 
     double testEl = 150.0;
-    SetupConfigArg sca = Configurations.createSetupConfigArg("testobsId",
+    SetupArg sca = Parameters.createSetupArg("testobsId",
       assemblyContext.setElevationSC(testEl), assemblyContext.followSC(false));
 
     // Send the setElevation
@@ -592,7 +592,7 @@ public class TromboneAssemblyBasicTests extends TestKit {
 
     double[] testZenithAngles = new double[]{0.0, 5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0};
     // These are fake messages for the FollowActor that will be sent to simulate the TCS
-    List<SystemEvent> tcsEvents = Arrays.stream(testZenithAngles).mapToObj(f -> new SystemEvent(zaConfigKey.prefix()).add(za(f)))
+    List<SystemEvent> tcsEvents = Arrays.stream(testZenithAngles).mapToObj(f -> new SystemEvent(zaPrefix.prefix()).add(za(f)))
       .collect(Collectors.toList());
 
     // This should result in the length of tcsEvents being published

@@ -8,8 +8,8 @@ import csw.services.ccs.CommandStatus.{Completed, Error, NoLongerValid}
 import csw.services.ccs.HcdController
 import csw.services.ccs.SequentialExecutor.{CommandStart, StopCurrentCommand}
 import csw.services.ccs.Validation.WrongInternalStateIssue
-import csw.util.config.Configurations.SetupConfig
-import csw.util.config.UnitsOfMeasure.encoder
+import csw.util.param.Parameters.Setup
+import csw.util.param.UnitsOfMeasure.encoder
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -25,7 +25,7 @@ import akka.pattern.ask
  * command, the sodium layer state must be set to true, which is not the case with the mvoe command.  There is probably
  * a way to refactor this to reuse the move command.
  */
-class SetElevationCommand(ac: AssemblyContext, sc: SetupConfig, tromboneHCD: ActorRef, startState: TromboneState, stateActor: Option[ActorRef]) extends Actor with ActorLogging {
+class SetElevationCommand(ac: AssemblyContext, sc: Setup, tromboneHCD: ActorRef, startState: TromboneState, stateActor: Option[ActorRef]) extends Actor with ActorLogging {
 
   import TromboneCommandHandler._
   import TromboneStateActor._
@@ -49,7 +49,7 @@ class SetElevationCommand(ac: AssemblyContext, sc: SetupConfig, tromboneHCD: Act
 
         val stateMatcher = posMatcher(encoderPosition)
         // Position key is encoder units
-        val scOut = SetupConfig(axisMoveCK).add(positionKey -> encoderPosition withUnits encoder)
+        val scOut = Setup(ac.commandInfo, axisMoveCK).add(positionKey -> encoderPosition withUnits encoder)
         sendState(SetState(cmdItem(cmdBusy), moveItem(moveMoving), startState.sodiumLayer, startState.nss))
         tromboneHCD ! HcdController.Submit(scOut)
 
@@ -63,7 +63,7 @@ class SetElevationCommand(ac: AssemblyContext, sc: SetupConfig, tromboneHCD: Act
       }
     case StopCurrentCommand =>
       log.debug("SetElevation command -- STOP")
-      tromboneHCD ! HcdController.Submit(cancelSC)
+      tromboneHCD ! HcdController.Submit(cancelSC(commandInfo))
   }
 
   private def sendState(setState: SetState): Unit = {
@@ -74,6 +74,6 @@ class SetElevationCommand(ac: AssemblyContext, sc: SetupConfig, tromboneHCD: Act
 
 object SetElevationCommand {
 
-  def props(ac: AssemblyContext, sc: SetupConfig, tromboneHCD: ActorRef, startState: TromboneState, stateActor: Option[ActorRef]): Props =
-    Props(classOf[SetElevationCommand], ac, sc, tromboneHCD, startState, stateActor)
+  def props(ac: AssemblyContext, sc: Setup, tromboneHCD: ActorRef, startState: TromboneState, stateActor: Option[ActorRef]): Props =
+    Props(new SetElevationCommand(ac, sc, tromboneHCD, startState, stateActor))
 }

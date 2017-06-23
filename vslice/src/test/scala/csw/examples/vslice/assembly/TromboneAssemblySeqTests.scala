@@ -12,13 +12,13 @@ import csw.services.events.Event
 import csw.services.loc.LocationService
 import csw.services.pkg.Supervisor._
 import csw.services.pkg.SupervisorExternal.{LifecycleStateChanged, SubscribeLifecycleCallback, UnsubscribeLifecycleCallback}
-import csw.util.config.{Configurations, DoubleKey}
-import csw.util.config.Configurations.{ConfigKey, SetupConfig}
+import csw.util.param.{Parameters, DoubleKey}
+import csw.util.param.Parameters.{Prefix, Setup}
 import org.scalatest.{BeforeAndAfterAll, _}
 
 import scala.concurrent.duration._
 import csw.services.sequencer.SequencerEnv._
-import csw.util.config.UnitsOfMeasure.kilometers
+import csw.util.param.UnitsOfMeasure.kilometers
 
 import scala.util.Try
 
@@ -49,32 +49,32 @@ class TromboneAssemblySeqTests extends TestKit(TromboneAssemblySeqTests.system) 
   // Public command configurations
   // Init submit command
   private val initPrefix = s"$componentPrefix.init"
-  private val initCK: ConfigKey = initPrefix
+  private val initCK: Prefix = initPrefix
 
   // Datum submit command
   private val datumPrefix = s"$componentPrefix.datum"
-  private val datumCK: ConfigKey = datumPrefix
+  private val datumCK: Prefix = datumPrefix
 
   private val naRangeDistanceKey = DoubleKey("rangeDistance")
   private val naRangeDistanceUnits = kilometers
 
   // Position submit command
   private val positionPrefix = s"$componentPrefix.position"
-  private val positionCK: ConfigKey = positionPrefix
+  private val positionCK: Prefix = positionPrefix
 
-  def positionSC(rangeDistance: Double): SetupConfig = SetupConfig(positionCK).add(naRangeDistanceKey -> rangeDistance withUnits naRangeDistanceUnits)
+  def positionSC(rangeDistance: Double): Setup = Setup(positionCK).add(naRangeDistanceKey -> rangeDistance withUnits naRangeDistanceUnits)
 
   def eventPrinter(ev: Event): Unit = {
     logger.info(s"EventReceived: $ev")
   }
 
-  private val sca1 = Configurations.createSetupConfigArg("testobsId", SetupConfig(initCK), SetupConfig(datumCK))
+  private val sca1 = Parameters.createSetupArg("testobsId", Setup(initCK), Setup(datumCK))
 
   // This will send a config arg with 10 position commands
   private val testRangeDistance = 90 to 130 by 10
   private val positionConfigs = testRangeDistance.map(f => positionSC(f))
 
-  private val sca2 = Configurations.createSetupConfigArg("testObsId", positionSC(100.0))
+  private val sca2 = Parameters.createSetupArg("testObsId", positionSC(100.0))
 
   // List of top level actors that were created for the HCD (for clean up)
   var containerActors: List[ActorRef] = Nil
@@ -131,7 +131,7 @@ class TromboneAssemblySeqTests extends TestKit(TromboneAssemblySeqTests.system) 
 
       val tlaClient = getTrombone
 
-      val datum = Configurations.createSetupConfigArg("testobsId", SetupConfig(initCK), SetupConfig(datumCK))
+      val datum = Parameters.createSetupArg("testobsId", Setup(initCK), Setup(datumCK))
       var completeMsg = tlaClient.submit(datum)
 
       // This first one is the accept/verification
@@ -144,7 +144,7 @@ class TromboneAssemblySeqTests extends TestKit(TromboneAssemblySeqTests.system) 
       val testRangeDistance = 140 to 180 by 10
       val positionConfigs = testRangeDistance.map(f => positionSC(f))
 
-      val sca = Configurations.createSetupConfigArg("testobsId", positionConfigs: _*)
+      val sca = Parameters.createSetupArg("testobsId", positionConfigs: _*)
       completeMsg = tlaClient.submit(sca)
 
       logger.info("msg2: " + completeMsg)
@@ -158,17 +158,17 @@ class TromboneAssemblySeqTests extends TestKit(TromboneAssemblySeqTests.system) 
 
       val fakeSequencer = TestProbe()
 
-      val datum = Configurations.createSetupConfigArg("testobsId", SetupConfig(initCK), SetupConfig(datumCK))
+      val datum = Parameters.createSetupArg("testobsId", Setup(initCK), Setup(datumCK))
       var completeMsg = tlaClient.submit(datum)
       expectNoMsg(1.second)
       logger.info("Datum complete: " + completeMsg)
 
-      val follow = Configurations.createSetupConfigArg("testobsId", setElevationSC(100.0), followSC(false))
+      val follow = Parameters.createSetupArg("testobsId", setElevationSC(100.0), followSC(false))
       completeMsg = tlaClient.submit(follow)
       expectNoMsg(2.seconds)
       logger.info("Follow complete: " + completeMsg)
 
-      val stop = Configurations.createSetupConfigArg("testObsId", SetupConfig(stopCK))
+      val stop = Parameters.createSetupArg("testObsId", Setup(stopCK))
       completeMsg = tlaClient.submit(stop)
       logger.info("Stop complete: " + completeMsg)
     }

@@ -19,10 +19,10 @@ import csw.services.pkg.Component.{DoNotRegister, HcdInfo}
 import csw.services.pkg.Supervisor
 import csw.services.pkg.Supervisor.{HaltComponent, LifecycleRunning}
 import csw.services.pkg.SupervisorExternal.{LifecycleStateChanged, SubscribeLifecycleCallback}
-import csw.util.config.BooleanItem
-import csw.util.config.Events.{EventTime, StatusEvent, SystemEvent}
-import csw.util.config.StateVariable.CurrentState
-import csw.util.config.UnitsOfMeasure.{degrees, kilometers, micrometers, millimeters}
+import csw.util.param.BooleanParameter
+import csw.util.param.Events.{EventTime, StatusEvent, SystemEvent}
+import csw.util.param.StateVariable.CurrentState
+import csw.util.param.UnitsOfMeasure.{degrees, kilometers, micrometers, millimeters}
 import org.scalatest._
 
 import scala.concurrent.Await
@@ -99,7 +99,7 @@ class FollowActorTests extends TestKit(FollowActorTests.system) with ImplicitSen
 
   import assemblyContext._
 
-  def newFollower(usingNSS: BooleanItem, tromboneControl: ActorRef, aoPublisher: ActorRef, engPublisher: ActorRef): TestActorRef[FollowActor] = {
+  def newFollower(usingNSS: BooleanParameter, tromboneControl: ActorRef, aoPublisher: ActorRef, engPublisher: ActorRef): TestActorRef[FollowActor] = {
     // Used for creating followers
     val initialElevation = iElevation(assemblyContext.calculationConfig.defaultInitialElevation)
     val props = FollowActor.props(assemblyContext, initialElevation, usingNSS, Some(tromboneControl), Some(aoPublisher), Some(engPublisher))
@@ -399,7 +399,7 @@ class FollowActorTests extends TestKit(FollowActorTests.system) with ImplicitSen
       tcsRtc.foreach(_.publish(SystemEvent(focusErrorPrefix).add(fe(testFE))))
 
       // These are fake messages for the FollowActor that will be sent to simulate the TCS updating ZA
-      val tcsEvents = testZenithAngles.map(f => SystemEvent(zaConfigKey.prefix).add(za(f)))
+      val tcsEvents = testZenithAngles.map(f => SystemEvent(zaPrefix.prefix).add(za(f)))
 
       // This should result in the length of tcsEvents being published, which is 15
       //tcsEvents.map(f => tcsRtc.publish(f))

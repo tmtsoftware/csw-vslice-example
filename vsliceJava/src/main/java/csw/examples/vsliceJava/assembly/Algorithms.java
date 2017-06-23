@@ -1,10 +1,10 @@
 package csw.examples.vsliceJava.assembly;
 
 import akka.japi.Pair;
-import csw.util.config.DoubleItem;
+import csw.util.param.DoubleParameter;
 import csw.examples.vsliceJava.assembly.AssemblyContext.*;
 
-import static javacsw.util.config.JItems.jvalue;
+import static javacsw.util.param.JParameters.jvalue;
 
 /**
  * This object contains functions that implement this test version of the trombone assembly algorithms.
@@ -24,20 +24,20 @@ public class Algorithms {
   /**
    * Arbitrary check of the zenith angle to be within bounds
    *
-   * @param zenithAngle DoubleItem that contains zenith angle
+   * @param zenithAngle DoubleParameter that contains zenith angle
    * @return true if valid else false
    */
-  public static boolean verifyZenithAngle(DoubleItem zenithAngle) {
+  public static boolean verifyZenithAngle(DoubleParameter zenithAngle) {
     return jvalue(zenithAngle) < 90.0 && jvalue(zenithAngle) >= 0.0;
   }
 
   /**
    * Checking the input focus error against fake limits of +/- 20
    *
-   * @param focusError DoubleItem that contains focusError
+   * @param focusError DoubleParameter that contains focusError
    * @return true if valid else false
    */
-  public static boolean verifyFocusError(TromboneCalculationConfig calculationConfig, DoubleItem focusError) {
+  public static boolean verifyFocusError(TromboneCalculationConfig calculationConfig, DoubleParameter focusError) {
     return jvalue(focusError) >= calculationConfig.lowerFocusLimit && jvalue(focusError) <= calculationConfig.upperFocusLimit;
   }
 
@@ -83,7 +83,7 @@ public class Algorithms {
 
   /**
    * @param stagePosition is the value of the stage position in millimeters (currently the total NA elevation)
-   * @return DoubleItem with key naTrombonePosition and units of enc
+   * @return DoubleParameter with key naTrombonePosition and units of enc
    */
   @SuppressWarnings("UnnecessaryLocalVariable")
   public static int stagePositionToEncoder(TromboneControlConfig controlConfig, double stagePosition) {

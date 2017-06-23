@@ -6,7 +6,7 @@ import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.japi.Creator;
 import csw.services.loc.LocationService;
-import csw.util.config.*;
+import csw.util.param.*;
 import javacsw.services.events.IEventService;
 import javacsw.services.events.ITelemetryService;
 import javacsw.services.pkg.ILocationSubscriberClient;
@@ -15,9 +15,9 @@ import java.util.Optional;
 
 import static csw.examples.vsliceJava.assembly.TromboneStateActor.TromboneState;
 import static csw.services.loc.LocationService.ResolvedTcpLocation;
-import static csw.util.config.Events.StatusEvent;
-import static csw.util.config.Events.SystemEvent;
-import static javacsw.util.config.JItems.jadd;
+import static csw.util.param.Events.StatusEvent;
+import static csw.util.param.Events.SystemEvent;
+import static javacsw.util.param.JParameters.jadd;
 
 /**
  * An actor that provides the publishing interface to the TMT Event Service and Telemetry Service.
@@ -146,7 +146,7 @@ public class TrombonePublisher extends AbstractActor implements TromboneStateCli
   }
 
 
-  private void publishAOESW(Optional<IEventService> eventService, DoubleItem elevationItem, DoubleItem rangeItem) {
+  private void publishAOESW(Optional<IEventService> eventService, DoubleParameter elevationItem, DoubleParameter rangeItem) {
     SystemEvent se = jadd(new SystemEvent(assemblyContext.aoSystemEventPrefix), elevationItem, rangeItem);
     log.info("System publish of " + assemblyContext.aoSystemEventPrefix + ": " + se);
     eventService.ifPresent(e -> e.publish(se).handle((x, ex) -> {
@@ -155,7 +155,7 @@ public class TrombonePublisher extends AbstractActor implements TromboneStateCli
     }));
   }
 
-  private void publishEngr(Optional<ITelemetryService> telemetryService, DoubleItem rtcFocusError, DoubleItem stagePosition, DoubleItem zenithAngle) {
+  private void publishEngr(Optional<ITelemetryService> telemetryService, DoubleParameter rtcFocusError, DoubleParameter stagePosition, DoubleParameter zenithAngle) {
     StatusEvent ste = jadd(new StatusEvent(assemblyContext.engStatusEventPrefix), rtcFocusError, stagePosition, zenithAngle);
     log.info("Status publish of " + assemblyContext.engStatusEventPrefix + ": " + ste);
 
@@ -175,8 +175,8 @@ public class TrombonePublisher extends AbstractActor implements TromboneStateCli
     }));
   }
 
-  private void publishAxisState(Optional<ITelemetryService> telemetryService, StringItem axisName, IntItem position, ChoiceItem state, BooleanItem inLowLimit,
-                                BooleanItem inHighLimit, BooleanItem inHome) {
+  private void publishAxisState(Optional<ITelemetryService> telemetryService, StringParameter axisName, IntParameter position, ChoiceParameter state, BooleanParameter inLowLimit,
+                                BooleanParameter inHighLimit, BooleanParameter inHome) {
     StatusEvent ste = jadd(new StatusEvent(assemblyContext.axisStateEventPrefix), axisName, position, state, inLowLimit, inHighLimit, inHome);
     log.debug("Axis state publish of " + assemblyContext.axisStateEventPrefix + ": " + ste);
     telemetryService.ifPresent(e -> e.publish(ste).handle((x, ex) -> {
@@ -185,8 +185,8 @@ public class TrombonePublisher extends AbstractActor implements TromboneStateCli
     }));
   }
 
-  private void publishAxisStats(Optional<ITelemetryService> telemetryService, StringItem axisName, IntItem datumCount, IntItem moveCount, IntItem homeCount, IntItem limitCount,
-                                IntItem successCount, IntItem failureCount, IntItem cancelCount) {
+  private void publishAxisStats(Optional<ITelemetryService> telemetryService, StringParameter axisName, IntParameter datumCount, IntParameter moveCount, IntParameter homeCount, IntParameter limitCount,
+                                IntParameter successCount, IntParameter failureCount, IntParameter cancelCount) {
     StatusEvent ste = jadd(new StatusEvent(assemblyContext.axisStatsEventPrefix), axisName, datumCount, moveCount, homeCount, limitCount,
         successCount, failureCount, cancelCount);
     log.debug("Axis stats publish of " + assemblyContext.axisStatsEventPrefix + ": " + ste);
@@ -214,15 +214,15 @@ public class TrombonePublisher extends AbstractActor implements TromboneStateCli
    */
   @SuppressWarnings("WeakerAccess")
   public static class AOESWUpdate {
-    public final DoubleItem naElevation;
-    public final DoubleItem naRange;
+    public final DoubleParameter naElevation;
+    public final DoubleParameter naRange;
 
     /**
      * Constructor
      * @param naElevation elevation update
      * @param naRange range update
      */
-    public AOESWUpdate(DoubleItem naElevation, DoubleItem naRange) {
+    public AOESWUpdate(DoubleParameter naElevation, DoubleParameter naRange) {
       this.naElevation = naElevation;
       this.naRange = naRange;
     }
@@ -258,17 +258,17 @@ public class TrombonePublisher extends AbstractActor implements TromboneStateCli
    */
   @SuppressWarnings("WeakerAccess")
   public static class EngrUpdate {
-    public final DoubleItem focusError;
-    public final DoubleItem stagePosition;
-    public final DoubleItem zenithAngle;
+    public final DoubleParameter focusError;
+    public final DoubleParameter stagePosition;
+    public final DoubleParameter zenithAngle;
 
     /**
      * Constructor
-     * @param focusError focus error value as DoubleItem
-     * @param stagePosition stage position as a DoubleItem
-     * @param zenithAngle zenith angle update as a DoubleItem
+     * @param focusError focus error value as DoubleParameter
+     * @param stagePosition stage position as a DoubleParameter
+     * @param zenithAngle zenith angle update as a DoubleParameter
      */
-    public EngrUpdate(DoubleItem focusError, DoubleItem stagePosition, DoubleItem zenithAngle) {
+    public EngrUpdate(DoubleParameter focusError, DoubleParameter stagePosition, DoubleParameter zenithAngle) {
       this.focusError = focusError;
       this.stagePosition = stagePosition;
       this.zenithAngle = zenithAngle;
@@ -295,15 +295,15 @@ public class TrombonePublisher extends AbstractActor implements TromboneStateCli
 
   @SuppressWarnings("WeakerAccess")
   public static class AxisStateUpdate {
-    public final StringItem axisName;
-    public final IntItem position;
-    public final ChoiceItem state;
-    public final BooleanItem inLowLimit;
-    public final BooleanItem inHighLimit;
-    public final BooleanItem inHome;
+    public final StringParameter axisName;
+    public final IntParameter position;
+    public final ChoiceParameter state;
+    public final BooleanParameter inLowLimit;
+    public final BooleanParameter inHighLimit;
+    public final BooleanParameter inHome;
 
-    public AxisStateUpdate(StringItem axisName, IntItem position, ChoiceItem state, BooleanItem inLowLimit,
-                           BooleanItem inHighLimit, BooleanItem inHome) {
+    public AxisStateUpdate(StringParameter axisName, IntParameter position, ChoiceParameter state, BooleanParameter inLowLimit,
+                           BooleanParameter inHighLimit, BooleanParameter inHome) {
       this.axisName = axisName;
       this.position = position;
       this.state = state;
@@ -315,17 +315,17 @@ public class TrombonePublisher extends AbstractActor implements TromboneStateCli
 
   @SuppressWarnings("WeakerAccess")
   public static class AxisStatsUpdate {
-    public final StringItem axisName;
-    public final IntItem initCount;
-    public final IntItem moveCount;
-    public final IntItem homeCount;
-    public final IntItem limitCount;
-    public final IntItem successCount;
-    public final IntItem failCount;
-    public final IntItem cancelCount;
+    public final StringParameter axisName;
+    public final IntParameter initCount;
+    public final IntParameter moveCount;
+    public final IntParameter homeCount;
+    public final IntParameter limitCount;
+    public final IntParameter successCount;
+    public final IntParameter failCount;
+    public final IntParameter cancelCount;
 
-    public AxisStatsUpdate(StringItem axisName, IntItem initCount, IntItem moveCount, IntItem homeCount,
-                           IntItem limitCount, IntItem successCount, IntItem failCount, IntItem cancelCount) {
+    public AxisStatsUpdate(StringParameter axisName, IntParameter initCount, IntParameter moveCount, IntParameter homeCount,
+                           IntParameter limitCount, IntParameter successCount, IntParameter failCount, IntParameter cancelCount) {
       this.axisName = axisName;
       this.initCount = initCount;
       this.moveCount = moveCount;

@@ -1,7 +1,7 @@
 package csw.examples.vslice.assembly
 
 import akka.actor.{Actor, ActorLogging, Props}
-import csw.util.config._
+import csw.util.param._
 
 /**
  * Note that this state actor is not a listener for events. Only the client listens.
@@ -79,9 +79,9 @@ object TromboneStateActor {
   /**
    * A convenience method to set the cmdItem choice
    * @param ch one of the cmd choices
-   * @return a ChoiceItem with the choice value
+   * @return a ChoiceParameter with the choice value
    */
-  def cmdItem(ch: Choice): ChoiceItem = cmdKey.set(ch)
+  def cmdItem(ch: Choice): ChoiceParameter = cmdKey.set(ch)
 
   val moveUnindexed = Choice("unindexed")
   val moveIndexing = Choice("indexing")
@@ -94,9 +94,9 @@ object TromboneStateActor {
   /**
    * A convenience method to set the moveItem choice
    * @param ch one of the move choices
-   * @return a ChoiceItem with the choice value
+   * @return a ChoiceParameter with the choice value
    */
-  def moveItem(ch: Choice): ChoiceItem = moveKey.set(ch)
+  def moveItem(ch: Choice): ChoiceParameter = moveKey.set(ch)
 
   def sodiumKey = BooleanKey("sodiumLayer")
   val sodiumLayerDefault = sodiumItem(false)
@@ -105,9 +105,9 @@ object TromboneStateActor {
   /**
    * A convenience method to set the sodium layer boolean value indicating the sodium layer has been set
    * @param flag trur or false
-   * @return a BooleanItem with the Boolean value
+   * @return a BooleanParameter with the Boolean value
    */
-  def sodiumItem(flag: Boolean): BooleanItem = sodiumKey.set(flag)
+  def sodiumItem(flag: Boolean): BooleanParameter = sodiumKey.set(flag)
 
   def nssKey = BooleanKey("nss")
   val nssDefault = nssItem(false)
@@ -116,9 +116,9 @@ object TromboneStateActor {
   /**
    * A convenience method to set the NSS enabled boolean value
    * @param flag true or false
-   * @return a BooleanItem with the Boolean value
+   * @return a BooleanParameter with the Boolean value
    */
-  def nssItem(flag: Boolean): BooleanItem = nssKey.set(flag)
+  def nssItem(flag: Boolean): BooleanParameter = nssKey.set(flag)
 
   val defaultTromboneState = TromboneState(cmdDefault, moveDefault, sodiumLayerDefault, nssDefault)
 
@@ -130,7 +130,7 @@ object TromboneStateActor {
    * @param sodiumLayer the current sodiumLayer flag, set when elevation has been set
    * @param nss         the current NSS mode flag
    */
-  case class TromboneState(cmd: ChoiceItem, move: ChoiceItem, sodiumLayer: BooleanItem, nss: BooleanItem)
+  case class TromboneState(cmd: ChoiceParameter, move: ChoiceParameter, sodiumLayer: BooleanParameter, nss: BooleanParameter)
 
   /**
    * Update the current state with a TromboneState
@@ -141,13 +141,13 @@ object TromboneStateActor {
   object SetState {
     /**
      * Alternate way to create the SetState message using items
-     * @param cmd a ChoiceItem created with cmdItem
-     * @param move a ChoiceItem created with moveItem
-     * @param sodiumLayer a BooleanItem created with sodiumItem
-     * @param nss a BooleanItem created with nssItem
+     * @param cmd a ChoiceParameter created with cmdItem
+     * @param move a ChoiceParameter created with moveItem
+     * @param sodiumLayer a BooleanParameter created with sodiumItem
+     * @param nss a BooleanParameter created with nssItem
      * @return a new SetState message instance
      */
-    def apply(cmd: ChoiceItem, move: ChoiceItem, sodiumLayer: BooleanItem, nss: BooleanItem): SetState = SetState(TromboneState(cmd, move, sodiumLayer, nss))
+    def apply(cmd: ChoiceParameter, move: ChoiceParameter, sodiumLayer: BooleanParameter, nss: BooleanParameter): SetState = SetState(TromboneState(cmd, move, sodiumLayer, nss))
 
     /**
      * Alternate way to create the SetState message using primitives

@@ -21,7 +21,7 @@ import static csw.examples.vsliceJava.assembly.TromboneStateActor.*;
 import static csw.examples.vsliceJava.hcd.TromboneHCD.axisDatumCK;
 import static csw.examples.vsliceJava.hcd.TromboneHCD.cancelSC;
 import static csw.services.ccs.CommandStatus.NoLongerValid;
-import static csw.util.config.Configurations.SetupConfig;
+import static csw.util.param.Parameters.Setup;
 import static javacsw.services.ccs.JCommandStatus.Completed;
 import static akka.pattern.PatternsCS.ask;
 
@@ -33,7 +33,7 @@ public class DatumCommand extends AbstractActor {
   private final TromboneState startState;
   private final Optional<ActorRef> stateActor;
 
-  private DatumCommand(SetupConfig sc, ActorRef tromboneHCD, TromboneState startState, Optional<ActorRef> stateActor) {
+  private DatumCommand(Setup sc, ActorRef tromboneHCD, TromboneState startState, Optional<ActorRef> stateActor) {
     this.tromboneHCD = tromboneHCD;
     this.startState = startState;
     this.stateActor = stateActor;
@@ -50,7 +50,7 @@ public class DatumCommand extends AbstractActor {
           } else {
             ActorRef mySender = sender();
             sendState(new SetState(cmdItem(cmdBusy), moveItem(moveIndexing), startState.sodiumLayer, startState.nss));
-            tromboneHCD.tell(new HcdController.Submit(new SetupConfig(axisDatumCK.prefix())), self());
+            tromboneHCD.tell(new HcdController.Submit(new Setup(axisDatumCK.prefix())), self());
             Timeout timeout = new Timeout(5, TimeUnit.SECONDS);
             TromboneCommandHandler.executeMatch(getContext(), TromboneCommandHandler.idleMatcher(), tromboneHCD,  Optional.of(mySender), timeout, status -> {
               if (status == Completed)
@@ -79,7 +79,7 @@ public class DatumCommand extends AbstractActor {
     });
   }
 
-  public static Props props(SetupConfig sc, ActorRef tromboneHCD, TromboneState startState, Optional<ActorRef> stateActor) {
+  public static Props props(Setup sc, ActorRef tromboneHCD, TromboneState startState, Optional<ActorRef> stateActor) {
     return Props.create(new Creator<DatumCommand>() {
       private static final long serialVersionUID = 1L;
 

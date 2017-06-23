@@ -11,7 +11,7 @@ import akka.util.Timeout;
 import csw.services.loc.ComponentType;
 import csw.services.pkg.Component;
 import csw.services.pkg.Supervisor;
-import csw.util.config.*;
+import csw.util.param.*;
 import javacsw.services.ccs.JHcdController;
 import javacsw.services.cs.akka.JConfigServiceClient;
 import javacsw.services.loc.JComponentType;
@@ -21,14 +21,14 @@ import scala.concurrent.Await;
 import scala.concurrent.duration.Duration;
 import scala.runtime.BoxedUnit;
 
-import static javacsw.util.config.JItems.*;
-import static javacsw.util.config.JConfigDSL.*;
-import static javacsw.util.config.JUnitsOfMeasure.encoder;
+import static javacsw.util.param.JParameters.*;
+import static javacsw.util.param.JParameterSetDsl.*;
+import static javacsw.util.param.JUnitsOfMeasure.encoder;
 import static javacsw.services.pkg.JSupervisor.*;
 
-import static csw.util.config.Configurations.SetupConfig;
-import static csw.util.config.Configurations.ConfigKey;
-import static csw.util.config.StateVariable.CurrentState;
+import static csw.util.param.Parameters.Setup;
+import static csw.util.param.Parameters.Prefix;
+import static csw.util.param.StateVariable.CurrentState;
 
 import static csw.examples.vsliceJava.hcd.SingleAxisSimulator.AxisState;
 import static csw.examples.vsliceJava.hcd.SingleAxisSimulator.AxisStarted;
@@ -195,20 +195,20 @@ public class TromboneHCD extends JHcdController {
    * @param sc the config received
    */
   @Override
-  public void process(SetupConfig sc) {
+  public void process(Setup sc) {
 //    import TromboneHCD._
 
     log.debug("Trombone process received sc: " + sc);
 
-    ConfigKey configKey = sc.configKey();
-    if (configKey.equals(axisMoveCK)) {
+    Prefix prefix = sc.prefix();
+    if (prefix.equals(axisMoveCK)) {
       tromboneAxis.tell(new SingleAxisSimulator.Move(jvalue(jitem(sc, positionKey)), true), self());
-    } else if (configKey.equals(axisDatumCK)) {
+    } else if (prefix.equals(axisDatumCK)) {
       log.info("Received Datum");
       tromboneAxis.tell(SingleAxisSimulator.Datum.instance, self());
-    } else if (configKey.equals(axisHomeCK)) {
+    } else if (prefix.equals(axisHomeCK)) {
       tromboneAxis.tell(SingleAxisSimulator.Home.instance, self());
-    } else if (configKey.equals(axisCancelCK)) {
+    } else if (prefix.equals(axisCancelCK)) {
       tromboneAxis.tell(SingleAxisSimulator.CancelMove.instance, self());
     }
   }
@@ -260,7 +260,7 @@ public class TromboneHCD extends JHcdController {
   public static final String tromboneAxisName = "tromboneAxis";
 
   public static final String axisStatePrefix = trombonePrefix + ".axis1State";
-  public static final ConfigKey axisStateCK = new ConfigKey(axisStatePrefix);
+  public static final Prefix axisStateCK = new Prefix(axisStatePrefix);
   public static final StringKey axisNameKey = new StringKey("axisName");
   public static final Choice AXIS_IDLE = new Choice(AxisState.AXIS_IDLE.toString());
   public static final Choice AXIS_MOVING = new Choice(AxisState.AXIS_MOVING.toString());
@@ -282,7 +282,7 @@ public class TromboneHCD extends JHcdController {
     jset(inHomeKey, false));
 
   public static final String axisStatsPrefix = trombonePrefix + ".axisStats";
-  public static final ConfigKey axisStatsCK = new ConfigKey(axisStatsPrefix);
+  public static final Prefix axisStatsCK = new Prefix(axisStatsPrefix);
   public static final IntKey datumCountKey = IntKey("initCount");
   public static final IntKey moveCountKey = IntKey("moveCount");
   public static final IntKey homeCountKey = IntKey("homeCount");
@@ -301,7 +301,7 @@ public class TromboneHCD extends JHcdController {
     jset(cancelCountKey, 0));
 
   public static final String axisConfigPrefix = trombonePrefix + ".axisConfig";
-  public static final ConfigKey axisConfigCK = new ConfigKey(axisConfigPrefix);
+  public static final Prefix axisConfigCK = new Prefix(axisConfigPrefix);
   // axisNameKey
   public static final IntKey lowLimitKey = IntKey("lowLimit");
   public static final IntKey lowUserKey = IntKey("lowUser");
@@ -316,23 +316,23 @@ public class TromboneHCD extends JHcdController {
   );
 
   public static final String axisMovePrefix = trombonePrefix + ".move";
-  public static final ConfigKey axisMoveCK = new ConfigKey(axisMovePrefix);
+  public static final Prefix axisMoveCK = new Prefix(axisMovePrefix);
 
-  public static SetupConfig positionSC(int value) {
+  public static Setup positionSC(int value) {
     return sc(axisMovePrefix, jset(positionKey, value).withUnits(encoder));
   }
 
   public static final String axisDatumPrefix = trombonePrefix + ".datum";
-  public static final ConfigKey axisDatumCK = new ConfigKey(axisDatumPrefix);
-  public static final SetupConfig datumSC = SetupConfig(axisDatumCK);
+  public static final Prefix axisDatumCK = new Prefix(axisDatumPrefix);
+  public static final Setup datumSC = Setup(axisDatumCK);
 
   public static final String axisHomePrefix = trombonePrefix + ".home";
-  public static final ConfigKey axisHomeCK = new ConfigKey(axisHomePrefix);
-  public static final SetupConfig homeSC = SetupConfig(axisHomeCK);
+  public static final Prefix axisHomeCK = new Prefix(axisHomePrefix);
+  public static final Setup homeSC = Setup(axisHomeCK);
 
   public static final String axisCancelPrefix = trombonePrefix + ".cancel";
-  public static final ConfigKey axisCancelCK = new ConfigKey(axisCancelPrefix);
-  public static final SetupConfig cancelSC = SetupConfig(axisCancelCK);
+  public static final Prefix axisCancelCK = new Prefix(axisCancelPrefix);
+  public static final Setup cancelSC = Setup(axisCancelCK);
 
   // Testing messages for TromboneHCD
   public enum TromboneEngineering {

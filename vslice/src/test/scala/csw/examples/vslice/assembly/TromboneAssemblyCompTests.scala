@@ -16,8 +16,8 @@ import csw.services.pkg.Component.AssemblyInfo
 import csw.services.pkg.Supervisor
 import csw.services.pkg.Supervisor._
 import csw.services.pkg.SupervisorExternal.{LifecycleStateChanged, SubscribeLifecycleCallback}
-import csw.util.config.Configurations
-import csw.util.config.Configurations.SetupConfig
+import csw.util.param.Parameters
+import csw.util.param.Parameters.Setup
 import org.scalatest.{BeforeAndAfterAll, _}
 import csw.services.sequencer.SequencerEnv._
 
@@ -92,7 +92,7 @@ class TromboneAssemblyCompTests extends TestKit(TromboneAssemblyCompTests.system
 
       fakeSequencer.expectNoMsg(3.seconds) // wait for connections
 
-      val sca = Configurations.createSetupConfigArg("testobsId", SetupConfig(initCK), SetupConfig(datumCK))
+      val sca = Parameters.createSetupArg("testobsId", Setup(initCK), Setup(datumCK))
 
       fakeSequencer.send(tla, Submit(sca))
 
@@ -118,7 +118,7 @@ class TromboneAssemblyCompTests extends TestKit(TromboneAssemblyCompTests.system
 
       //fakeSequencer.expectNoMsg(12.seconds)  // wait for connections
 
-      val datum = Configurations.createSetupConfigArg("testobsId", SetupConfig(initCK), SetupConfig(datumCK))
+      val datum = Parameters.createSetupArg("testobsId", Setup(initCK), Setup(datumCK))
       fakeSequencer.send(tla, Submit(datum))
 
       // This first one is the accept/verification
@@ -135,7 +135,7 @@ class TromboneAssemblyCompTests extends TestKit(TromboneAssemblyCompTests.system
       val testRangeDistance = 90 to 180 by 10
       val positionConfigs = testRangeDistance.map(f => positionSC(f))
 
-      val sca = Configurations.createSetupConfigArg("testobsId", positionConfigs: _*)
+      val sca = Parameters.createSetupArg("testobsId", positionConfigs: _*)
       fakeSequencer.send(tla, Submit(sca))
 
       // This first one is the accept/verification

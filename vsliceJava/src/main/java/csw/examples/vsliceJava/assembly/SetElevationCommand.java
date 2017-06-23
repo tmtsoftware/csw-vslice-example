@@ -10,7 +10,7 @@ import akka.util.Timeout;
 import csw.services.ccs.CommandStatus.Error;
 import csw.services.ccs.DemandMatcher;
 import csw.services.ccs.HcdController;
-import csw.util.config.DoubleItem;
+import csw.util.param.DoubleParameter;
 import javacsw.services.ccs.JSequentialExecutor;
 
 import java.util.Optional;
@@ -20,11 +20,11 @@ import static csw.examples.vsliceJava.assembly.TromboneStateActor.*;
 import static csw.examples.vsliceJava.hcd.TromboneHCD.*;
 import static csw.services.ccs.CommandStatus.NoLongerValid;
 import static csw.services.ccs.Validation.WrongInternalStateIssue;
-import static csw.util.config.Configurations.SetupConfig;
+import static csw.util.param.Parameters.Setup;
 import static javacsw.services.ccs.JCommandStatus.Completed;
-import static javacsw.util.config.JConfigDSL.sc;
-import static javacsw.util.config.JItems.*;
-import static javacsw.util.config.JUnitsOfMeasure.encoder;
+import static javacsw.util.param.JParameterSetDsl.sc;
+import static javacsw.util.param.JParameters.*;
+import static javacsw.util.param.JUnitsOfMeasure.encoder;
 import static akka.pattern.PatternsCS.ask;
 
 /**
@@ -42,12 +42,12 @@ public class SetElevationCommand extends AbstractActor {
 
   private final LoggingAdapter log = Logging.getLogger(getContext().system(), this);
   private final AssemblyContext ac;
-  private final SetupConfig sc;
+  private final Setup sc;
   private final ActorRef tromboneHCD;
   private final TromboneState startState;
   private final Optional<ActorRef> stateActor;
 
-  private SetElevationCommand(AssemblyContext ac, SetupConfig sc, ActorRef tromboneHCD,
+  private SetElevationCommand(AssemblyContext ac, Setup sc, ActorRef tromboneHCD,
                               TromboneState startState, Optional<ActorRef> stateActor) {
     this.ac = ac;
     this.sc = sc;
@@ -67,7 +67,7 @@ public class SetElevationCommand extends AbstractActor {
           } else {
             ActorRef mySender = sender();
             // Note that units have already been verified here
-            DoubleItem elevationItem = jitem(sc, AssemblyContext.naElevationKey);
+            DoubleParameter elevationItem = jitem(sc, AssemblyContext.naElevationKey);
 
             // Let the elevation be the range distance
             // Convert range distance to encoder units from mm
@@ -78,7 +78,7 @@ public class SetElevationCommand extends AbstractActor {
 
             DemandMatcher stateMatcher = TromboneCommandHandler.posMatcher(encoderPosition);
             // Position key is encoder units
-            SetupConfig scOut = jadd(sc(axisMoveCK.prefix(), jset(positionKey, encoderPosition).withUnits(encoder)));
+            Setup scOut = jadd(sc(axisMoveCK.prefix(), jset(positionKey, encoderPosition).withUnits(encoder)));
             sendState(new SetState(cmdItem(cmdBusy), moveItem(moveMoving), startState.sodiumLayer, startState.nss));
             tromboneHCD.tell(new HcdController.Submit(scOut), self());
 
@@ -111,7 +111,7 @@ public class SetElevationCommand extends AbstractActor {
     });
   }
 
-  public static Props props(AssemblyContext ac, SetupConfig sc, ActorRef tromboneHCD, TromboneState startState, Optional<ActorRef> stateActor) {
+  public static Props props(AssemblyContext ac, Setup sc, ActorRef tromboneHCD, TromboneState startState, Optional<ActorRef> stateActor) {
     return Props.create(new Creator<SetElevationCommand>() {
       private static final long serialVersionUID = 1L;
 

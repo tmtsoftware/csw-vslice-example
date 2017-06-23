@@ -7,7 +7,7 @@ import csw.services.ccs.CommandStatus.{Completed, Error, NoLongerValid}
 import csw.services.ccs.HcdController
 import csw.services.ccs.SequentialExecutor.{CommandStart, StopCurrentCommand}
 import csw.services.ccs.Validation.WrongInternalStateIssue
-import csw.util.config.Configurations.SetupConfig
+import csw.util.param.Parameters.Setup
 import akka.pattern.ask
 import akka.util.Timeout
 
@@ -17,7 +17,8 @@ import scala.concurrent.duration._
 /**
  * TMT Source Code: 10/21/16.
  */
-class DatumCommand(sc: SetupConfig, tromboneHCD: ActorRef, startState: TromboneState, stateActor: Option[ActorRef]) extends Actor with ActorLogging {
+class DatumCommand(sc: Setup, tromboneHCD: ActorRef, startState: TromboneState, stateActor: Option[ActorRef])
+  extends Actor with ActorLogging {
   import TromboneCommandHandler._
   import TromboneStateActor._
 
@@ -29,7 +30,7 @@ class DatumCommand(sc: SetupConfig, tromboneHCD: ActorRef, startState: TromboneS
       } else {
         val mySender = sender()
         sendState(SetState(cmdItem(cmdBusy), moveItem(moveIndexing), startState.sodiumLayer, startState.nss))
-        tromboneHCD ! HcdController.Submit(SetupConfig(axisDatumCK))
+        tromboneHCD ! HcdController.Submit(Setup(axisDatumCK))
         TromboneCommandHandler.executeMatch(context, idleMatcher, tromboneHCD, Some(mySender)) {
           case Completed =>
             sendState(SetState(cmdReady, moveIndexed, sodiumLayer = false, nss = false))
@@ -39,7 +40,7 @@ class DatumCommand(sc: SetupConfig, tromboneHCD: ActorRef, startState: TromboneS
       }
     case StopCurrentCommand =>
       log.debug(">>  DATUM STOPPED")
-      tromboneHCD ! HcdController.Submit(cancelSC)
+      tromboneHCD ! HcdController.Submit(cancelSC(commandInfo))
 
     case StateWasSet(b) => // ignore confirmation
   }
@@ -51,6 +52,6 @@ class DatumCommand(sc: SetupConfig, tromboneHCD: ActorRef, startState: TromboneS
 }
 
 object DatumCommand {
-  def props(sc: SetupConfig, tromboneHCD: ActorRef, startState: TromboneState, stateActor: Option[ActorRef]): Props =
-    Props(classOf[DatumCommand], sc, tromboneHCD, startState, stateActor)
+  def props(sc: Setup, tromboneHCD: ActorRef, startState: TromboneState, stateActor: Option[ActorRef]): Props =
+    Props(new DatumCommand(sc, tromboneHCD, startState, stateActor))
 }

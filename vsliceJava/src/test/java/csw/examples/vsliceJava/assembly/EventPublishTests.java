@@ -13,8 +13,8 @@ import akka.testkit.TestProbe;
 import akka.util.Timeout;
 import csw.examples.vsliceJava.TestEnv;
 import csw.services.loc.LocationService;
-import csw.util.config.DoubleItem;
-import csw.util.config.Events;
+import csw.util.param.DoubleParameter;
+import csw.util.param.Events;
 import javacsw.services.events.IEventService;
 import javacsw.services.events.ITelemetryService;
 import org.junit.*;
@@ -30,9 +30,9 @@ import static csw.examples.vsliceJava.assembly.AssemblyTestData.newRangeAndElDat
 import static csw.examples.vsliceJava.assembly.AssemblyTestData.testZenithAngles;
 import static csw.examples.vsliceJava.assembly.FollowActor.UpdatedEventData;
 import static csw.examples.vsliceJava.assembly.TromboneStateActor.*;
-import static csw.util.config.Events.*;
-import static javacsw.util.config.JItems.jadd;
-import static javacsw.util.config.JItems.jset;
+import static csw.util.param.Events.*;
+import static javacsw.util.param.JParameters.jadd;
+import static javacsw.util.param.JParameters.jset;
 import static junit.framework.TestCase.assertEquals;
 
 @SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "unused", "FieldCanBeLocal", "WeakerAccess"})
@@ -137,7 +137,7 @@ public class EventPublishTests extends TestKit {
     system = null;
   }
 
-  DoubleItem initialElevation = naElevation(assemblyContext.calculationConfig.defaultInitialElevation);
+  DoubleParameter initialElevation = naElevation(assemblyContext.calculationConfig.defaultInitialElevation);
 
   // Publisher behaves the same whether nss is in use or not so always nssNotInUse
   ActorRef newTestFollower(Optional<ActorRef> tromboneControl, Optional<ActorRef> publisher) {
@@ -297,7 +297,7 @@ public class EventPublishTests extends TestKit {
     tcsRtc.publish(new SystemEvent(focusErrorPrefix).add(fe(testFE)));
 
     // These are fake messages for the FollowActor that will be sent to simulate the TCS
-    List<SystemEvent> tcsEvents = testZenithAngles.stream().map(f -> new SystemEvent(zaConfigKey.prefix()).add(za(f)))
+    List<SystemEvent> tcsEvents = testZenithAngles.stream().map(f -> new SystemEvent(zaPrefix.prefix()).add(za(f)))
       .collect(Collectors.toList());
 
     // This should result in the length of tcsEvents being published

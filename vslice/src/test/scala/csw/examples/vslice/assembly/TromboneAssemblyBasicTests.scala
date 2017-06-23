@@ -13,9 +13,9 @@ import csw.services.events.EventService
 import csw.services.loc.LocationService
 import csw.services.pkg.Component.AssemblyInfo
 import csw.services.pkg.Supervisor._
-import csw.util.config.Configurations
-import csw.util.config.Configurations.SetupConfig
-import csw.util.config.Events.SystemEvent
+import csw.util.param.Parameters
+import csw.util.param.Parameters.Setup
+import csw.util.param.Events.SystemEvent
 import org.scalatest.{BeforeAndAfterAll, FunSpecLike, _}
 import csw.services.sequencer.SequencerEnv._
 
@@ -120,7 +120,7 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
       fakeSupervisor.expectMsg(Initialized)
       fakeSupervisor.send(tromboneAssembly, Running)
 
-      val sca = Configurations.createSetupConfigArg("testobsId", SetupConfig(datumCK))
+      val sca = Parameters.createSetupArg("testobsId", Setup(datumCK))
 
       fakeClient.send(tromboneAssembly, Submit(sca))
 
@@ -148,7 +148,7 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
       fakeSupervisor.expectMsg(Initialized)
       fakeSupervisor.send(tromboneAssembly, Running)
 
-      val sca = Configurations.createSetupConfigArg("testobsId", SetupConfig(initCK), SetupConfig(datumCK))
+      val sca = Parameters.createSetupArg("testobsId", Setup(initCK), Setup(datumCK))
 
       fakeClient.send(tromboneAssembly, Submit(sca))
 
@@ -178,7 +178,7 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
 
       // Sending an Init first so we can see the dataum issue
       val testPosition = 90.0
-      val sca = Configurations.createSetupConfigArg("testobsId", SetupConfig(initCK), moveSC(testPosition))
+      val sca = Parameters.createSetupArg("testobsId", Setup(initCK), moveSC(testPosition))
 
       fakeClient.send(tromboneAssembly, Submit(sca))
 
@@ -210,7 +210,7 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
 
       val testMove = 90.0
       val testMove2 = 100.0
-      val sca = Configurations.createSetupConfigArg("testobsId", SetupConfig(initCK), SetupConfig(datumCK), moveSC(testMove), moveSC(testMove2))
+      val sca = Parameters.createSetupArg("testobsId", Setup(initCK), Setup(datumCK), moveSC(testMove), moveSC(testMove2))
 
       fakeClient.send(tromboneAssembly, Submit(sca))
 
@@ -239,7 +239,7 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
       fakeSupervisor.send(tromboneAssembly, Running)
 
       val testRangeDistance = 125.0
-      val sca = Configurations.createSetupConfigArg("testobsId", SetupConfig(initCK), SetupConfig(datumCK), positionSC(testRangeDistance))
+      val sca = Parameters.createSetupArg("testobsId", Setup(initCK), Setup(datumCK), positionSC(testRangeDistance))
 
       fakeClient.send(tromboneAssembly, Submit(sca))
 
@@ -269,7 +269,7 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
       fakeSupervisor.send(tromboneAssembly, Running)
       expectNoMsg(200.millis)
 
-      val datum = Configurations.createSetupConfigArg("testobsId", SetupConfig(initCK), SetupConfig(datumCK))
+      val datum = Parameters.createSetupArg("testobsId", Setup(initCK), Setup(datumCK))
       fakeClient.send(tromboneAssembly, Submit(datum))
 
       // This first one is the accept/verification
@@ -286,7 +286,7 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
       val testRangeDistance = 90 to 180 by 10
       val positionConfigs = testRangeDistance.map(f => positionSC(f))
 
-      val sca = Configurations.createSetupConfigArg("testobsId", positionConfigs: _*)
+      val sca = Parameters.createSetupArg("testobsId", positionConfigs: _*)
       fakeClient.send(tromboneAssembly, Submit(sca))
 
       // This first one is the accept/verification
@@ -314,7 +314,7 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
       fakeSupervisor.expectNoMsg(200.milli)
       fakeSupervisor.send(tromboneAssembly, Running)
 
-      val datum = Configurations.createSetupConfigArg("testobsId", SetupConfig(initCK), SetupConfig(datumCK))
+      val datum = Parameters.createSetupArg("testobsId", Setup(initCK), Setup(datumCK))
       fakeClient.send(tromboneAssembly, Submit(datum))
 
       // This first one is the accept/verification
@@ -326,7 +326,7 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
 
       // Now start a long move
       val testMove = 150.1
-      val sca = Configurations.createSetupConfigArg("testobsId", moveSC(testMove))
+      val sca = Parameters.createSetupArg("testobsId", moveSC(testMove))
       // Send the move
       fakeClient.send(tromboneAssembly, Submit(sca))
 
@@ -337,7 +337,7 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
       // Now send the stop after a bit of delay to let it get going
       // XXX FIXME: This is a timing thing that may not work on all machines
       fakeSupervisor.expectNoMsg(300.millis)
-      val stop = Configurations.createSetupConfigArg("testobsId", SetupConfig(stopCK))
+      val stop = Parameters.createSetupArg("testobsId", Setup(stopCK))
       // Send the stop
       fakeClient.send(tromboneAssembly, Submit(stop))
 
@@ -368,7 +368,7 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
       fakeSupervisor.expectNoMsg(200.milli)
       fakeSupervisor.send(tromboneAssembly, Running)
 
-      val datum = Configurations.createSetupConfigArg("testobsId", SetupConfig(initCK), SetupConfig(datumCK))
+      val datum = Parameters.createSetupArg("testobsId", Setup(initCK), Setup(datumCK))
       fakeClient.send(tromboneAssembly, Submit(datum))
 
       // This first one is the accept/verification
@@ -379,7 +379,7 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
       completeMsg.overall shouldBe AllCompleted
 
       val testEl = 150.0
-      val sca = Configurations.createSetupConfigArg("testobsId", setElevationSC(testEl))
+      val sca = Parameters.createSetupArg("testobsId", setElevationSC(testEl))
 
       // Send the setElevation
       fakeClient.send(tromboneAssembly, Submit(sca))
@@ -409,7 +409,7 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
       fakeSupervisor.send(tromboneAssembly, Running)
 
       // Sending an Init first so we can see the datum issue
-      val sca = Configurations.createSetupConfigArg("testobsId", SetupConfig(initCK), SetupConfig(datumCK))
+      val sca = Parameters.createSetupArg("testobsId", Setup(initCK), Setup(datumCK))
 
       fakeClient.send(tromboneAssembly, Submit(sca))
 
@@ -425,7 +425,7 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
 
       // Now try a setAngle
       val setAngleValue = 22.0
-      val sca2 = Configurations.createSetupConfigArg("testobsId", setAngleSC(setAngleValue))
+      val sca2 = Parameters.createSetupArg("testobsId", setAngleSC(setAngleValue))
       // Send the command
       fakeClient.send(tromboneAssembly, Submit(sca2))
 
@@ -457,7 +457,7 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
       fakeSupervisor.expectNoMsg(200.milli)
       fakeSupervisor.send(tromboneAssembly, Running)
 
-      val datum = Configurations.createSetupConfigArg("testobsId", SetupConfig(initCK), SetupConfig(datumCK))
+      val datum = Parameters.createSetupArg("testobsId", Setup(initCK), Setup(datumCK))
       fakeClient.send(tromboneAssembly, Submit(datum))
 
       // This first one is the accept/verification
@@ -468,7 +468,7 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
       completeMsg.overall shouldBe AllCompleted
 
       val testEl = 150.0
-      val sca = Configurations.createSetupConfigArg("testobsId", setElevationSC(testEl), followSC(false), SetupConfig(stopCK))
+      val sca = Parameters.createSetupArg("testobsId", setElevationSC(testEl), followSC(false), Setup(stopCK))
 
       // Send the setElevation
       fakeClient.send(tromboneAssembly, Submit(sca))
@@ -500,7 +500,7 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
     fakeSupervisor.expectNoMsg(200.milli)
     fakeSupervisor.send(tromboneAssembly, Running)
 
-    val datum = Configurations.createSetupConfigArg("testobsId", SetupConfig(initCK), SetupConfig(datumCK))
+    val datum = Parameters.createSetupArg("testobsId", Setup(initCK), Setup(datumCK))
     fakeClient.send(tromboneAssembly, Submit(datum))
 
     // This first one is the accept/verification
@@ -511,7 +511,7 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
     completeMsg.overall shouldBe AllCompleted
 
     val testEl = 150.0
-    val sca = Configurations.createSetupConfigArg("testobsId", setElevationSC(testEl), followSC(false))
+    val sca = Parameters.createSetupArg("testobsId", setElevationSC(testEl), followSC(false))
 
     // Send the setElevation
     fakeClient.send(tromboneAssembly, Submit(sca))
@@ -536,7 +536,7 @@ class TromboneAssemblyBasicTests extends TestKit(TromboneAssemblyBasicTests.syst
 
     val testZenithAngles = 0.0 to 40.0 by 5.0
     // These are fake messages for the FollowActor that will be sent to simulate the TCS
-    val tcsEvents = testZenithAngles.map(f => SystemEvent(zaConfigKey.prefix).add(za(f)))
+    val tcsEvents = testZenithAngles.map(f => SystemEvent(zaPrefix.prefix).add(za(f)))
 
     // This should result in the length of tcsEvents being published
     tcsEvents.foreach { f =>

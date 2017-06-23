@@ -10,7 +10,7 @@ import csw.services.events.EventService.eventServiceConnection
 import csw.services.events.{Event, EventService, TelemetryService}
 import csw.services.loc.LocationService
 import csw.services.loc.LocationService.ResolvedTcpLocation
-import csw.util.config.Events.{EventTime, StatusEvent, SystemEvent}
+import csw.util.param.Events.{EventTime, StatusEvent, SystemEvent}
 import org.scalatest.{BeforeAndAfterAll, FunSpecLike, _}
 
 import scala.concurrent.Await
@@ -228,7 +228,7 @@ class EventPublishTests extends TestKit(EventPublishTests.system) with ImplicitS
       tcsRtc.publish(SystemEvent(focusErrorPrefix).add(fe(testFE)))
 
       // These are fake messages for the FollowActor that will be sent to simulate the TCS
-      val tcsEvents = testZenithAngles.map(f => SystemEvent(zaConfigKey.prefix).add(za(f)))
+      val tcsEvents = testZenithAngles.map(f => SystemEvent(zaPrefix.prefix).add(za(f)))
 
       // This should result in the length of tcsEvents being published
       tcsEvents.foreach { f =>

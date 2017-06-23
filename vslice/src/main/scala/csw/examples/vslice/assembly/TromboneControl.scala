@@ -5,7 +5,7 @@ import csw.examples.vslice.assembly.TromboneAssembly.UpdateTromboneHCD
 import csw.examples.vslice.assembly.TromboneControl.GoToStagePosition
 import csw.examples.vslice.hcd.TromboneHCD
 import csw.services.ccs.HcdController.Submit
-import csw.util.config.DoubleItem
+import csw.util.param.DoubleParameter
 
 /**
  * An actor dedicated to converting stage position values to encoder units and writing in a oneway fashion to
@@ -13,7 +13,7 @@ import csw.util.config.DoubleItem
  *
  * Other actors, primarily the FollowActor write stage positions with units of millimeters. This actor uses the
  * function in algorithms to convert this to encoder units. It then uses the Submit command of CCS to send the
- * SetupConfig to the trombone HCD.
+ * Setup to the trombone HCD.
  *
  * Note that the actor receive method is parameterized with an optional HCD actor ref. It is set initially when
  * the actor is created and may be updated if the actor goes down or up. The actor ref is an [[scala.Option]] so
@@ -43,7 +43,7 @@ class TromboneControl(ac: AssemblyContext, tromboneHCDIn: Option[ActorRef]) exte
       log.debug(s"Setting trombone axis to stage position: ${newPosition.head} and encoder: $encoderPosition")
 
       // Send command to HCD here
-      tromboneHCD.foreach(_ ! Submit(TromboneHCD.positionSC(encoderPosition)))
+      tromboneHCD.foreach(_ ! Submit(TromboneHCD.positionSC(ac.commandInfo, encoderPosition)))
 
     case UpdateTromboneHCD(tromboneHCDUpdate) =>
       context.become(controlReceive(tromboneHCDUpdate))
@@ -58,6 +58,6 @@ object TromboneControl {
   def props(assemblyContext: AssemblyContext, tromboneHCD: Option[ActorRef] = None) = Props(classOf[TromboneControl], assemblyContext, tromboneHCD)
 
   // Used to send a position that requries transformaton from
-  case class GoToStagePosition(stagePosition: DoubleItem)
+  case class GoToStagePosition(stagePosition: DoubleParameter)
 
 }

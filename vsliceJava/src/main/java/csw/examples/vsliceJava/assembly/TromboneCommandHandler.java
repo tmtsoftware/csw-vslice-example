@@ -10,8 +10,8 @@ import csw.services.ccs.DemandMatcher;
 import csw.services.ccs.MultiStateMatcherActor;
 import csw.services.ccs.SequentialExecutor.ExecuteOne;
 import csw.services.ccs.StateMatcher;
-import csw.util.config.BooleanItem;
-import csw.util.config.DoubleItem;
+import csw.util.param.BooleanParameter;
+import csw.util.param.DoubleParameter;
 import javacsw.services.ccs.JSequentialExecutor;
 import javacsw.services.events.IEventService;
 import javacsw.services.pkg.ILocationSubscriberClient;
@@ -28,12 +28,12 @@ import static csw.services.ccs.CommandStatus.Error;
 import static csw.services.ccs.CommandStatus.Invalid;
 import static csw.services.ccs.Validation.*;
 import static csw.services.loc.LocationService.*;
-import static csw.util.config.Configurations.ConfigKey;
-import static csw.util.config.Configurations.SetupConfig;
-import static csw.util.config.StateVariable.DemandState;
+import static csw.util.param.Parameters.Prefix;
+import static csw.util.param.Parameters.Setup;
+import static csw.util.param.StateVariable.DemandState;
 import static javacsw.services.ccs.JCommandStatus.Cancelled;
 import static javacsw.services.ccs.JCommandStatus.Completed;
-import static javacsw.util.config.JItems.*;
+import static javacsw.util.param.JParameters.*;
 import static scala.compat.java8.OptionConverters.toJava;
 
 /**
@@ -63,7 +63,7 @@ class TromboneCommandHandler extends AbstractActor implements TromboneStateClien
 //  }
 
   // Set the default evaluation for use with the follow command
-  private DoubleItem setElevationItem;
+  private DoubleParameter setElevationItem;
 
   // The actor for managing the persistent assembly state as defined in the spec is here, it is passed to each command
   private final ActorRef tromboneStateActor;
@@ -137,11 +137,11 @@ class TromboneCommandHandler extends AbstractActor implements TromboneStateClien
 
       match(ExecuteOne.class, t -> {
 
-        SetupConfig sc = t.sc();
+        Setup sc = t.setup();
         Optional<ActorRef> commandOriginator = toJava(t.commandOriginator());
-        ConfigKey configKey = sc.configKey();
+        Prefix prefix = sc.prefix();
 
-        if (configKey.equals(ac.initCK)) {
+        if (prefix.equals(ac.initCK)) {
           log.info("Init not fully implemented -- only sets state ready!");
           try {
             ask(tromboneStateActor, new SetState(cmdItem(cmdReady), moveItem(moveUnindexed), sodiumItem(false), nssItem(false)), 5000).toCompletableFuture().get();
@@ -150,7 +150,7 @@ class TromboneCommandHandler extends AbstractActor implements TromboneStateClien
           }
           commandOriginator.ifPresent(actorRef -> actorRef.tell(Completed, self()));
 
-        } else if (configKey.equals(ac.datumCK)) {
+        } else if (prefix.equals(ac.datumCK)) {
           if (isHCDAvailable()) {
             log.info("Datums State: " + currentState());
             ActorRef datumActorRef = getContext().actorOf(DatumCommand.props(sc, tromboneHCD, currentState(), Optional.of(tromboneStateActor)));
@@ -158,29 +158,29 @@ class TromboneCommandHandler extends AbstractActor implements TromboneStateClien
             self().tell(JSequentialExecutor.CommandStart(), self());
           } else hcdNotAvailableResponse(commandOriginator);
 
-        } else if (configKey.equals(ac.moveCK)) {
+        } else if (prefix.equals(ac.moveCK)) {
           if (isHCDAvailable()) {
             ActorRef moveActorRef = getContext().actorOf(MoveCommand.props(ac, sc, tromboneHCD, currentState(), Optional.of(tromboneStateActor)));
             getContext().become(actorExecutingReceive(moveActorRef, commandOriginator));
             self().tell(JSequentialExecutor.CommandStart(), self());
           } else hcdNotAvailableResponse(commandOriginator);
 
-        } else if (configKey.equals(ac.positionCK)) {
+        } else if (prefix.equals(ac.positionCK)) {
           if (isHCDAvailable()) {
             ActorRef positionActorRef = getContext().actorOf(PositionCommand.props(ac, sc, tromboneHCD, currentState(), Optional.of(tromboneStateActor)));
             getContext().become(actorExecutingReceive(positionActorRef, commandOriginator));
             self().tell(JSequentialExecutor.CommandStart(), self());
           } else hcdNotAvailableResponse(commandOriginator);
 
-        } else if (configKey.equals(ac.stopCK)) {
+        } else if (prefix.equals(ac.stopCK)) {
           commandOriginator.ifPresent(actorRef ->
             actorRef.tell(new NoLongerValid(new WrongInternalStateIssue("Trombone assembly must be executing a command to use stop")), self()));
 
-        } else if (configKey.equals(ac.setAngleCK)) {
+        } else if (prefix.equals(ac.setAngleCK)) {
           commandOriginator.ifPresent(actorRef ->
             actorRef.tell(new NoLongerValid(new WrongInternalStateIssue("Trombone assembly must be following for setAngle")), self()));
 
-        } else if (configKey.equals(ac.setElevationCK)) {
+        } else if (prefix.equals(ac.setElevationCK)) {
           // Setting the elevation state here for a future follow command
           setElevationItem = jitem(sc, AssemblyContext.naElevationKey);
           log.info("Setting elevation to: " + setElevationItem);
@@ -189,7 +189,7 @@ class TromboneCommandHandler extends AbstractActor implements TromboneStateClien
           getContext().become(actorExecutingReceive(setElevationActorRef, commandOriginator));
           self().tell(JSequentialExecutor.CommandStart(), self());
 
-        } else if (configKey.equals(ac.followCK)) {
+        } else if (prefix.equals(ac.followCK)) {
           if (cmd(currentState()).equals(cmdUninitialized)
             || (!move(currentState()).equals(moveIndexed) && !move(currentState()).equals(moveMoving))
             || !sodiumLayer(currentState())) {
@@ -199,7 +199,7 @@ class TromboneCommandHandler extends AbstractActor implements TromboneStateClien
           } else {
             // No state set during follow
             // At this point, parameters have been checked so direct access is okay
-            BooleanItem nssItem = jitem(sc, AssemblyContext.nssInUseKey);
+            BooleanParameter nssItem = jitem(sc, AssemblyContext.nssInUseKey);
 
             log.info("Set elevation is: " + setElevationItem);
 
@@ -222,7 +222,7 @@ class TromboneCommandHandler extends AbstractActor implements TromboneStateClien
           log.error("TromboneCommandHandler2:noFollowReceive received an unknown command: " + t + " from " + sender());
           commandOriginator.ifPresent(actorRef ->
             actorRef.tell(new Invalid(new UnsupportedCommandInStateIssue("Trombone assembly does not support the command " +
-              configKey.prefix() + " in the current state.")), self()));
+              prefix.prefix() + " in the current state.")), self()));
         }
       }).
       matchAny(t ->
@@ -238,15 +238,15 @@ class TromboneCommandHandler extends AbstractActor implements TromboneStateClien
   private Receive followReceive(ActorRef followActor) {
     return stateReceive().orElse(receiveBuilder().
       match(ExecuteOne.class, t -> {
-        SetupConfig sc = t.sc();
+        Setup sc = t.setup();
         Optional<ActorRef> commandOriginator = toJava(t.commandOriginator());
-        ConfigKey configKey = sc.configKey();
+        Prefix prefix = sc.prefix();
 
-        if (configKey.equals(ac.datumCK) || configKey.equals(ac.moveCK) || configKey.equals(ac.positionCK) || configKey.equals(ac.followCK) || configKey.equals(ac.setElevationCK)) {
+        if (prefix.equals(ac.datumCK) || prefix.equals(ac.moveCK) || prefix.equals(ac.positionCK) || prefix.equals(ac.followCK) || prefix.equals(ac.setElevationCK)) {
           commandOriginator.ifPresent(actorRef ->
             actorRef.tell(new Invalid(new WrongInternalStateIssue("Trombone assembly cannot be following for datum, move, position, setElevation, and follow")), self()));
 
-        } else if (configKey.equals(ac.setAngleCK)) {
+        } else if (prefix.equals(ac.setAngleCK)) {
           // Unclear what to really do with state here
           // Everything else is the same
           // Wait to make sure state was set
@@ -258,7 +258,7 @@ class TromboneCommandHandler extends AbstractActor implements TromboneStateClien
 
           // At this point, parameters have been checked so direct access is okay
           // Send the SetElevation to the follow actor
-          DoubleItem zenithAngleItem = jitem(sc, AssemblyContext.zenithAngleKey);
+          DoubleParameter zenithAngleItem = jitem(sc, AssemblyContext.zenithAngleKey);
           followActor.tell(new FollowActor.SetZenithAngle(zenithAngleItem), self());
           Timeout timeout = new Timeout(5, TimeUnit.SECONDS);
           executeMatch(getContext(), idleMatcher(), tromboneHCD, commandOriginator, timeout, status -> {
@@ -271,7 +271,7 @@ class TromboneCommandHandler extends AbstractActor implements TromboneStateClien
             } else if (status instanceof Error)
               log.error("setElevation command failed with message: " + ((Error) status).message());
           });
-        } else if (configKey.equals(ac.stopCK)) {
+        } else if (prefix.equals(ac.stopCK)) {
           // Stop the follower
           log.debug("Stop received while following");
           followActor.tell(new FollowCommand.StopFollowing(), self());
@@ -310,7 +310,7 @@ class TromboneCommandHandler extends AbstractActor implements TromboneStateClien
             getContext().become(noFollowReceive());
       }).
 
-      match(SetupConfig.class, t -> t.configKey().equals(ac.stopCK), t -> {
+      match(Setup.class, t -> t.prefix().equals(ac.stopCK), t -> {
         log.debug("actorExecutingReceive: Stop CK");
         closeDownMotionCommand(currentCommand, commandOriginator);
       }).

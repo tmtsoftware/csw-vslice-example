@@ -14,8 +14,8 @@ import csw.services.loc.LocationService;
 import csw.services.pkg.Component.HcdInfo;
 import csw.services.pkg.Supervisor;
 import csw.services.pkg.SupervisorExternal.*;
-import csw.util.config.Configurations.SetupConfig;
-import csw.util.config.StateVariable.CurrentState;
+import csw.util.param.Parameters.Setup;
+import csw.util.param.StateVariable.CurrentState;
 import javacsw.services.ccs.JHcdController;
 import javacsw.services.loc.JConnectionType;
 import javacsw.services.pkg.JComponent;
@@ -28,7 +28,7 @@ import scala.concurrent.duration.FiniteDuration;
 import static csw.examples.vsliceJava.hcd.TromboneHCD.TromboneEngineering.GetAxisConfig;
 import static csw.examples.vsliceJava.hcd.TromboneHCD.*;
 import static csw.examples.vsliceJava.hcd.TromboneHCD.TromboneEngineering.GetAxisStats;
-import static javacsw.util.config.JItems.*;
+import static javacsw.util.param.JParameters.*;
 
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -204,7 +204,7 @@ public class TromboneHCDCompTests extends TestKit {
     send(hcd, GetAxisStats);
     CurrentState stats = expectMsgClass(CurrentState.class);
     System.out.println("Stats: " + stats);
-    assertEquals(stats.configKey(), TromboneHCD.axisStatsCK);
+    assertEquals(stats.prefix(), TromboneHCD.axisStatsCK);
     assertEquals(jvalue(jitem(stats, datumCountKey)).intValue(), 1);
     assertEquals(jvalue(jitem(stats, moveCountKey)).intValue(), 1);
 
@@ -229,8 +229,8 @@ public class TromboneHCDCompTests extends TestKit {
     // Currently can't subscribe unless in Running state because controllerReceive has process
     send(hcd, JHcdController.Subscribe);
 
-    // Being done this way to ensure ConfigKey equality works
-    SetupConfig sc = SetupConfig(axisHomePrefix);
+    // Being done this way to ensure Prefix equality works
+    Setup sc = Setup(axisHomePrefix);
     send(hcd, new Submit(sc));
 
     Vector<CurrentState> msgs = waitForMoveMsgs();
@@ -244,9 +244,9 @@ public class TromboneHCDCompTests extends TestKit {
     send(hcd, GetAxisStats);
     CurrentState stats = expectMsgClass(CurrentState.class);
     log.info("Stats: " + stats);
-    assertEquals(stats.configKey(), TromboneHCD.axisStatsCK);
-    assertEquals(stats.item(homeCountKey).head(), 1);
-    assertEquals(stats.item(moveCountKey).head(), 1);
+    assertEquals(stats.prefix(), TromboneHCD.axisStatsCK);
+    assertEquals(stats.parameter(homeCountKey).head(), 1);
+    assertEquals(stats.parameter(moveCountKey).head(), 1);
     send(hcd, JHcdController.Unsubscribe);
 
     cleanup(hcd);
@@ -269,7 +269,7 @@ public class TromboneHCDCompTests extends TestKit {
     // Currently can't subscribe unless in Running state because controllerReceive has process
     send(hcd, JHcdController.Subscribe);
 
-    // Being done this way to ensure ConfigKey equality works
+    // Being done this way to ensure Prefix equality works
     int testPos = 500;
 
     send(hcd, new Submit(positionSC(testPos)));
@@ -369,7 +369,7 @@ public class TromboneHCDCompTests extends TestKit {
     send(hcd, JHcdController.Subscribe);
 
     // Move 1
-    send(hcd, new Submit(SetupConfig(axisDatumPrefix))); // Could use ones in TromboneHCD
+    send(hcd, new Submit(Setup(axisDatumPrefix))); // Could use ones in TromboneHCD
     Vector<CurrentState> msgs = waitForMoveMsgs();
     assertEquals(jvalue(jitem(msgs.lastElement(), inHomeKey)), false);
 
@@ -419,7 +419,7 @@ public class TromboneHCDCompTests extends TestKit {
     send(hcd, GetAxisStats);
     CurrentState stats = expectMsgClass(CurrentState.class);
     //println("Stats: " + stats)
-    assertEquals(stats.configKey(), TromboneHCD.axisStatsCK);
+    assertEquals(stats.prefix(), TromboneHCD.axisStatsCK);
     assertEquals(jvalue(jitem(stats, datumCountKey)).intValue(), 1);
     assertEquals(jvalue(jitem(stats, moveCountKey)).intValue(), 6);
     assertEquals(jvalue(jitem(stats, homeCountKey)).intValue(), 2);
@@ -463,7 +463,7 @@ public class TromboneHCDCompTests extends TestKit {
     send(hcd, GetAxisStats);
     CurrentState stats = expectMsgClass(CurrentState.class);
     //println("Stats: " + stats)
-    assertEquals(stats.configKey(), TromboneHCD.axisStatsCK);
+    assertEquals(stats.prefix(), TromboneHCD.axisStatsCK);
     assertEquals(jvalue(jitem(stats, moveCountKey)).intValue(), 1);
     assertEquals(jvalue(jitem(stats, successCountKey)).intValue(), 1);
     assertEquals(jvalue(jitem(stats, cancelCountKey)).intValue(), 1);
@@ -490,7 +490,7 @@ public class TromboneHCDCompTests extends TestKit {
     send(hcd, JHcdController.Subscribe);
 
     // Init 1
-    send(hcd, new Submit(SetupConfig(axisDatumCK))); // Could use ones in TromboneHCD
+    send(hcd, new Submit(Setup(axisDatumCK))); // Could use ones in TromboneHCD
     Vector<CurrentState> msgs = waitForMoveMsgs();
     assertEquals(jvalue(jitem(msgs.lastElement(), stateKey)), AXIS_IDLE);
 

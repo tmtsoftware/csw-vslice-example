@@ -10,8 +10,8 @@ import csw.services.loc.ConnectionType.AkkaType
 import csw.services.loc.LocationService
 import csw.services.pkg.Component.{DoNotRegister, HcdInfo}
 import csw.services.pkg.Supervisor._
-import csw.util.config.Configurations.SetupConfig
-import csw.util.config.StateVariable.CurrentState
+import csw.util.param.Parameters.{CommandInfo, Setup}
+import csw.util.param.StateVariable.CurrentState
 import org.scalatest.{BeforeAndAfterAll, DoNotDiscover, FunSpecLike, Matchers}
 
 import scala.concurrent.Await
@@ -28,6 +28,9 @@ object TromboneHCDBasicTests {
 
 class TromboneHCDBasicTests extends TestKit(TromboneHCDBasicTests.system) with ImplicitSender
     with FunSpecLike with Matchers with BeforeAndAfterAll {
+
+  // This would normally come from the sequencer and be passed along to keep track of the obsId, etc.
+  private val commandInfo = new CommandInfo("obs001")
 
   override def beforeAll: Unit = {
     TestEnv.createTromboneHcdConfig()
@@ -199,7 +202,7 @@ class TromboneHCDBasicTests extends TestKit(TromboneHCDBasicTests.system) with I
       lifecycleStart(supervisor, tla)
 
       tla ! Subscribe
-      tla ! Submit(datumSC)
+      tla ! Submit(datumSC(commandInfo))
 
       val msgs = waitForMoveMsgs
       msgs.last(positionKey).head should equal(tla.underlyingActor.axisConfig.startPosition + 1) // Init position is one off the start position
@@ -208,9 +211,9 @@ class TromboneHCDBasicTests extends TestKit(TromboneHCDBasicTests.system) with I
       tla ! GetAxisStats
       val stats = expectMsgClass(classOf[CurrentState])
       //println("Stats: " + stats)
-      stats.configKey should equal(TromboneHCD.axisStatsCK)
-      stats.item(datumCountKey).head should equal(1)
-      stats.item(moveCountKey).head should equal(1)
+      stats.prefix should equal(TromboneHCD.axisStatsCK)
+      stats.parameter(datumCountKey).head should equal(1)
+      stats.parameter(moveCountKey).head should equal(1)
 
       tla ! Unsubscribe
       cleanup(tla)
@@ -223,8 +226,8 @@ class TromboneHCDBasicTests extends TestKit(TromboneHCDBasicTests.system) with I
       lifecycleStart(supervisor, tla)
 
       tla ! Subscribe
-      // Being done this way to ensure ConfigKey equality works
-      val sc = SetupConfig(axisHomePrefix)
+      // Being done this way to ensure Prefix equality works
+      val sc = Setup(axisHomePrefix)
       tla ! Submit(sc)
 
       val msgs = waitForMoveMsgs
@@ -237,9 +240,9 @@ class TromboneHCDBasicTests extends TestKit(TromboneHCDBasicTests.system) with I
       tla ! GetAxisStats
       val stats = expectMsgClass(classOf[CurrentState])
       //info(s"Stats: $stats")
-      stats.configKey should equal(TromboneHCD.axisStatsCK)
-      stats.item(homeCountKey).head should equal(1)
-      stats.item(moveCountKey).head should equal(1)
+      stats.prefix should equal(TromboneHCD.axisStatsCK)
+      stats.parameter(homeCountKey).head should equal(1)
+      stats.parameter(moveCountKey).head should equal(1)
 
       tla ! Unsubscribe
 
@@ -254,7 +257,7 @@ class TromboneHCDBasicTests extends TestKit(TromboneHCDBasicTests.system) with I
       val testPos = 500
 
       tla ! Subscribe
-      tla ! Submit(positionSC(testPos))
+      tla ! Submit(positionSC(commandInfo, testPos))
 
       val msgs = waitForMoveMsgs
       // Check the last message
@@ -278,12 +281,12 @@ class TromboneHCDBasicTests extends TestKit(TromboneHCDBasicTests.system) with I
 
       tla ! Subscribe
       // Move 2
-      tla ! Submit(homeSC)
+      tla ! Submit(homeSC(commandInfo))
       val msgs = waitForMoveMsgs
       msgs.last(inHomeKey).head should be(true)
 
       encoderTestValues.foreach { testPos =>
-        tla ! Submit(positionSC(testPos))
+        tla ! Submit(positionSC(commandInfo, testPos))
         //val msgs = waitForMoveMsgs
       }
       waitForMoveMsgs
@@ -303,7 +306,7 @@ class TromboneHCDBasicTests extends TestKit(TromboneHCDBasicTests.system) with I
         val testActual = tla.underlyingActor.axisConfig.lowLimit
 
         tla ! Subscribe
-        tla ! Submit(positionSC(testPos))
+        tla ! Submit(positionSC(commandInfo, testPos))
 
         val msgs = waitForMoveMsgs
         // Check the last message
@@ -332,7 +335,7 @@ class TromboneHCDBasicTests extends TestKit(TromboneHCDBasicTests.system) with I
         val testActual = tla.underlyingActor.axisConfig.lowLimit
 
         tla ! Subscribe
-        tla ! Submit(positionSC(testPos))
+        tla ! Submit(positionSC(commandInfo, testPos))
 
         var msgs = waitForMoveMsgs
         // Check the last message
@@ -343,7 +346,7 @@ class TromboneHCDBasicTests extends TestKit(TromboneHCDBasicTests.system) with I
 
         // Now move off low limt
         testPos = tla.underlyingActor.axisConfig.lowUser + 20
-        tla ! Submit(positionSC(testPos))
+        tla ! Submit(positionSC(commandInfo, testPos))
 
         msgs = waitForMoveMsgs
         // Check the last message
@@ -375,7 +378,7 @@ class TromboneHCDBasicTests extends TestKit(TromboneHCDBasicTests.system) with I
         val testActual = tla.underlyingActor.axisConfig.highLimit
 
         tla ! Subscribe
-        tla ! Submit(positionSC(testPos))
+        tla ! Submit(positionSC(commandInfo, testPos))
 
         val msgs = waitForMoveMsgs
         // Check the last message
@@ -405,18 +408,18 @@ class TromboneHCDBasicTests extends TestKit(TromboneHCDBasicTests.system) with I
         tla ! Subscribe
 
         // Move 1
-        tla ! Submit(SetupConfig(axisDatumPrefix)) // Could use ones in TromboneHCD
+        tla ! Submit(Setup(axisDatumPrefix)) // Could use ones in TromboneHCD
         var msgs = waitForMoveMsgs
         msgs.last(inHomeKey).head should be(false)
 
         // Move 2
-        tla ! Submit(homeSC)
+        tla ! Submit(homeSC(commandInfo))
         msgs = waitForMoveMsgs
         msgs.last(inHomeKey).head should be(true)
 
         // Move 3
         var testPos = 423
-        tla ! Submit(positionSC(testPos))
+        tla ! Submit(positionSC(commandInfo, testPos))
         msgs = waitForMoveMsgs
         // Check the last message
         msgs.last(positionKey).head should be(testPos)
@@ -427,7 +430,7 @@ class TromboneHCDBasicTests extends TestKit(TromboneHCDBasicTests.system) with I
 
         // Move 4
         testPos = 800
-        tla ! Submit(positionSC(testPos))
+        tla ! Submit(positionSC(commandInfo, testPos))
         msgs = waitForMoveMsgs
         // Check the last message
         msgs.last(positionKey).head should be(testPos)
@@ -435,7 +438,7 @@ class TromboneHCDBasicTests extends TestKit(TromboneHCDBasicTests.system) with I
 
         // Move 5
         testPos = 1240
-        tla ! Submit(positionSC(testPos))
+        tla ! Submit(positionSC(commandInfo, testPos))
         msgs = waitForMoveMsgs
         // Check the last message
         msgs.last(positionKey).head should be(testPos)
@@ -444,7 +447,7 @@ class TromboneHCDBasicTests extends TestKit(TromboneHCDBasicTests.system) with I
         msgs.last(inHighLimitKey).head should be(true)
 
         // Move 6
-        tla ! Submit(homeSC)
+        tla ! Submit(homeSC(commandInfo))
         msgs = waitForMoveMsgs
         msgs.last(inHomeKey).head should be(true)
         msgs.last(inLowLimitKey).head should be(false)
@@ -454,14 +457,14 @@ class TromboneHCDBasicTests extends TestKit(TromboneHCDBasicTests.system) with I
         tla ! GetAxisStats
         val stats = expectMsgClass(classOf[CurrentState])
         //println("Stats: " + stats)
-        stats.configKey should equal(TromboneHCD.axisStatsCK)
-        stats.item(datumCountKey).head should equal(1)
-        stats.item(moveCountKey).head should equal(6)
-        stats.item(homeCountKey).head should equal(2)
-        stats.item(limitCountKey).head should equal(1)
-        stats.item(successCountKey).head should equal(6)
-        stats.item(failureCountKey).head should be(0)
-        stats.item(cancelCountKey).head should be(0)
+        stats.prefix should equal(TromboneHCD.axisStatsCK)
+        stats.parameter(datumCountKey).head should equal(1)
+        stats.parameter(moveCountKey).head should equal(6)
+        stats.parameter(homeCountKey).head should equal(2)
+        stats.parameter(limitCountKey).head should equal(1)
+        stats.parameter(successCountKey).head should equal(6)
+        stats.parameter(failureCountKey).head should be(0)
+        stats.parameter(cancelCountKey).head should be(0)
 
         tla ! Unsubscribe
 
@@ -481,11 +484,11 @@ class TromboneHCDBasicTests extends TestKit(TromboneHCDBasicTests.system) with I
         val testPos = 1000
 
         tla ! Subscribe
-        tla ! Submit(positionSC(testPos))
+        tla ! Submit(positionSC(commandInfo, testPos))
 
         // wait for 2 updates
         receiveN(2)
-        tla ! Submit(cancelSC)
+        tla ! Submit(cancelSC(commandInfo))
         val msgs = waitForMoveMsgs
         // Check the last message
         msgs.last(stateKey).head should be(AXIS_IDLE)
@@ -495,10 +498,10 @@ class TromboneHCDBasicTests extends TestKit(TromboneHCDBasicTests.system) with I
         tla ! GetAxisStats
         val stats = expectMsgClass(classOf[CurrentState])
         //println("Stats: " + stats)
-        stats.configKey should equal(TromboneHCD.axisStatsCK)
-        stats.item(moveCountKey).head should equal(1)
-        stats.item(successCountKey).head should equal(1)
-        stats.item(cancelCountKey).head should be(1)
+        stats.prefix should equal(TromboneHCD.axisStatsCK)
+        stats.parameter(moveCountKey).head should equal(1)
+        stats.parameter(successCountKey).head should equal(1)
+        stats.parameter(cancelCountKey).head should be(1)
 
         tla ! Unsubscribe
 

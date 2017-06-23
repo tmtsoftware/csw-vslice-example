@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 
 import static csw.examples.vsliceJava.assembly.AssemblyContext.TromboneCalculationConfig;
 import static csw.examples.vsliceJava.assembly.AssemblyContext.TromboneControlConfig;
-import static csw.util.config.Configurations.SetupConfigArg;
+import static csw.util.param.Parameters.SetupArg;
 import static javacsw.services.pkg.JSupervisor.*;
 
 /**
@@ -253,17 +253,17 @@ public class TromboneAssembly extends JAssemblyController {
   }
 
   /**
-   * Function that overrides AssemblyController setup processes incoming SetupConfigArg messages
+   * Function that overrides AssemblyController setup processes incoming SetupArg messages
    * @param sca received SetupConfgiArg
    * @param commandOriginator the sender of the command
    * @return a validation object that indicates if the received config is valid
    */
   @Override
-  public List<Validation.Validation> setup(SetupConfigArg sca, Optional<ActorRef> commandOriginator) {
+  public List<Validation.Validation> setup(SetupArg sca, Optional<ActorRef> commandOriginator) {
     // Returns validations for all
     List<Validation.Validation> validations = validateSequenceConfigArg(sca);
     if (Validation.isAllValid(validations)) {
-      // Create a SequentialExecutor to process all SetupConfigs
+      // Create a SequentialExecutor to process all Setups
       ActorRef executor = newExecutor(commandHandler, sca, commandOriginator);
     }
     return validations;
@@ -272,13 +272,13 @@ public class TromboneAssembly extends JAssemblyController {
   /**
    * Validates a received config arg and returns the first
    */
-  private List<Validation.Validation> validateSequenceConfigArg(SetupConfigArg sca) {
+  private List<Validation.Validation> validateSequenceConfigArg(SetupArg sca) {
     // Are all of the configs really for us and correctly formatted, etc?
-    return ConfigValidation.validateTromboneSetupConfigArg(sca, ac);
+    return ConfigValidation.validateTromboneSetupArg(sca, ac);
   }
 
   // Convenience method to create a new SequentialExecutor
-  private ActorRef newExecutor(ActorRef commandHandler, SetupConfigArg sca, Optional<ActorRef> commandOriginator) {
+  private ActorRef newExecutor(ActorRef commandHandler, SetupArg sca, Optional<ActorRef> commandOriginator) {
     return getContext().actorOf(SequentialExecutor.props(commandHandler, sca, commandOriginator));
   }
 

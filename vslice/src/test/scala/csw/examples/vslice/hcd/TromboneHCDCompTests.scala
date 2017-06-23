@@ -10,8 +10,8 @@ import csw.services.pkg.Component.{DoNotRegister, HcdInfo}
 import csw.services.pkg.Supervisor.{HaltComponent, LifecycleRunning}
 import csw.services.pkg.SupervisorExternal.{ExComponentShutdown, LifecycleStateChanged, SubscribeLifecycleCallback}
 import csw.services.pkg.Supervisor
-import csw.util.config.Configurations.SetupConfig
-import csw.util.config.StateVariable.CurrentState
+import csw.util.param.Parameters.{CommandInfo, Setup}
+import csw.util.param.StateVariable.CurrentState
 import org.scalatest.{BeforeAndAfterAll, _}
 
 import scala.concurrent.Await
@@ -32,6 +32,9 @@ class TromboneHCDCompTests extends TestKit(TromboneHCDCompTests.system) with Imp
   import TromboneHCD._
   import csw.services.ccs.HcdController._
   implicit val sys: ActorSystem = system
+
+  // This would normally come from the sequencer and be passed along to keep track of the obsId, etc.
+  private val commandInfo = new CommandInfo("obs001")
 
   override def beforeAll: Unit = {
     TestEnv.createTromboneHcdConfig()
@@ -145,7 +148,7 @@ class TromboneHCDCompTests extends TestKit(TromboneHCDCompTests.system) with Imp
       // Currently can't subscribe unless in Running state because controllerReceive has process
       fakeAssembly.send(hcd, Subscribe)
 
-      fakeAssembly.send(hcd, Submit(datumSC))
+      fakeAssembly.send(hcd, Submit(datumSC(commandInfo)))
 
       val msgs = waitForMoveMsgs(fakeAssembly)
       //msgs.last(positionKey).head should equal(tla.underlyingActor.axisConfig.startPosition + 1) // Init position is one off the start position
@@ -154,9 +157,9 @@ class TromboneHCDCompTests extends TestKit(TromboneHCDCompTests.system) with Imp
       fakeAssembly.send(hcd, GetAxisStats)
       val stats = fakeAssembly.expectMsgClass(classOf[CurrentState])
       println("Stats: " + stats)
-      stats.configKey should equal(TromboneHCD.axisStatsCK)
-      stats.item(datumCountKey).head should equal(1)
-      stats.item(moveCountKey).head should equal(1)
+      stats.prefix should equal(TromboneHCD.axisStatsCK)
+      stats.parameter(datumCountKey).head should equal(1)
+      stats.parameter(moveCountKey).head should equal(1)
 
       fakeAssembly.send(hcd, Unsubscribe)
       cleanup(hcd)
@@ -175,8 +178,8 @@ class TromboneHCDCompTests extends TestKit(TromboneHCDCompTests.system) with Imp
       // Currently can't subscribe unless in Running state because controllerReceive has process
       fakeAssembly.send(hcd, Subscribe)
 
-      // Being done this way to ensure ConfigKey equality works
-      val sc = SetupConfig(axisHomePrefix)
+      // Being done this way to ensure Prefix equality works
+      val sc = Setup(axisHomePrefix)
       fakeAssembly.send(hcd, Submit(sc))
 
       val msgs = waitForMoveMsgs(fakeAssembly)
@@ -189,9 +192,9 @@ class TromboneHCDCompTests extends TestKit(TromboneHCDCompTests.system) with Imp
       fakeAssembly.send(hcd, GetAxisStats)
       val stats = fakeAssembly.expectMsgClass(classOf[CurrentState])
       info(s"Stats: $stats")
-      stats.configKey should equal(TromboneHCD.axisStatsCK)
-      stats.item(homeCountKey).head should equal(1)
-      stats.item(moveCountKey).head should equal(1)
+      stats.prefix should equal(TromboneHCD.axisStatsCK)
+      stats.parameter(homeCountKey).head should equal(1)
+      stats.parameter(moveCountKey).head should equal(1)
 
       fakeAssembly.send(hcd, Unsubscribe)
       cleanup(hcd)
@@ -208,10 +211,10 @@ class TromboneHCDCompTests extends TestKit(TromboneHCDCompTests.system) with Imp
     info("Running")
 
     fakeAssembly.send(hcd, Subscribe)
-    // Being done this way to ensure ConfigKey equality works
+    // Being done this way to ensure Prefix equality works
     val testPos = 500
 
-    fakeAssembly.send(hcd, Submit(positionSC(testPos)))
+    fakeAssembly.send(hcd, Submit(positionSC(commandInfo, testPos)))
 
     val msgs = waitForMoveMsgs(fakeAssembly)
     // Check the last message
@@ -233,7 +236,7 @@ class TromboneHCDCompTests extends TestKit(TromboneHCDCompTests.system) with Imp
     fakeAssembly.send(hcd, Subscribe)
 
     val testPos = 0
-    fakeAssembly.send(hcd, Submit(positionSC(testPos)))
+    fakeAssembly.send(hcd, Submit(positionSC(commandInfo, testPos)))
     val lowLimit = 100 // Note this will fail if axisConfig is changed
 
     val msgs = waitForMoveMsgs(fakeAssembly)
@@ -261,7 +264,7 @@ class TromboneHCDCompTests extends TestKit(TromboneHCDCompTests.system) with Imp
     val testPos = 3000
     val highLimit = 1300 // Note this will fail if axisConfig is changed
 
-    fakeAssembly.send(hcd, Submit(positionSC(testPos)))
+    fakeAssembly.send(hcd, Submit(positionSC(commandInfo, testPos)))
 
     val msgs = waitForMoveMsgs(fakeAssembly)
     // Check the last message
@@ -287,18 +290,18 @@ class TromboneHCDCompTests extends TestKit(TromboneHCDCompTests.system) with Imp
     fakeAssembly.send(hcd, Subscribe)
 
     // Move 1
-    fakeAssembly.send(hcd, Submit(SetupConfig(axisDatumPrefix))) // Could use ones in TromboneHCD
+    fakeAssembly.send(hcd, Submit(Setup(axisDatumPrefix))) // Could use ones in TromboneHCD
     var msgs = waitForMoveMsgs(fakeAssembly)
     msgs.last(inHomeKey).head should be(false)
 
     // Move 2
-    fakeAssembly.send(hcd, Submit(homeSC))
+    fakeAssembly.send(hcd, Submit(homeSC(commandInfo)))
     msgs = waitForMoveMsgs(fakeAssembly)
     msgs.last(inHomeKey).head should be(true)
 
     // Move 3
     var testPos = 423
-    fakeAssembly.send(hcd, Submit(positionSC(testPos)))
+    fakeAssembly.send(hcd, Submit(positionSC(commandInfo, testPos)))
     msgs = waitForMoveMsgs(fakeAssembly)
     // Check the last message
     msgs.last(positionKey).head should be(testPos)
@@ -309,7 +312,7 @@ class TromboneHCDCompTests extends TestKit(TromboneHCDCompTests.system) with Imp
 
     // Move 4
     testPos = 800
-    fakeAssembly.send(hcd, Submit(positionSC(testPos)))
+    fakeAssembly.send(hcd, Submit(positionSC(commandInfo, testPos)))
     msgs = waitForMoveMsgs(fakeAssembly)
     // Check the last message
     msgs.last(positionKey).head should be(testPos)
@@ -317,7 +320,7 @@ class TromboneHCDCompTests extends TestKit(TromboneHCDCompTests.system) with Imp
 
     // Move 5
     testPos = 1240
-    fakeAssembly.send(hcd, Submit(positionSC(testPos)))
+    fakeAssembly.send(hcd, Submit(positionSC(commandInfo, testPos)))
     msgs = waitForMoveMsgs(fakeAssembly)
     // Check the last message
     msgs.last(positionKey).head should be(testPos)
@@ -326,7 +329,7 @@ class TromboneHCDCompTests extends TestKit(TromboneHCDCompTests.system) with Imp
     msgs.last(inHighLimitKey).head should be(true)
 
     // Move 6
-    fakeAssembly.send(hcd, Submit(homeSC))
+    fakeAssembly.send(hcd, Submit(homeSC(commandInfo)))
     msgs = waitForMoveMsgs(fakeAssembly)
     msgs.last(inHomeKey).head should be(true)
     msgs.last(inLowLimitKey).head should be(false)
@@ -336,14 +339,14 @@ class TromboneHCDCompTests extends TestKit(TromboneHCDCompTests.system) with Imp
     fakeAssembly.send(hcd, GetAxisStats)
     val stats = fakeAssembly.expectMsgClass(classOf[CurrentState])
     //println("Stats: " + stats)
-    stats.configKey should equal(TromboneHCD.axisStatsCK)
-    stats.item(datumCountKey).head should equal(1)
-    stats.item(moveCountKey).head should equal(6)
-    stats.item(homeCountKey).head should equal(2)
-    stats.item(limitCountKey).head should equal(1)
-    stats.item(successCountKey).head should equal(6)
-    stats.item(failureCountKey).head should be(0)
-    stats.item(cancelCountKey).head should be(0)
+    stats.prefix should equal(TromboneHCD.axisStatsCK)
+    stats.parameter(datumCountKey).head should equal(1)
+    stats.parameter(moveCountKey).head should equal(6)
+    stats.parameter(homeCountKey).head should equal(2)
+    stats.parameter(limitCountKey).head should equal(1)
+    stats.parameter(successCountKey).head should equal(6)
+    stats.parameter(failureCountKey).head should be(0)
+    stats.parameter(cancelCountKey).head should be(0)
 
     fakeAssembly.send(hcd, Unsubscribe)
     cleanup(hcd)
@@ -361,11 +364,11 @@ class TromboneHCDCompTests extends TestKit(TromboneHCDCompTests.system) with Imp
 
     val testPos = 1000
 
-    fakeAssembly.send(hcd, Submit(positionSC(testPos)))
+    fakeAssembly.send(hcd, Submit(positionSC(commandInfo, testPos)))
 
     // wait for 2 updates
     fakeAssembly.receiveN(2)
-    fakeAssembly.send(hcd, Submit(cancelSC))
+    fakeAssembly.send(hcd, Submit(cancelSC(commandInfo)))
     val msgs = waitForMoveMsgs(fakeAssembly)
     // Check the last message
     msgs.last(stateKey).head should be(AXIS_IDLE)
@@ -374,10 +377,10 @@ class TromboneHCDCompTests extends TestKit(TromboneHCDCompTests.system) with Imp
     fakeAssembly.send(hcd, GetAxisStats)
     val stats = fakeAssembly.expectMsgClass(classOf[CurrentState])
     //println("Stats: " + stats)
-    stats.configKey should equal(TromboneHCD.axisStatsCK)
-    stats.item(moveCountKey).head should equal(1)
-    stats.item(successCountKey).head should equal(1)
-    stats.item(cancelCountKey).head should be(1)
+    stats.prefix should equal(TromboneHCD.axisStatsCK)
+    stats.parameter(moveCountKey).head should equal(1)
+    stats.parameter(successCountKey).head should equal(1)
+    stats.parameter(cancelCountKey).head should be(1)
 
     fakeAssembly.send(hcd, Unsubscribe)
     cleanup(hcd)
@@ -395,12 +398,12 @@ class TromboneHCDCompTests extends TestKit(TromboneHCDCompTests.system) with Imp
     fakeAssembly.send(hcd, Subscribe)
 
     // Init 1
-    fakeAssembly.send(hcd, Submit(SetupConfig(axisDatumCK))) // Could use ones in TromboneHCD
+    fakeAssembly.send(hcd, Submit(Setup(axisDatumCK))) // Could use ones in TromboneHCD
     var msgs = waitForMoveMsgs(fakeAssembly)
     msgs.last(stateKey).head should be(AXIS_IDLE)
 
     // Move 2
-    fakeAssembly.send(hcd, Submit(homeSC))
+    fakeAssembly.send(hcd, Submit(homeSC(commandInfo)))
     msgs = waitForMoveMsgs(fakeAssembly)
     msgs.last(inHomeKey).head should be(true)
 
@@ -410,7 +413,7 @@ class TromboneHCDCompTests extends TestKit(TromboneHCDCompTests.system) with Imp
     for (loops <- 1 to 2) {
       logger.info(s"Loop: $loops")
       for (testPos <- start to finish by stepSize) {
-        fakeAssembly.send(hcd, Submit(positionSC(testPos)))
+        fakeAssembly.send(hcd, Submit(positionSC(commandInfo, testPos)))
         msgs = waitForMoveMsgs(fakeAssembly)
       }
     }
@@ -438,7 +441,7 @@ class TromboneHCDCompTests extends TestKit(TromboneHCDCompTests.system) with Imp
 
     // Move to 0
     var testPos = 0
-    fakeAssembly.send(hcd, Submit(positionSC(testPos)))
+    fakeAssembly.send(hcd, Submit(positionSC(commandInfo, testPos)))
     var msgs = waitForMoveMsgs(fakeAssembly)
     // Check the last message
     msgs.last(positionKey).head should be(lowLimit)
@@ -448,7 +451,7 @@ class TromboneHCDCompTests extends TestKit(TromboneHCDCompTests.system) with Imp
 
     // Move to 2000
     testPos = 2000
-    fakeAssembly.send(hcd, Submit(positionSC(testPos)))
+    fakeAssembly.send(hcd, Submit(positionSC(commandInfo, testPos)))
     msgs = waitForMoveMsgs(fakeAssembly)
     // Check the last message
     msgs.last(positionKey).head should be(highLimit)

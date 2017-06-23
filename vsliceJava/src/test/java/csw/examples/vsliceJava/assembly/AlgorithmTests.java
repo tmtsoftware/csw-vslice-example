@@ -13,7 +13,7 @@ import static csw.examples.vsliceJava.assembly.AssemblyContext.focusErrorKey;
 import static csw.examples.vsliceJava.assembly.AssemblyContext.zenithAngleKey;
 import static csw.examples.vsliceJava.assembly.AssemblyTestData.*;
 import static javacsw.util.JUtils.zip;
-import static javacsw.util.config.JItems.jset;
+import static javacsw.util.param.JParameters.jset;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;

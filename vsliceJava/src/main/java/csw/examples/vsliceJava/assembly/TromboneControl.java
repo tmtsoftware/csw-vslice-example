@@ -7,12 +7,12 @@ import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.japi.Creator;
 import csw.examples.vsliceJava.hcd.TromboneHCD;
-import csw.util.config.DoubleItem;
+import csw.util.param.DoubleParameter;
 
 import java.util.Optional;
 
 import static csw.services.ccs.HcdController.Submit;
-import static javacsw.util.config.JItems.jvalue;
+import static javacsw.util.param.JParameters.jvalue;
 
 /**
  * An actor dedicated to converting stage position values to encoder units and writing in a oneway fashion to
@@ -20,7 +20,7 @@ import static javacsw.util.config.JItems.jvalue;
  * <p>
  * Other actors, primarily the FollowActor write stage positions with units of millimeters. This actor uses the
  * function in algorithms to convert this to encoder units. It then uses the Submit command of CCS to send the
- * SetupConfig to the trombone HCD.
+ * Setup to the trombone HCD.
  * <p>
  * Note that the actor receive method is parameterized with an optional HCD actor ref. It is set initially when
  * the actor is created and may be updated if the actor goes down or up. The actor ref is an [[scala.Option]] so
@@ -55,7 +55,7 @@ class TromboneControl extends AbstractActor {
     private Receive controlReceive(Optional<ActorRef> tromboneHCD) {
     return receiveBuilder().
       match(GoToStagePosition.class, t -> {
-        DoubleItem newPosition = t.stagePosition;
+        DoubleParameter newPosition = t.stagePosition;
         // It should be correct, but check
         assert (newPosition.units() == AssemblyContext.stagePositionUnits);
 
@@ -92,9 +92,9 @@ class TromboneControl extends AbstractActor {
 
   // Used to send a position that requries transformaton from
   static class GoToStagePosition {
-    final DoubleItem stagePosition;
+    final DoubleParameter stagePosition;
 
-    GoToStagePosition(DoubleItem stagePosition) {
+    GoToStagePosition(DoubleParameter stagePosition) {
       this.stagePosition = stagePosition;
     }
 

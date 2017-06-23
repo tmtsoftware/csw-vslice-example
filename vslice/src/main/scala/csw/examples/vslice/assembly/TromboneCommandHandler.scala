@@ -15,8 +15,8 @@ import csw.services.ccs.Validation.{RequiredHCDUnavailableIssue, UnsupportedComm
 import csw.services.events.EventService
 import csw.services.loc.LocationService._
 import csw.services.loc.LocationSubscriberClient
-import csw.util.config.Configurations.SetupConfig
-import csw.util.config.StateVariable.DemandState
+import csw.util.param.Parameters.Setup
+import csw.util.param.StateVariable.DemandState
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -85,7 +85,7 @@ class TromboneCommandHandler(ac: AssemblyContext, tromboneHCDIn: Option[ActorRef
 
     case ExecuteOne(sc, commandOriginator) =>
 
-      sc.configKey match {
+      sc.prefix match {
         case ac.initCK =>
           log.info("Init not fully implemented -- only sets state ready!")
           Await.ready(tromboneStateActor ? SetState(cmdItem(cmdReady), moveItem(moveUnindexed), sodiumItem(false), nssItem(false)), timeout.duration)
@@ -166,7 +166,7 @@ class TromboneCommandHandler(ac: AssemblyContext, tromboneHCDIn: Option[ActorRef
 
   def followReceive(eventService: EventService, followActor: ActorRef): Receive = stateReceive orElse {
     case ExecuteOne(sc, commandOriginator) =>
-      sc.configKey match {
+      sc.prefix match {
         case ac.datumCK | ac.moveCK | ac.positionCK | ac.followCK | ac.setElevationCK =>
           commandOriginator.foreach(_ ! Invalid(WrongInternalStateIssue("Trombone assembly cannot be following for datum, move, position, setElevation, and follow")))
 
@@ -221,11 +221,11 @@ class TromboneCommandHandler(ac: AssemblyContext, tromboneHCDIn: Option[ActorRef
     case CommandDone =>
       context.become(noFollowReceive())
 
-    case SetupConfig(ac.stopCK, _) =>
+    case Setup(ac.commandInfo, ac.stopCK, _) =>
       log.debug("actorExecutingReceive: Stop CK")
       closeDownMotionCommand(currentCommand, commandOriginator)
 
-    case ExecuteOne(SetupConfig(ac.stopCK, _), _) =>
+    case ExecuteOne(Setup(ac.commandInfo, ac.stopCK, _), _) =>
       log.debug("actorExecutingReceive: ExecuteOneStop")
       closeDownMotionCommand(currentCommand, commandOriginator)
 

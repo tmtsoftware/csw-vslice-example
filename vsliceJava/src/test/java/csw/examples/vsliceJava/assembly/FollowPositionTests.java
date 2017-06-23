@@ -19,11 +19,11 @@ import csw.services.loc.LocationService;
 import csw.services.pkg.Component;
 import csw.services.pkg.Supervisor;
 import csw.services.pkg.SupervisorExternal;
-import csw.util.config.BooleanItem;
-import csw.util.config.DoubleItem;
-import csw.util.config.Events;
-import csw.util.config.JavaHelpers;
-import csw.util.config.StateVariable.CurrentState;
+import csw.util.param.BooleanParameter;
+import csw.util.param.DoubleParameter;
+import csw.util.param.Events;
+import csw.util.param.JavaHelpers;
+import csw.util.param.StateVariable.CurrentState;
 import javacsw.services.events.IEventService;
 import javacsw.services.pkg.JComponent;
 import org.junit.*;
@@ -38,18 +38,18 @@ import static csw.examples.vsliceJava.assembly.AssemblyContext.*;
 import static csw.examples.vsliceJava.assembly.AssemblyTestData.*;
 import static csw.examples.vsliceJava.assembly.FollowActor.UpdatedEventData;
 import static csw.examples.vsliceJava.hcd.TromboneHCD.*;
-import static csw.util.config.Configurations.SetupConfig;
-import static csw.util.config.Events.EventServiceEvent;
-import static csw.util.config.Events.SystemEvent;
+import static csw.util.param.Parameters.Setup;
+import static csw.util.param.Events.EventServiceEvent;
+import static csw.util.param.Events.SystemEvent;
 import static javacsw.services.loc.JConnectionType.AkkaType;
 import static javacsw.services.pkg.JComponent.DoNotRegister;
 import static javacsw.services.pkg.JSupervisor.HaltComponent;
 import static javacsw.services.pkg.JSupervisor.LifecycleRunning;
-import static javacsw.util.config.JItems.jadd;
-import static javacsw.util.config.JItems.jset;
-import static javacsw.util.config.JPublisherActor.Subscribe;
-import static javacsw.util.config.JUnitsOfMeasure.degrees;
-import static javacsw.util.config.JUnitsOfMeasure.micrometers;
+import static javacsw.util.param.JParameters.jadd;
+import static javacsw.util.param.JParameters.jset;
+import static javacsw.util.param.JPublisherActor.Subscribe;
+import static javacsw.util.param.JUnitsOfMeasure.degrees;
+import static javacsw.util.param.JUnitsOfMeasure.micrometers;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
 
@@ -147,12 +147,12 @@ public class FollowPositionTests extends TestKit {
     system = null;
   }
 
-  DoubleItem pos(double position) {
+  DoubleParameter pos(double position) {
     return jset(stagePositionKey, position).withUnits(stagePositionUnits);
   }
 
   // Used for creating followers
-  DoubleItem initialElevation = naElevation(assemblyContext.calculationConfig.defaultInitialElevation);
+  DoubleParameter initialElevation = naElevation(assemblyContext.calculationConfig.defaultInitialElevation);
 
   TestActorRef<FollowActor> newFollower(Optional<ActorRef> tromboneControl, Optional<ActorRef> publisher) {
     Props props = FollowActor.props(assemblyContext, initialElevation, setNssInUse(false), tromboneControl, publisher, Optional.empty());
@@ -170,22 +170,22 @@ public class FollowPositionTests extends TestKit {
   }
 
   /**
-   * Shortcut for creating zenith angle DoubleItem
+   * Shortcut for creating zenith angle DoubleParameter
    *
    * @param angle angle in degrees
-   * @return DoubleItem with value and degrees
+   * @return DoubleParameter with value and degrees
    */
-  DoubleItem za(double angle) {
+  DoubleParameter za(double angle) {
     return jset(zenithAngleKey, angle).withUnits(degrees);
   }
 
   /**
-   * Shortcut for creating focus error DoubleItem
+   * Shortcut for creating focus error DoubleParameter
    *
    * @param error focus error in millimeters
-   * @return DoubleItem with value and millimeters units
+   * @return DoubleParameter with value and millimeters units
    */
-  DoubleItem fe(double error) {
+  DoubleParameter fe(double error) {
     return jset(focusErrorKey, error).withUnits(micrometers);
   }
 
@@ -317,7 +317,7 @@ public class FollowPositionTests extends TestKit {
     // Fake actor that handles sending to HCD
     TestProbe fakeTromboneControl = new TestProbe(system);
 
-    BooleanItem nssUse = setNssInUse(false);
+    BooleanParameter nssUse = setNssInUse(false);
     // Create the follow actor and give it the actor ref of the publisher for sending calculated events
     ActorRef followActor = system.actorOf(FollowActor.props(assemblyContext, initialElevation, nssUse, Optional.of(fakeTromboneControl.ref()),
       Optional.empty(), Optional.empty()));
@@ -333,7 +333,7 @@ public class FollowPositionTests extends TestKit {
     tcsRtc.publish(new SystemEvent(focusErrorPrefix).add(fe(testFE)));
 
     // These are fake messages for the FollowActor that will be sent to simulate the TCS updating ZA
-    List<SystemEvent> tcsEvents = testZenithAngles.stream().map(f -> new SystemEvent(zaConfigKey.prefix()).add(za(f)))
+    List<SystemEvent> tcsEvents = testZenithAngles.stream().map(f -> new SystemEvent(zaPrefix.prefix()).add(za(f)))
       .collect(Collectors.toList());
 
     // This should result in the length of tcsEvents being published, which is 15
@@ -397,7 +397,7 @@ public class FollowPositionTests extends TestKit {
 
     // Difference here is that fakeTromboneHCD receives a Submit commaand with an encoder value only
     Submit msg = fakeTromboneHCD.expectMsgClass(Submit.class);
-    assertEquals(msg, new Submit(jadd(new SetupConfig(axisMoveCK.prefix()),
+    assertEquals(msg, new Submit(jadd(new Setup(axisMoveCK.prefix()),
       jset(positionKey, expectedEnc).withUnits(TromboneHCD.positionUnits))));
 
     cleanup(Optional.empty(), tromboneControl, followActor);
@@ -746,7 +746,7 @@ public class FollowPositionTests extends TestKit {
     assertEquals(JavaHelpers.jvalue(last, inHighLimitKey), Boolean.valueOf(false));
 
     // These are fake messages for the FollowActor that will be sent to simulate the TCS
-    List<SystemEvent> tcsEvents = testZenithAngles.stream().map(f -> new SystemEvent(zaConfigKey.prefix()).add(za(f)))
+    List<SystemEvent> tcsEvents = testZenithAngles.stream().map(f -> new SystemEvent(zaPrefix.prefix()).add(za(f)))
       .collect(Collectors.toList());
 
     // This should result in the length of tcsEvents being published, which is 15

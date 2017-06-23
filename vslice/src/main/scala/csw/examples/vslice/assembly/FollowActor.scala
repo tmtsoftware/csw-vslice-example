@@ -4,8 +4,8 @@ import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import csw.examples.vslice.assembly.AssemblyContext.{TromboneCalculationConfig, TromboneControlConfig}
 import csw.examples.vslice.assembly.TromboneControl.GoToStagePosition
 import csw.examples.vslice.assembly.TrombonePublisher.{AOESWUpdate, EngrUpdate}
-import csw.util.config.{BooleanItem, DoubleItem}
-import csw.util.config.Events.EventTime
+import csw.util.param.{BooleanParameter, DoubleParameter}
+import csw.util.param.Events.EventTime
 
 /**
  * FollowActor uses events from TCS and RTC to calculate the position of the trombone assembly when in follow mode, which is set
@@ -16,7 +16,7 @@ import csw.util.config.Events.EventTime
  * calculations. It receives this data in the form of UpdatedEventData messages from the TromboneEventSubscriber actor. This connection
  * is made in the FollowCommandActor. This is done to allow testing of the actors and functionality separately.
  *
- * FollowActor receives the calculation and control configurations and a flag BooleanItem called inNSSMode.  When inNSSMode is true,
+ * FollowActor receives the calculation and control configurations and a flag BooleanParameter called inNSSMode.  When inNSSMode is true,
  * the NFIRAOS Source Simulator is in use. In this mode, the FollowActor ignores the TCS zenith angle event data and provides 0.0 no
  * matter what the focus error.
  *
@@ -27,15 +27,15 @@ import csw.util.config.Events.EventTime
  * TrombonePublisher actor reference.
  *
  * @param ac AssemblyContext provides the configurations and other values
- * @param inNSSMode a BooleanItem set to true if the NFIRAOS Source Simulator is currently in use
+ * @param inNSSMode a BooleanParameter set to true if the NFIRAOS Source Simulator is currently in use
  * @param tromboneControl an actorRef as [[scala.Option]] of the actor that writes the position to the trombone HCD
  * @param aoPublisher an actorRef as [[scala.Option]] of the actor that publishes the sodiumLayer event
  * @param engPublisher an actorRef as [[scala.Option]] of the actor that publishes the eng telemetry event
  */
 class FollowActor(
     ac:                   AssemblyContext,
-    val initialElevation: DoubleItem,
-    val inNSSMode:        BooleanItem,
+    val initialElevation: DoubleParameter,
+    val inNSSMode:        BooleanParameter,
     val tromboneControl:  Option[ActorRef],
     val aoPublisher:      Option[ActorRef],
     val engPublisher:     Option[ActorRef]
@@ -49,16 +49,16 @@ class FollowActor(
   val controlConfig = ac.controlConfig
 
   // In this implementation, these vars are needed to support the setElevation and setAngle commands which require an update
-  //val initialElevation: DoubleItem = initialElevationIn
-  val initialFocusError: DoubleItem = focusErrorKey -> 0.0 withUnits focusErrorUnits
-  val initialZenithAngle: DoubleItem = zenithAngleKey -> 0.0 withUnits zenithAngleUnits
+  //val initialElevation: DoubleParameter = initialElevationIn
+  val initialFocusError: DoubleParameter = focusErrorKey -> 0.0 withUnits focusErrorUnits
+  val initialZenithAngle: DoubleParameter = zenithAngleKey -> 0.0 withUnits zenithAngleUnits
 
   val nSSModeZenithAngle = zenithAngleKey -> 0.0 withUnits zenithAngleUnits
 
   // Initial receive - start with initial values
   def receive = followingReceive(initialElevation, initialFocusError, initialZenithAngle)
 
-  def followingReceive(cElevation: DoubleItem, cFocusError: DoubleItem, cZenithAngle: DoubleItem): Receive = {
+  def followingReceive(cElevation: DoubleParameter, cFocusError: DoubleParameter, cZenithAngle: DoubleParameter): Receive = {
 
     case StopFollowing =>
 
@@ -111,7 +111,7 @@ class FollowActor(
     case x => log.error(s"Unexpected message in TromboneAssembly:FollowActor: $x")
   }
 
-  def calculateNewTrombonePosition(calculationConfig: TromboneCalculationConfig, elevationIn: DoubleItem, focusErrorIn: DoubleItem, zenithAngleIn: DoubleItem): DoubleItem = {
+  def calculateNewTrombonePosition(calculationConfig: TromboneCalculationConfig, elevationIn: DoubleParameter, focusErrorIn: DoubleParameter, zenithAngleIn: DoubleParameter): DoubleParameter = {
     val totalRangeDistance = focusZenithAngleToRangeDistance(calculationConfig, elevationIn.head, focusErrorIn.head, zenithAngleIn.head)
     log.debug(s"totalRange: $totalRangeDistance")
 
@@ -120,17 +120,17 @@ class FollowActor(
   }
 
   //
-  def sendTrombonePosition(controlConfig: TromboneControlConfig, stagePosition: DoubleItem): Unit = {
+  def sendTrombonePosition(controlConfig: TromboneControlConfig, stagePosition: DoubleParameter): Unit = {
     log.debug(s"Sending position: $stagePosition")
     tromboneControl.foreach(_ ! GoToStagePosition(stagePosition))
   }
 
-  def sendAOESWUpdate(elevationItem: DoubleItem, rangeItem: DoubleItem): Unit = {
+  def sendAOESWUpdate(elevationItem: DoubleParameter, rangeItem: DoubleParameter): Unit = {
     log.debug(s"Publish aoUpdate: $aoPublisher $elevationItem, $rangeItem")
     aoPublisher.foreach(_ ! AOESWUpdate(elevationItem, rangeItem))
   }
 
-  def sendEngrUpdate(focusError: DoubleItem, trombonePosition: DoubleItem, zenithAngle: DoubleItem): Unit = {
+  def sendEngrUpdate(focusError: DoubleParameter, trombonePosition: DoubleParameter, zenithAngle: DoubleParameter): Unit = {
     log.debug(s"Publish engUpdate: " + engPublisher)
     engPublisher.foreach(_ ! EngrUpdate(focusError, trombonePosition, zenithAngle))
   }
@@ -140,8 +140,8 @@ object FollowActor {
   // Props for creating the follow actor
   def props(
     assemblyContext:  AssemblyContext,
-    initialElevation: DoubleItem,
-    inNSSModeIn:      BooleanItem,
+    initialElevation: DoubleParameter,
+    inNSSModeIn:      BooleanParameter,
     tromboneControl:  Option[ActorRef],
     aoPublisher:      Option[ActorRef] = None,
     engPublisher:     Option[ActorRef] = None
@@ -153,12 +153,12 @@ object FollowActor {
    */
   trait FollowActorMessages
 
-  case class UpdatedEventData(zenithAngle: DoubleItem, focusError: DoubleItem, time: EventTime) extends FollowActorMessages
+  case class UpdatedEventData(zenithAngle: DoubleParameter, focusError: DoubleParameter, time: EventTime) extends FollowActorMessages
 
   // Messages to Follow Actor
-  case class SetElevation(elevation: DoubleItem) extends FollowActorMessages
+  case class SetElevation(elevation: DoubleParameter) extends FollowActorMessages
 
-  case class SetZenithAngle(zenithAngle: DoubleItem) extends FollowActorMessages
+  case class SetZenithAngle(zenithAngle: DoubleParameter) extends FollowActorMessages
 
   case object StopFollowing extends FollowActorMessages
 

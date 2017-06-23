@@ -17,11 +17,11 @@ import csw.services.pkg.Component.{DoNotRegister, HcdInfo}
 import csw.services.pkg.Supervisor
 import csw.services.pkg.Supervisor.{HaltComponent, LifecycleRunning}
 import csw.services.pkg.SupervisorExternal.{LifecycleStateChanged, SubscribeLifecycleCallback}
-import csw.util.config.Configurations.SetupConfig
-import csw.util.config.DoubleItem
-import csw.util.config.Events.{EventTime, SystemEvent}
-import csw.util.config.StateVariable.CurrentState
-import csw.util.config.UnitsOfMeasure._
+import csw.util.param.Parameters.Setup
+import csw.util.param.DoubleParameter
+import csw.util.param.Events.{EventTime, SystemEvent}
+import csw.util.param.StateVariable.CurrentState
+import csw.util.param.UnitsOfMeasure._
 import org.scalatest.{FunSpecLike, _}
 
 import scala.concurrent.Await
@@ -90,7 +90,7 @@ class FollowPositionTests extends TestKit(FollowPositionTests.system) with Impli
   val calculationConfig = assemblyContext.calculationConfig
   import assemblyContext._
 
-  def pos(position: Double): DoubleItem = stagePositionKey -> position withUnits stagePositionUnits
+  def pos(position: Double): DoubleParameter = stagePositionKey -> position withUnits stagePositionUnits
 
   // Used for creating followers
   val initialElevation = naElevation(assemblyContext.calculationConfig.defaultInitialElevation)
@@ -111,18 +111,18 @@ class FollowPositionTests extends TestKit(FollowPositionTests.system) with Impli
   }
 
   /**
-   * Shortcut for creating zenith angle DoubleItem
+   * Shortcut for creating zenith angle DoubleParameter
    * @param angle angle in degrees
-   * @return DoubleItem with value and degrees
+   * @return DoubleParameter with value and degrees
    */
-  def za(angle: Double): DoubleItem = zenithAngleKey -> angle withUnits degrees
+  def za(angle: Double): DoubleParameter = zenithAngleKey -> angle withUnits degrees
 
   /**
-   * Shortcut for creating focus error DoubleItem
+   * Shortcut for creating focus error DoubleParameter
    * @param error focus error in millimeters
-   * @return DoubleItem with value and millimeters units
+   * @return DoubleParameter with value and millimeters units
    */
-  def fe(error: Double): DoubleItem = focusErrorKey -> error withUnits micrometers
+  def fe(error: Double): DoubleParameter = focusErrorKey -> error withUnits micrometers
 
   // Stop any actors created for a test to avoid conflict with other tests
   private def cleanup(hcd: Option[ActorRef], a: ActorRef*): Unit = {
@@ -258,7 +258,7 @@ class FollowPositionTests extends TestKit(FollowPositionTests.system) with Impli
       tcsRtc.publish(SystemEvent(focusErrorPrefix).add(fe(testFE)))
 
       // These are fake messages for the FollowActor that will be sent to simulate the TCS updating ZA
-      val tcsEvents = testZenithAngles.map(f => SystemEvent(zaConfigKey.prefix).add(za(f)))
+      val tcsEvents = testZenithAngles.map(f => SystemEvent(zaPrefix.prefix).add(za(f)))
 
       // This should result in the length of tcsEvents being published, which is 15
       tcsEvents.foreach(tcsRtc.publish)
@@ -319,7 +319,7 @@ class FollowPositionTests extends TestKit(FollowPositionTests.system) with Impli
 
       // Difference here is that fakeTromboneHCD receives a Submit commaand with an encoder value only
       val msg = fakeTromboneHCD.expectMsgClass(classOf[Submit])
-      msg should equal(Submit(SetupConfig(axisMoveCK).add(positionKey -> expectedEnc withUnits positionUnits)))
+      msg should equal(Submit(Setup("obs001", axisMoveCK).add(positionKey -> expectedEnc withUnits positionUnits)))
 
       cleanup(None, tromboneControl, followActor)
     }
@@ -612,7 +612,7 @@ class FollowPositionTests extends TestKit(FollowPositionTests.system) with Impli
       msgs.last(inHighLimitKey).head should equal(false)
 
       // These are fake messages for the FollowActor that will be sent to simulate the TCS
-      val tcsEvents = testZenithAngles.map(f => SystemEvent(zaConfigKey.prefix).add(za(f)))
+      val tcsEvents = testZenithAngles.map(f => SystemEvent(zaPrefix.prefix).add(za(f)))
 
       // This should result in the length of tcsEvents being published, which is 15
       tcsEvents.foreach { f =>

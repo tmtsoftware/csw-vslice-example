@@ -1,11 +1,11 @@
 package csw.examples.vsliceJava.assembly;
 
 import csw.services.ccs.CommandStatus;
-import csw.util.config.Configurations;
-import csw.util.config.Configurations.SequenceConfig;
-import csw.util.config.Configurations.SetupConfig;
-import csw.util.config.Configurations.SetupConfigArg;
-import csw.util.config.DoubleKey;
+import csw.util.param.Parameters;
+import csw.util.param.Parameters.SequenceConfig;
+import csw.util.param.Parameters.Setup;
+import csw.util.param.Parameters.SetupArg;
+import csw.util.param.DoubleKey;
 import javacsw.services.ccs.JCommandStatus;
 import org.junit.Test;
 
@@ -17,10 +17,10 @@ import static csw.examples.vsliceJava.assembly.ConfigValidation.*;
 import static csw.services.ccs.Validation.*;
 import static javacsw.services.ccs.JCommandStatus.NotAccepted;
 import static javacsw.services.ccs.JValidation.Valid;
-import static javacsw.services.ccs.JValidation.WrongConfigKeyIssue;
-import static javacsw.util.config.JItems.jadd;
-import static javacsw.util.config.JItems.jset;
-import static javacsw.util.config.JUnitsOfMeasure.kilometers;
+import static javacsw.services.ccs.JValidation.WrongPrefixIssue;
+import static javacsw.util.param.JParameters.jadd;
+import static javacsw.util.param.JParameters.jset;
+import static javacsw.util.param.JUnitsOfMeasure.kilometers;
 import static junit.framework.TestCase.*;
 
 
@@ -36,8 +36,8 @@ public class ValidationTests {
     return (Invalid) result;
   }
 
-  void checkForWrongConfigKey(Validation result) {
-    assertTrue(checkInvalid(result).issue() instanceof WrongConfigKeyIssue);
+  void checkForWrongPrefix(Validation result) {
+    assertTrue(checkInvalid(result).issue() instanceof WrongPrefixIssue);
   }
 
   void checkForMissingKeys(Validation result) {
@@ -73,14 +73,14 @@ public class ValidationTests {
   @Test
   public void test1() {
     // should fail if not an init
-    SetupConfig sc = new SetupConfig(assemblyContext.positionCK.prefix());
-    checkForWrongConfigKey(initValidation(sc, assemblyContext));
+    Setup sc = new Setup(assemblyContext.positionCK.prefix());
+    checkForWrongPrefix(initValidation(sc, assemblyContext));
   }
 
   @Test
   public void test2() {
     // should validate init setupconfig with 0 args
-    SetupConfig sc = new SetupConfig(assemblyContext.initCK.prefix());
+    Setup sc = new Setup(assemblyContext.initCK.prefix());
 
     // Should validate with no arguments
     assertEquals(initValidation(sc, assemblyContext), Valid);
@@ -89,7 +89,7 @@ public class ValidationTests {
   @Test
   public void test3() {
     // should validate 2 arg init setupconfig
-    SetupConfig sc = jadd(new SetupConfig(assemblyContext.initCK.prefix()),
+    Setup sc = jadd(new Setup(assemblyContext.initCK.prefix()),
       jset(configurationNameKey, "config1"),
       jset(configurationVersionKey, "1.0"));
 
@@ -106,7 +106,7 @@ public class ValidationTests {
     // should check for init item types
     // Make a key with the correct name that isn't the right type
     DoubleKey cvKey = new DoubleKey(configurationVersionKey.keyName());
-    SetupConfig sc = jadd(new SetupConfig(assemblyContext.initCK.prefix()),
+    Setup sc = jadd(new Setup(assemblyContext.initCK.prefix()),
       jset(configurationNameKey, "config1"),
       jset(cvKey, 1.0));
     // Should be invalid
@@ -122,14 +122,14 @@ public class ValidationTests {
   // should fail if not a move
   @Test
   public void test5() {
-    SetupConfig sc = new SetupConfig(assemblyContext.positionCK.prefix());
-    checkForWrongConfigKey(moveValidation(sc, assemblyContext));
+    Setup sc = new Setup(assemblyContext.positionCK.prefix());
+    checkForWrongPrefix(moveValidation(sc, assemblyContext));
   }
 
   @Test
   public void test6() {
     // should validate the move setupconfig with 0 args
-    SetupConfig sc = new SetupConfig(assemblyContext.moveCK.prefix());
+    Setup sc = new Setup(assemblyContext.moveCK.prefix());
     // Should validate with no arguments
     assertEquals(moveValidation(sc, assemblyContext), Valid);
   }
@@ -138,7 +138,7 @@ public class ValidationTests {
   public void test7() {
     // should validate 1 arg move setupconfig
     // Create but don't set units
-    SetupConfig sc = new SetupConfig(assemblyContext.moveCK.prefix()).add(jset(stagePositionKey, 22.0));
+    Setup sc = new Setup(assemblyContext.moveCK.prefix()).add(jset(stagePositionKey, 22.0));
 
     // Should fail for units
     checkForWrongUnits(moveValidation(sc, assemblyContext));
@@ -162,14 +162,14 @@ public class ValidationTests {
   @Test
   public void test8() {
     // should fail if not a position
-    SetupConfig sc = new SetupConfig(assemblyContext.moveCK.prefix());
-    checkForWrongConfigKey(positionValidation(sc, assemblyContext));
+    Setup sc = new Setup(assemblyContext.moveCK.prefix());
+    checkForWrongPrefix(positionValidation(sc, assemblyContext));
   }
 
   @Test
   public void test9() {
     // should fail for missing unitsg
-    SetupConfig sc = new SetupConfig(assemblyContext.positionCK.prefix()).add(jset(naRangeDistanceKey, 22.0));
+    Setup sc = new Setup(assemblyContext.positionCK.prefix()).add(jset(naRangeDistanceKey, 22.0));
 
     // Should fail for units
     checkForWrongUnits(positionValidation(sc, assemblyContext));
@@ -179,7 +179,7 @@ public class ValidationTests {
   public void test10() {
     // should validate when keys and units present
     // Now add good units
-    SetupConfig sc = new SetupConfig(assemblyContext.positionCK.prefix()).add(
+    Setup sc = new Setup(assemblyContext.positionCK.prefix()).add(
       jset(naRangeDistanceKey, 22.0).withUnits(naRangeDistanceUnits));
 
     // Should validate with 1 good argument
@@ -194,7 +194,7 @@ public class ValidationTests {
   public void test11() {
     // should fail for negative range distance value
     // Now  good units with neg value
-    SetupConfig sc = new SetupConfig(assemblyContext.positionCK.prefix()).add(
+    Setup sc = new Setup(assemblyContext.positionCK.prefix()).add(
       jset(naRangeDistanceKey, -22.0).withUnits(naRangeDistanceUnits));
     checkForOutOfRange(positionValidation(sc, assemblyContext));
   }
@@ -207,15 +207,15 @@ public class ValidationTests {
   @Test
   public void test12() {
     // should fail if not a setElevation
-    SetupConfig sc = new SetupConfig(assemblyContext.initCK.prefix());
-    checkForWrongConfigKey(setElevationValidation(sc, assemblyContext));
+    Setup sc = new Setup(assemblyContext.initCK.prefix());
+    checkForWrongPrefix(setElevationValidation(sc, assemblyContext));
   }
 
   @Test
   public void test13() {
     // should vail to vailidate for missing units and keys
     // First check for missing args
-    SetupConfig sc = new SetupConfig(assemblyContext.setElevationCK.prefix());
+    Setup sc = new Setup(assemblyContext.setElevationCK.prefix());
     checkForMissingKeys(setElevationValidation(sc, assemblyContext));
 
     // Should validate with 2 good arguments
@@ -226,7 +226,7 @@ public class ValidationTests {
   @Test
   public void test14() {
     /// should validate 2 arg setElevation setupconfig
-    SetupConfig sc = jadd(new SetupConfig(assemblyContext.setElevationCK.prefix()),
+    Setup sc = jadd(new Setup(assemblyContext.setElevationCK.prefix()),
       jset(zenithAngleKey, 0.0).withUnits(zenithAngleUnits),
       jset(naElevationKey, 100.0).withUnits(naElevationUnits));
     assertEquals(setElevationValidation(sc, assemblyContext), Valid);
@@ -241,7 +241,7 @@ public class ValidationTests {
     // should check for init item types
     // Make a key with the correct name that isn't the right type
     DoubleKey cvKey = new DoubleKey(configurationVersionKey.keyName());
-    SetupConfig sc = jadd(new SetupConfig(assemblyContext.initCK.prefix()),
+    Setup sc = jadd(new Setup(assemblyContext.initCK.prefix()),
       jset(configurationNameKey, "config1"),
       jset(cvKey, 1.0));
     // Should be invalid
@@ -257,14 +257,14 @@ public class ValidationTests {
 
   public void test16() {
     // should fail if not a setAngle
-    SetupConfig sc = new SetupConfig(assemblyContext.moveCK.prefix());
-    checkForWrongConfigKey(setAngleValidation(sc, assemblyContext));
+    Setup sc = new Setup(assemblyContext.moveCK.prefix());
+    checkForWrongPrefix(setAngleValidation(sc, assemblyContext));
   }
 
   @Test
   public void test17() {
     // should fail for missing key
-    SetupConfig sc = new SetupConfig(assemblyContext.setAngleCK.prefix());
+    Setup sc = new Setup(assemblyContext.setAngleCK.prefix());
 
     // Should fail for units
     checkForMissingKeys(setAngleValidation(sc, assemblyContext));
@@ -273,7 +273,7 @@ public class ValidationTests {
   @Test
   public void test18() {
     // should fail for missing units
-    SetupConfig sc = new SetupConfig(assemblyContext.setAngleCK.prefix()).add(jset(zenithAngleKey, 22.0));
+    Setup sc = new Setup(assemblyContext.setAngleCK.prefix()).add(jset(zenithAngleKey, 22.0));
 
     // Should fail for units
     checkForWrongUnits(setAngleValidation(sc, assemblyContext));
@@ -283,7 +283,7 @@ public class ValidationTests {
   public void test19() {
     // should validate when keys and units present
     // Now add good units
-    SetupConfig sc = new SetupConfig(assemblyContext.setAngleCK.prefix()).add(
+    Setup sc = new Setup(assemblyContext.setAngleCK.prefix()).add(
       jset(zenithAngleKey, 22.0).withUnits(zenithAngleUnits));
 
     // Should validate with 1 good argument
@@ -302,14 +302,14 @@ public class ValidationTests {
   @Test
   public void test20() {
     // should fail if not a follow
-    SetupConfig sc = new SetupConfig(assemblyContext.moveCK.prefix());
-    checkForWrongConfigKey(followValidation(sc, assemblyContext));
+    Setup sc = new Setup(assemblyContext.moveCK.prefix());
+    checkForWrongPrefix(followValidation(sc, assemblyContext));
   }
 
   @Test
   public void test21() {
     // should fail for missing key
-    SetupConfig sc = new SetupConfig(assemblyContext.followCK.prefix());
+    Setup sc = new Setup(assemblyContext.followCK.prefix());
 
     // Should fail for units
     checkForMissingKeys(followValidation(sc, assemblyContext));
@@ -318,7 +318,7 @@ public class ValidationTests {
   @Test
   public void test22() {
     // should validate when key present
-    SetupConfig sc = new SetupConfig(assemblyContext.followCK.prefix()).add(jset(nssInUseKey, true));
+    Setup sc = new Setup(assemblyContext.followCK.prefix()).add(jset(nssInUseKey, true));
 
     // Should validate with 1 good argument
     assertEquals(followValidation(sc, assemblyContext), Valid);
@@ -329,18 +329,18 @@ public class ValidationTests {
   }
 
   /*
-   * Test Description: This is a test of the SetupConfigARg validation routine in TromboneAssembly
+   * Test Description: This is a test of the SetupARg validation routine in TromboneAssembly
    */
   // --- Test of TromboneAssembly validation ---
 
   @Test
   public void test23() {
     // should work with okay sca
-    SetupConfigArg sca = Configurations.createSetupConfigArg("testobsId",
-      new SetupConfig(assemblyContext.initCK.prefix()),
-      new SetupConfig(assemblyContext.stopCK.prefix()));
+    SetupArg sca = Parameters.createSetupArg("testobsId",
+      new Setup(assemblyContext.initCK.prefix()),
+      new Setup(assemblyContext.stopCK.prefix()));
 
-    List<Invalid> issues = invalidsInTromboneSetupConfigArg(sca, assemblyContext);
+    List<Invalid> issues = invalidsInTromboneSetupArg(sca, assemblyContext);
     assertTrue(issues.isEmpty());
   }
 
@@ -348,10 +348,10 @@ public class ValidationTests {
   public void test24() {
     // should show a single issue
     // positionCK requires an argument
-    SetupConfigArg sca = Configurations.createSetupConfigArg("testobsId",
-      new SetupConfig(assemblyContext.initCK.prefix()),
-      new SetupConfig(assemblyContext.positionCK.prefix()));
-    List<Invalid> issues = invalidsInTromboneSetupConfigArg(sca, assemblyContext);
+    SetupArg sca = Parameters.createSetupArg("testobsId",
+      new Setup(assemblyContext.initCK.prefix()),
+      new Setup(assemblyContext.positionCK.prefix()));
+    List<Invalid> issues = invalidsInTromboneSetupArg(sca, assemblyContext);
     assertFalse(issues.isEmpty());
     assertEquals(issues.size(), 1);
     checkForMissingKeys(issues.get(0));
@@ -361,11 +361,11 @@ public class ValidationTests {
   public void test25() {
     // should show multiple issues
     // positionCK needs an argument and moveCK has the wrong units
-    SetupConfigArg sca = Configurations.createSetupConfigArg("testobsId",
-      new SetupConfig(assemblyContext.initCK.prefix()),
-      new SetupConfig(assemblyContext.positionCK.prefix()),
-      jadd(new SetupConfig(assemblyContext.moveCK.prefix()), jset(stagePositionKey, 22.0).withUnits(kilometers)));
-    List<Invalid> issues = invalidsInTromboneSetupConfigArg(sca, assemblyContext);
+    SetupArg sca = Parameters.createSetupArg("testobsId",
+      new Setup(assemblyContext.initCK.prefix()),
+      new Setup(assemblyContext.positionCK.prefix()),
+      jadd(new Setup(assemblyContext.moveCK.prefix()), jset(stagePositionKey, 22.0).withUnits(kilometers)));
+    List<Invalid> issues = invalidsInTromboneSetupArg(sca, assemblyContext);
     assertTrue(!issues.isEmpty());
     assertEquals(issues.size(), 2);
     checkForMissingKeys(issues.get(0));
@@ -377,23 +377,23 @@ public class ValidationTests {
     // should convert validation invalid successfully to a CommandStatus invalid
     String testmessage = "test message";
 
-    Invalid t1 = new Invalid(WrongConfigKeyIssue(testmessage));
+    Invalid t1 = new Invalid(WrongPrefixIssue(testmessage));
 
     CommandStatus.Invalid c1 = JCommandStatus.Invalid(t1);
-    assertTrue(c1.issue() instanceof WrongConfigKeyIssue);
+    assertTrue(c1.issue() instanceof WrongPrefixIssue);
     assertEquals(c1.issue().reason(), testmessage);
   }
 
   @Test
   public void test27() {
     // should convert validation result to comand status result
-    SetupConfigArg sca = Configurations.createSetupConfigArg("testobsId",
-      new SetupConfig(assemblyContext.initCK.prefix()),
-      new SetupConfig(assemblyContext.positionCK.prefix()),
-      new SetupConfig(assemblyContext.moveCK.prefix()).add(jset(stagePositionKey, 22.0).withUnits(kilometers)));
+    SetupArg sca = Parameters.createSetupArg("testobsId",
+      new Setup(assemblyContext.initCK.prefix()),
+      new Setup(assemblyContext.positionCK.prefix()),
+      new Setup(assemblyContext.moveCK.prefix()).add(jset(stagePositionKey, 22.0).withUnits(kilometers)));
 
     // Check if validated properly
-    List<Validation> validations = ConfigValidation.validateTromboneSetupConfigArg(sca, assemblyContext);
+    List<Validation> validations = ConfigValidation.validateTromboneSetupArg(sca, assemblyContext);
     assertEquals(validations.size(), sca.configs().size());
     assertEquals(validations.get(0), Valid);
     assertTrue(validations.get(1) instanceof Invalid);
@@ -416,10 +416,10 @@ public class ValidationTests {
     assertEquals(CommandStatus.validationsToOverallCommandStatus(validations), NotAccepted);
 
     // Same with no errors
-    SetupConfigArg sca2 = Configurations.createSetupConfigArg("testobsId",
-      new SetupConfig(assemblyContext.initCK.prefix()), assemblyContext.positionSC(22.0), assemblyContext.moveSC(44.0));
+    SetupArg sca2 = Parameters.createSetupArg("testobsId",
+      new Setup(assemblyContext.initCK.prefix()), assemblyContext.positionSC(22.0), assemblyContext.moveSC(44.0));
 
-    List<Validation> validations2 = ConfigValidation.validateTromboneSetupConfigArg(sca2, assemblyContext);
+    List<Validation> validations2 = ConfigValidation.validateTromboneSetupArg(sca2, assemblyContext);
     assertTrue(isAllValid(validations2));
   }
 }

@@ -16,9 +16,9 @@ import csw.services.pkg.Component.{DoNotRegister, HcdInfo}
 import csw.services.pkg.Supervisor
 import csw.services.pkg.Supervisor.{HaltComponent, LifecycleRunning}
 import csw.services.pkg.SupervisorExternal.{ExComponentShutdown, LifecycleStateChanged, SubscribeLifecycleCallback}
-import csw.util.config.BooleanItem
-import csw.util.config.Events.{StatusEvent, SystemEvent}
-import csw.util.config.StateVariable.CurrentState
+import csw.util.param.BooleanParameter
+import csw.util.param.Events.{StatusEvent, SystemEvent}
+import csw.util.param.StateVariable.CurrentState
 import org.scalatest.{BeforeAndAfterAll, FunSpecLike, _}
 
 import scala.concurrent.Await
@@ -94,14 +94,14 @@ class FollowCommandTests extends TestKit(FollowCommandTests.system) with Implici
   // Used for creating followers
   val initialElevation = naElevation(assemblyContext.calculationConfig.defaultInitialElevation)
 
-  def newTestFollowCommand(nssInUse: BooleanItem, tromboneHCD: Option[ActorRef], eventPublisher: Option[ActorRef]): TestActorRef[FollowCommand] = {
+  def newTestFollowCommand(nssInUse: BooleanParameter, tromboneHCD: Option[ActorRef], eventPublisher: Option[ActorRef]): TestActorRef[FollowCommand] = {
     val props = FollowCommand.props(assemblyContext, initialElevation, nssInUse, tromboneHCD, eventPublisher, eventService)
     val a: TestActorRef[FollowCommand] = TestActorRef(props)
     expectNoMsg(200.millis)
     a
   }
 
-  def newFollowCommand(isNssInUse: BooleanItem, tromboneHCD: Option[ActorRef], eventPublisher: Option[ActorRef]): ActorRef = {
+  def newFollowCommand(isNssInUse: BooleanParameter, tromboneHCD: Option[ActorRef], eventPublisher: Option[ActorRef]): ActorRef = {
     val props = FollowCommand.props(assemblyContext, initialElevation, isNssInUse, tromboneHCD, eventPublisher, eventService)
     val a = system.actorOf(props)
     expectNoMsg(200.millis)
@@ -238,7 +238,7 @@ class FollowCommandTests extends TestKit(FollowCommandTests.system) with Implici
       tcsRtc.publish(SystemEvent(focusErrorPrefix).add(fe(testFE)))
 
       // These are fake messages for the FollowActor that will be sent to simulate the TCS updating ZA
-      val tcsEvents = testZenithAngles.map(f => SystemEvent(zaConfigKey.prefix).add(za(f)))
+      val tcsEvents = testZenithAngles.map(f => SystemEvent(zaPrefix.prefix).add(za(f)))
 
       // This should result in the length of tcsEvents being published, which is 15
       //tcsEvents.map(f => tcsRtc.publish(f))
@@ -353,7 +353,7 @@ class FollowCommandTests extends TestKit(FollowCommandTests.system) with Implici
       eventService.subscribe(resultSubscriber2, postLastEvents = false, engStatusEventPrefix)
 
       // These are fake messages for the FollowActor that will be sent to simulate the TCS updating ZA
-      val tcsEvents = testZenithAngles.map(f => SystemEvent(zaConfigKey.prefix).add(za(f)))
+      val tcsEvents = testZenithAngles.map(f => SystemEvent(zaPrefix.prefix).add(za(f)))
 
       // This should result in the length of tcsEvents being published, which is 15
       // Since nss is in use, no events will be published because za is not subscribed to
@@ -405,7 +405,7 @@ class FollowCommandTests extends TestKit(FollowCommandTests.system) with Implici
       val results: Results = expectMsgClass(classOf[Results])
       val engs = results.msgs.map(_.asInstanceOf[StatusEvent])
       // Verify that the za is always 0.0 when inNssMode
-      engs.map(f => f.item(zenithAngleKey).head).filter(_ != 0.0) shouldBe empty
+      engs.map(f => f.parameter(zenithAngleKey).head).filter(_ != 0.0) shouldBe empty
 
       cleanup(Some(tromboneHCD), resultSubscriber1, resultSubscriber2)
     }
@@ -441,7 +441,7 @@ class FollowCommandTests extends TestKit(FollowCommandTests.system) with Implici
       val tcsRtc = eventService
 
       // These are fake messages for the FollowActor that will be sent to simulate the TCS updating ZA
-      val tcsEvents = testZenithAngles.map(f => SystemEvent(zaConfigKey.prefix).add(za(f)))
+      val tcsEvents = testZenithAngles.map(f => SystemEvent(zaPrefix.prefix).add(za(f)))
 
       // This should result in the length of tcsEvents being published, which is 15
       //tcsEvents.map(f => tcsRtc.publish(f))

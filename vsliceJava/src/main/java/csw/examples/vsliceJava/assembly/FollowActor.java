@@ -3,17 +3,17 @@ package csw.examples.vsliceJava.assembly;
 import akka.actor.*;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
-import csw.util.config.BooleanItem;
-import csw.util.config.DoubleItem;
-import csw.util.config.Events.*;
+import csw.util.param.BooleanParameter;
+import csw.util.param.DoubleParameter;
+import csw.util.param.Events.*;
 import akka.japi.Creator;
 
 import java.time.Instant;
 import java.util.Optional;
 
 import static csw.examples.vsliceJava.assembly.Algorithms.*;
-import static javacsw.util.config.JItems.jset;
-import static javacsw.util.config.JItems.jvalue;
+import static javacsw.util.param.JParameters.jset;
+import static javacsw.util.param.JParameters.jvalue;
 import static csw.examples.vsliceJava.assembly.AssemblyContext.TromboneCalculationConfig;
 import static csw.examples.vsliceJava.assembly.AssemblyContext.TromboneControlConfig;
 import static csw.examples.vsliceJava.assembly.TrombonePublisher.AOESWUpdate;
@@ -28,7 +28,7 @@ import static csw.examples.vsliceJava.assembly.TrombonePublisher.EngrUpdate;
  * calculations. It receives this data in the form of UpdatedEventData messages from the TromboneEventSubscriber actor. This connection
  * is made in the FollowCommandActor. This is done to allow testing of the actors and functionality separately.
  *
- * FollowActor receives the calculation and control configurations and a flag BooleanItem called inNSSMode.  When inNSSMode is true,
+ * FollowActor receives the calculation and control configurations and a flag BooleanParameter called inNSSMode.  When inNSSMode is true,
  * the NFIRAOS Source Simulator is in use. In this mode, the FollowActor ignores the TCS zenith angle event data and provides 0.0 no
  * matter what the focus error.
  *
@@ -47,24 +47,24 @@ public class FollowActor extends AbstractActor {
   LoggingAdapter log = Logging.getLogger(getContext().system(), this);
 
   private final AssemblyContext ac;
-  private final BooleanItem inNSSMode;
+  private final BooleanParameter inNSSMode;
   private final Optional<ActorRef> tromboneControl;
   private final Optional<ActorRef> aoPublisher;
   private final Optional<ActorRef> engPublisher;
 
   private final TromboneCalculationConfig calculationConfig;
-  final DoubleItem initialElevation;
+  final DoubleParameter initialElevation;
 
   /**
    * Constructor
    *
    * @param ac AssemblyContext provides the configurations and other values
-   * @param inNSSMode a BooleanItem set to true if the NFIRAOS Source Simulator is currently in use
+   * @param inNSSMode a BooleanParameter set to true if the NFIRAOS Source Simulator is currently in use
    * @param tromboneControl an actorRef as [[scala.Option]] of the actor that writes the position to the trombone HCD
    * @param aoPublisher an actorRef as [[scala.Option]] of the actor that publishes the sodiumLayer event
    * @param engPublisher an actorRef as [[scala.Option]] of the actor that publishes the eng telemetry event
    */
-  private FollowActor(AssemblyContext ac, DoubleItem initialElevation, BooleanItem inNSSMode, Optional<ActorRef> tromboneControl,
+  private FollowActor(AssemblyContext ac, DoubleParameter initialElevation, BooleanParameter inNSSMode, Optional<ActorRef> tromboneControl,
                      Optional<ActorRef> aoPublisher, Optional<ActorRef> engPublisher) {
     this.ac = ac;
     this.initialElevation = initialElevation;
@@ -80,12 +80,12 @@ public class FollowActor extends AbstractActor {
   public Receive createReceive() {
     // Initial receive - start with initial values
     // In this implementation, these vars are needed to support the setElevation and setAngle commands which require an update
-    DoubleItem initialFocusError = jset(AssemblyContext.focusErrorKey, 0.0).withUnits(AssemblyContext.focusErrorUnits);
-    DoubleItem initialZenithAngle = jset(AssemblyContext.zenithAngleKey, 0.0).withUnits(AssemblyContext.zenithAngleUnits);
+    DoubleParameter initialFocusError = jset(AssemblyContext.focusErrorKey, 0.0).withUnits(AssemblyContext.focusErrorUnits);
+    DoubleParameter initialZenithAngle = jset(AssemblyContext.zenithAngleKey, 0.0).withUnits(AssemblyContext.zenithAngleUnits);
     return followingReceive(initialElevation, initialFocusError, initialZenithAngle);
   }
 
-    private Receive followingReceive(DoubleItem cElevation, DoubleItem cFocusError, DoubleItem cZenithAngle) {
+    private Receive followingReceive(DoubleParameter cElevation, DoubleParameter cFocusError, DoubleParameter cZenithAngle) {
     return receiveBuilder().
       match(StopFollowing.class, t -> {
         // do nothing
@@ -111,7 +111,7 @@ public class FollowActor extends AbstractActor {
               jset(AssemblyContext.naRangeDistanceKey, totalRangeDistance).withUnits(AssemblyContext.naRangeDistanceUnits));
           }
 
-          DoubleItem newTrombonePosition = calculateNewTrombonePosition(calculationConfig, cElevation, t.focusError, t.zenithAngle);
+          DoubleParameter newTrombonePosition = calculateNewTrombonePosition(calculationConfig, cElevation, t.focusError, t.zenithAngle);
 
           // Send the new trombone stage position to the HCD
           sendTrombonePosition(ac.controlConfig, newTrombonePosition);
@@ -142,8 +142,8 @@ public class FollowActor extends AbstractActor {
   }
 
 
-  private DoubleItem calculateNewTrombonePosition(TromboneCalculationConfig calculationConfig, DoubleItem elevationIn,
-                                                  DoubleItem focusErrorIn, DoubleItem zenithAngleIn) {
+  private DoubleParameter calculateNewTrombonePosition(TromboneCalculationConfig calculationConfig, DoubleParameter elevationIn,
+                                                  DoubleParameter focusErrorIn, DoubleParameter zenithAngleIn) {
     double totalRangeDistance = focusZenithAngleToRangeDistance(calculationConfig, jvalue(elevationIn), jvalue(focusErrorIn), jvalue(zenithAngleIn));
     log.debug("totalRange: " + totalRangeDistance);
 
@@ -152,17 +152,17 @@ public class FollowActor extends AbstractActor {
   }
 
   //
-  private void sendTrombonePosition(TromboneControlConfig controlConfig, DoubleItem stagePosition) {
+  private void sendTrombonePosition(TromboneControlConfig controlConfig, DoubleParameter stagePosition) {
     log.debug("Sending position: " + stagePosition);
     tromboneControl.ifPresent(actorRef -> actorRef.tell(new TromboneControl.GoToStagePosition(stagePosition), self()));
   }
 
-  private void sendAOESWUpdate(DoubleItem elevationItem, DoubleItem rangeItem) {
+  private void sendAOESWUpdate(DoubleParameter elevationItem, DoubleParameter rangeItem) {
     log.debug("Publish aoUpdate: $aoPublisher " + elevationItem + ", " + rangeItem);
     aoPublisher.ifPresent(actorRef -> actorRef.tell(new AOESWUpdate(elevationItem, rangeItem), self()));
   }
 
-  private void sendEngrUpdate(DoubleItem focusError, DoubleItem trombonePosition, DoubleItem zenithAngle) {
+  private void sendEngrUpdate(DoubleParameter focusError, DoubleParameter trombonePosition, DoubleParameter zenithAngle) {
     log.debug("Publish engUpdate: " + engPublisher);
     engPublisher.ifPresent(actorRef -> actorRef.tell(new EngrUpdate(focusError, trombonePosition, zenithAngle), self()));
   }
@@ -172,8 +172,8 @@ public class FollowActor extends AbstractActor {
   // Props for creating the follow actor
   public static Props props(
     AssemblyContext assemblyContext,
-    DoubleItem initialElevation,
-    BooleanItem inNSSModeIn,
+    DoubleParameter initialElevation,
+    BooleanParameter inNSSModeIn,
     Optional<ActorRef> tromboneControl,
     Optional<ActorRef> aoPublisher,
     Optional<ActorRef> engPublisher) {
@@ -195,11 +195,11 @@ public class FollowActor extends AbstractActor {
 
   @SuppressWarnings("WeakerAccess")
   public static class UpdatedEventData implements FollowActorMessages {
-    public final DoubleItem zenithAngle;
-    public final DoubleItem focusError;
+    public final DoubleParameter zenithAngle;
+    public final DoubleParameter focusError;
     public final EventTime time;
 
-    public UpdatedEventData(DoubleItem zenithAngle, DoubleItem focusError, EventTime time) {
+    public UpdatedEventData(DoubleParameter zenithAngle, DoubleParameter focusError, EventTime time) {
       this.zenithAngle = zenithAngle;
       this.focusError = focusError;
       this.time = time;
@@ -208,18 +208,18 @@ public class FollowActor extends AbstractActor {
 
   // Messages to Follow Actor
   public static class SetElevation implements FollowActorMessages {
-    public final DoubleItem elevation;
+    public final DoubleParameter elevation;
 
-    public SetElevation(DoubleItem elevation) {
+    public SetElevation(DoubleParameter elevation) {
       this.elevation = elevation;
     }
   }
 
   @SuppressWarnings("WeakerAccess")
   public static class SetZenithAngle implements FollowActorMessages {
-    public final DoubleItem zenithAngle;
+    public final DoubleParameter zenithAngle;
 
-    public SetZenithAngle(DoubleItem zenithAngle) {
+    public SetZenithAngle(DoubleParameter zenithAngle) {
       this.zenithAngle = zenithAngle;
     }
   }

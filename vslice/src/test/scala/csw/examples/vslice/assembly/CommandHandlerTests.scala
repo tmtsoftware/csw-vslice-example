@@ -24,8 +24,8 @@ import csw.services.pkg.Component.{DoNotRegister, HcdInfo}
 import csw.services.pkg.Supervisor
 import csw.services.pkg.Supervisor.{HaltComponent, LifecycleRunning}
 import csw.services.pkg.SupervisorExternal.{ExComponentShutdown, LifecycleStateChanged, SubscribeLifecycleCallback}
-import csw.util.config.Configurations
-import csw.util.config.Configurations.SetupConfig
+import csw.util.param.Parameters
+import csw.util.param.Parameters.Setup
 import org.scalatest.{BeforeAndAfterAll, FunSpecLike, _}
 
 import scala.concurrent.Await
@@ -118,7 +118,7 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
 
     setupState(TromboneState(cmdItem(cmdReady), moveItem(moveUnindexed), sodiumItem(false), nssItem(false)))
 
-    val sc = SetupConfig(ac.datumCK)
+    val sc = Setup(ac.datumCK)
 
     ch ! ExecuteOne(sc, Some(fakeAssembly.ref))
 
@@ -153,7 +153,7 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
 
     setupState(TromboneState(cmdItem(cmdReady), moveItem(moveUnindexed), sodiumItem(false), nssItem(false)))
 
-    val sc = SetupConfig(ac.datumCK)
+    val sc = Setup(ac.datumCK)
 
     ch ! ExecuteOne(sc, Some(fakeAssembly.ref))
 
@@ -194,7 +194,7 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
 
     setupState(TromboneState(cmdItem(cmdReady), moveItem(moveUnindexed), sodiumItem(false), nssItem(false)))
 
-    val sca = Configurations.createSetupConfigArg("testobsId", SetupConfig(ac.datumCK))
+    val sca = Parameters.createSetupArg("testobsId", Setup(ac.datumCK))
 
     val se = system.actorOf(SequentialExecutor.props(ch, sca, Some(fakeAssembly.ref)))
 
@@ -236,7 +236,7 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     //expectNoMsg(100.milli)
 
     val testPosition = 90.0
-    val sca = Configurations.createSetupConfigArg("testobsId", ac.moveSC(testPosition))
+    val sca = Parameters.createSetupArg("testobsId", ac.moveSC(testPosition))
 
     val se2 = system.actorOf(SequentialExecutor.props(ch, sca, Some(fakeAssembly.ref)))
 
@@ -297,7 +297,7 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     val pos1 = 86.0
     val pos2 = 150.1
 
-    val sca = Configurations.createSetupConfigArg("testobsId", ac.moveSC(pos1), ac.moveSC(pos2))
+    val sca = Parameters.createSetupArg("testobsId", ac.moveSC(pos1), ac.moveSC(pos2))
 
     val se2 = system.actorOf(SequentialExecutor.props(ch, sca, Some(fakeAssembly.ref)))
 
@@ -328,11 +328,11 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
 
     val pos1 = 150.1
 
-    val sca = Configurations.createSetupConfigArg("testobsId", ac.moveSC(pos1))
+    val sca = Parameters.createSetupArg("testobsId", ac.moveSC(pos1))
 
     val se = system.actorOf(SequentialExecutor.props(ch, sca, Some(fakeAssembly.ref)))
 
-    //    Configurations.createSetupConfigArg("testobsId", SetupConfig(ac.stopCK))
+    //    Parameters.createSetupArg("testobsId", Setup(ac.stopCK))
     Thread.sleep(100) // XXX FIXME: This is an arbitrary time to get things going before sending stop
 
     // This won't work
@@ -341,7 +341,7 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
 
     // This will also work
     //  se ! StopCurrentCommand
-    ch ! SetupConfig(ac.stopCK)
+    ch ! Setup(ac.stopCK)
 
     val msg = fakeAssembly.expectMsgClass(35.seconds, classOf[CommandResult])
     msg.overall shouldBe Incomplete
@@ -368,7 +368,7 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     val testRangeDistance = 94.0
     val positionConfig = ac.positionSC(testRangeDistance)
     logger.info("Position: " + positionConfig)
-    val sca = Configurations.createSetupConfigArg("testobsId", positionConfig)
+    val sca = Parameters.createSetupArg("testobsId", positionConfig)
 
     val se2 = system.actorOf(SequentialExecutor.props(ch, sca, Some(fakeAssembly.ref)))
 
@@ -401,7 +401,7 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     val testRangeDistance = 90 to 180 by 10
     val positionConfigs = testRangeDistance.map(f => ac.positionSC(f))
 
-    val sca = Configurations.createSetupConfigArg("testobsId", positionConfigs: _*)
+    val sca = Parameters.createSetupArg("testobsId", positionConfigs: _*)
 
     val se2 = system.actorOf(SequentialExecutor.props(ch, sca, Some(fakeAssembly.ref)))
 
@@ -461,7 +461,7 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
 
     setupState(TromboneState(cmdItem(cmdReady), moveItem(moveIndexed), sodiumItem(false), nssItem(false)))
 
-    val sca = Configurations.createSetupConfigArg("testobsId", ac.setAngleSC(22.0))
+    val sca = Parameters.createSetupArg("testobsId", ac.setAngleSC(22.0))
 
     val se2 = system.actorOf(SequentialExecutor.props(ch, sca, Some(fakeAssembly.ref)))
 
@@ -492,7 +492,7 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     setupState(TromboneState(cmdItem(cmdReady), moveItem(moveIndexed), sodiumItem(true), nssItem(false)))
 
     //fakeAssembly.expectNoMsg(30.milli)
-    val sca = Configurations.createSetupConfigArg("testobsId", ac.followSC(false), SetupConfig(ac.stopCK))
+    val sca = Parameters.createSetupArg("testobsId", ac.followSC(false), Setup(ac.stopCK))
     val se = system.actorOf(SequentialExecutor.props(ch, sca, Some(fakeAssembly.ref)))
 
     val msg2 = fakeAssembly.expectMsgClass(10.seconds, classOf[CommandResult])
@@ -531,7 +531,7 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     var expectedEncoderValue = Algorithms.stagePositionToEncoder(ac.controlConfig, stagePosition)
     logger.info(s"Expected for setElevation: $expectedEncoderValue")
 
-    var sca = Configurations.createSetupConfigArg("testobsId", ac.setElevationSC(testElevation))
+    var sca = Parameters.createSetupArg("testobsId", ac.setElevationSC(testElevation))
     val se2 = system.actorOf(SequentialExecutor.props(ch, sca, Some(fakeAssembly.ref)))
 
     val msg1 = fakeAssembly.expectMsgClass(10.seconds, classOf[CommandResult])
@@ -545,13 +545,13 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     //    fakeAssembly.expectNoMsg(2.seconds)
 
     // This sets up the follow command to put assembly into follow mode
-    sca = Configurations.createSetupConfigArg("testobsId", ac.followSC(nssInUse = false))
+    sca = Parameters.createSetupArg("testobsId", ac.followSC(nssInUse = false))
     val se = system.actorOf(SequentialExecutor.props(ch, sca, Some(fakeAssembly.ref)))
     val msg2 = fakeAssembly.expectMsgClass(10.seconds, classOf[CommandResult])
     logger.info("Msg2: " + msg2)
 
     val testZenithAngle = 30.0
-    sca = Configurations.createSetupConfigArg("testobsId", ac.setAngleSC(testZenithAngle))
+    sca = Parameters.createSetupArg("testobsId", ac.setAngleSC(testZenithAngle))
     val se3 = system.actorOf(SequentialExecutor.props(ch, sca, Some(fakeAssembly.ref)))
 
     val msg3 = fakeAssembly.expectMsgClass(10.seconds, classOf[CommandResult])
@@ -568,7 +568,7 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     logger.info(s"Upd2: $upd")
     upd.current should equal(expectedEncoderValue)
 
-    sca = Configurations.createSetupConfigArg("testobsId", SetupConfig(ac.stopCK))
+    sca = Parameters.createSetupArg("testobsId", Setup(ac.stopCK))
     val se4 = system.actorOf(SequentialExecutor.props(ch, sca, Some(fakeAssembly.ref)))
 
     val msg5 = fakeAssembly.expectMsgClass(10.seconds, classOf[CommandResult])
@@ -604,7 +604,7 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     setupState(TromboneState(cmdItem(cmdReady), moveItem(moveIndexed), sodiumItem(true), nssItem(false)))
 
     //fakeAssembly.expectNoMsg(30.milli)
-    val sca = Configurations.createSetupConfigArg("testobsId", ac.setElevationSC(testElevation), ac.followSC(false), ac.setAngleSC(testZenithAngle), SetupConfig(ac.stopCK))
+    val sca = Parameters.createSetupArg("testobsId", ac.setElevationSC(testElevation), ac.followSC(false), ac.setAngleSC(testZenithAngle), Setup(ac.stopCK))
     val se = system.actorOf(SequentialExecutor.props(ch, sca, Some(fakeAssembly.ref)))
 
     val msg = fakeAssembly.expectMsgClass(10.seconds, classOf[CommandResult])

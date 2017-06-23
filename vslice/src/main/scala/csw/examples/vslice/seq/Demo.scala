@@ -3,14 +3,14 @@ package csw.examples.vslice.seq
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
 import csw.services.ccs.AssemblyMessages.{DiagnosticMode, OperationsMode}
-import csw.util.config.{BooleanKey, Configurations, DoubleItem, DoubleKey}
-import csw.util.config.Configurations.{ConfigKey, SetupConfig, SetupConfigArg}
+import csw.util.param.{BooleanKey, Parameters, DoubleParameter, DoubleKey}
+import csw.util.param.Parameters.{Prefix, Setup, SetupArg}
 import csw.services.ccs.BlockingAssemblyClient
 import csw.services.ccs.CommandStatus.CommandResult
 import csw.services.events.EventService.EventMonitor
 import csw.services.events.TelemetryService.TelemetryMonitor
 import csw.services.events.{Event, EventService, TelemetryService}
-import csw.util.config.UnitsOfMeasure.{degrees, kilometers, millimeters}
+import csw.util.param.UnitsOfMeasure.{degrees, kilometers, millimeters}
 
 import scala.concurrent.duration._
 
@@ -32,74 +32,74 @@ object Demo extends LazyLogging {
   // Public command configurations
   // Init submit command
   val initPrefix = s"$componentPrefix.init"
-  val initCK: ConfigKey = initPrefix
+  val initCK: Prefix = initPrefix
 
   // Datum submit command
   val datumPrefix = s"$componentPrefix.datum"
-  val datumCK: ConfigKey = datumPrefix
+  val datumCK: Prefix = datumPrefix
 
   val naRangeDistanceKey = DoubleKey("rangeDistance")
   val naRangeDistanceUnits = kilometers
 
   val naElevationKey = DoubleKey("elevation")
   val naElevationUnits = kilometers
-  def naElevation(elevation: Double): DoubleItem = naElevationKey -> elevation withUnits naElevationUnits
+  def naElevation(elevation: Double): DoubleParameter = naElevationKey -> elevation withUnits naElevationUnits
 
   val stagePositionKey = DoubleKey("stagePosition")
   val stagePositionUnits = millimeters
 
   val zenithAngleKey = DoubleKey("zenithAngle")
   val zenithAngleUnits = degrees
-  def za(angle: Double): DoubleItem = zenithAngleKey -> angle withUnits zenithAngleUnits
+  def za(angle: Double): DoubleParameter = zenithAngleKey -> angle withUnits zenithAngleUnits
 
   // Move submit command
   val movePrefix = s"$componentPrefix.move"
-  val moveCK: ConfigKey = movePrefix
-  def moveSC(position: Double): SetupConfig = SetupConfig(moveCK).add(stagePositionKey -> position withUnits stagePositionUnits)
+  val moveCK: Prefix = movePrefix
+  def moveSC(position: Double): Setup = Setup(moveCK).add(stagePositionKey -> position withUnits stagePositionUnits)
 
   // Position submit command
   val positionPrefix = s"$componentPrefix.position"
-  val positionCK: ConfigKey = positionPrefix
-  def positionSC(rangeDistance: Double): SetupConfig = SetupConfig(positionCK).add(naRangeDistanceKey -> rangeDistance withUnits naRangeDistanceUnits)
+  val positionCK: Prefix = positionPrefix
+  def positionSC(rangeDistance: Double): Setup = Setup(positionCK).add(naRangeDistanceKey -> rangeDistance withUnits naRangeDistanceUnits)
 
   // setElevation submit command
   val setElevationPrefix = s"$componentPrefix.setElevation"
-  val setElevationCK: ConfigKey = setElevationPrefix
-  def setElevationSC(elevation: Double): SetupConfig = SetupConfig(setElevationCK).add(naElevation(elevation))
+  val setElevationCK: Prefix = setElevationPrefix
+  def setElevationSC(elevation: Double): Setup = Setup(setElevationCK).add(naElevation(elevation))
 
   // Follow submit command
   val followPrefix = s"$componentPrefix.follow"
-  val followCK: ConfigKey = followPrefix
+  val followCK: Prefix = followPrefix
   val nssInUseKey = BooleanKey("nssInUse")
 
   // Follow command
-  def followSC(nssInUse: Boolean): SetupConfig = SetupConfig(followCK).add(nssInUseKey -> nssInUse)
+  def followSC(nssInUse: Boolean): Setup = Setup(followCK).add(nssInUseKey -> nssInUse)
 
   // setAngle submit command
   val setAnglePrefx = s"$componentPrefix.setAngle"
-  val setAngleCK: ConfigKey = setAnglePrefx
-  def setAngleSC(zenithAngle: Double): SetupConfig = SetupConfig(setAngleCK).add(za(zenithAngle))
+  val setAngleCK: Prefix = setAnglePrefx
+  def setAngleSC(zenithAngle: Double): Setup = Setup(setAngleCK).add(za(zenithAngle))
 
   // Stop Command
   val stopPrefix = s"$componentPrefix.stop"
-  val stopCK: ConfigKey = stopPrefix
+  val stopCK: Prefix = stopPrefix
 
   /**
    * Generic function to print any event
    */
   val evPrinter = (ev: Event) => { println(s"EventReceived: $ev") }
 
-  // Test SetupConfigArgs
+  // Test SetupArgs
   // Init and Datum axis
-  val sca1 = Configurations.createSetupConfigArg(obsId, SetupConfig(initCK), SetupConfig(datumCK))
+  val sca1 = Parameters.createSetupArg(obsId, Setup(initCK), Setup(datumCK))
 
   // Sends One Move
-  val sca2 = Configurations.createSetupConfigArg(obsId, positionSC(100.0))
+  val sca2 = Parameters.createSetupArg(obsId, positionSC(100.0))
 
   // This will send a config arg with 10 position commands
   val testRangeDistance = 40 to 130 by 10
   val positionConfigs = testRangeDistance.map(f => positionSC(f))
-  val sca3 = Configurations.createSetupConfigArg(obsId, positionConfigs: _*)
+  val sca3 = Parameters.createSetupArg(obsId, positionConfigs: _*)
 
   /**
    * Returns the TromboneAssembly after LocationService lookup
@@ -127,7 +127,7 @@ object Demo extends LazyLogging {
    * @return CommandResult and the conclusion of execution
    */
   def oneMove(tla: BlockingAssemblyClient, pos: Double): CommandResult = {
-    tla.submit(Configurations.createSetupConfigArg(obsId, moveSC(pos)))
+    tla.submit(Parameters.createSetupArg(obsId, moveSC(pos)))
   }
 
   /**
@@ -137,7 +137,7 @@ object Demo extends LazyLogging {
    * @return CommandResult and the conclusion of execution
    */
   def onePos(tla: BlockingAssemblyClient, pos: Double): CommandResult = {
-    tla.submit(Configurations.createSetupConfigArg(obsId, positionSC(pos)))
+    tla.submit(Parameters.createSetupArg(obsId, positionSC(pos)))
   }
 
   /**
@@ -147,7 +147,7 @@ object Demo extends LazyLogging {
    * @return CommandResult at the end of execution
    */
   def setElevation(tla: BlockingAssemblyClient, el: Double): CommandResult = {
-    tla.submit(Configurations.createSetupConfigArg(obsId, setElevationSC(el)))
+    tla.submit(Parameters.createSetupArg(obsId, setElevationSC(el)))
   }
 
   /**
@@ -157,7 +157,7 @@ object Demo extends LazyLogging {
    * @return CommandResult at end of execution
    */
   def follow(tla: BlockingAssemblyClient, nssMode: Boolean): CommandResult = {
-    tla.submit(Configurations.createSetupConfigArg(obsId, followSC(nssMode)))
+    tla.submit(Parameters.createSetupArg(obsId, followSC(nssMode)))
   }
 
   /**
@@ -167,7 +167,7 @@ object Demo extends LazyLogging {
    * @return CommandResult at the end of execution
    */
   def setAngle(tla: BlockingAssemblyClient, degrees: Double): CommandResult = {
-    tla.submit(Configurations.createSetupConfigArg(obsId, setAngleSC(degrees)))
+    tla.submit(Parameters.createSetupArg(obsId, setAngleSC(degrees)))
   }
 
   /**
@@ -176,7 +176,7 @@ object Demo extends LazyLogging {
    * @return CommandResult at end of execution
    */
   def stop(tla: BlockingAssemblyClient): CommandResult = {
-    tla.submit(Configurations.createSetupConfigArg(obsId, SetupConfig(stopCK)))
+    tla.submit(Parameters.createSetupArg(obsId, Setup(stopCK)))
   }
 
   /**

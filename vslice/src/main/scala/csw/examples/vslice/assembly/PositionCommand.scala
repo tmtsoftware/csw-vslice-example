@@ -8,8 +8,8 @@ import csw.services.ccs.CommandStatus.{Completed, Error, NoLongerValid}
 import csw.services.ccs.HcdController
 import csw.services.ccs.SequentialExecutor.{CommandStart, StopCurrentCommand}
 import csw.services.ccs.Validation.WrongInternalStateIssue
-import csw.util.config.Configurations.SetupConfig
-import csw.util.config.UnitsOfMeasure.encoder
+import csw.util.param.Parameters.Setup
+import csw.util.param.UnitsOfMeasure.encoder
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
@@ -18,7 +18,7 @@ import akka.pattern.ask
 /**
  * TMT Source Code: 10/22/16.
  */
-class PositionCommand(ac: AssemblyContext, sc: SetupConfig, tromboneHCD: ActorRef, startState: TromboneState, stateActor: Option[ActorRef]) extends Actor with ActorLogging {
+class PositionCommand(ac: AssemblyContext, sc: Setup, tromboneHCD: ActorRef, startState: TromboneState, stateActor: Option[ActorRef]) extends Actor with ActorLogging {
 
   import TromboneCommandHandler._
   import TromboneStateActor._
@@ -41,7 +41,7 @@ class PositionCommand(ac: AssemblyContext, sc: SetupConfig, tromboneHCD: ActorRe
 
         val stateMatcher = posMatcher(encoderPosition)
         // Position key is encoder units
-        val scOut = SetupConfig(axisMoveCK).add(positionKey -> encoderPosition withUnits encoder)
+        val scOut = Setup(axisMoveCK).add(positionKey -> encoderPosition withUnits encoder)
         sendState(SetState(cmdItem(cmdBusy), moveItem(moveMoving), startState.sodiumLayer, startState.nss))
         tromboneHCD ! HcdController.Submit(scOut)
 
@@ -54,7 +54,7 @@ class PositionCommand(ac: AssemblyContext, sc: SetupConfig, tromboneHCD: ActorRe
       }
     case StopCurrentCommand =>
       log.debug("Move command -- STOP")
-      tromboneHCD ! HcdController.Submit(cancelSC)
+      tromboneHCD ! HcdController.Submit(cancelSC(commandInfo))
   }
 
   private def sendState(setState: SetState): Unit = {
@@ -66,6 +66,6 @@ class PositionCommand(ac: AssemblyContext, sc: SetupConfig, tromboneHCD: ActorRe
 
 object PositionCommand {
 
-  def props(ac: AssemblyContext, sc: SetupConfig, tromboneHCD: ActorRef, startState: TromboneState, stateActor: Option[ActorRef]): Props =
+  def props(ac: AssemblyContext, sc: Setup, tromboneHCD: ActorRef, startState: TromboneState, stateActor: Option[ActorRef]): Props =
     Props(classOf[PositionCommand], ac, sc, tromboneHCD, startState, stateActor)
 }

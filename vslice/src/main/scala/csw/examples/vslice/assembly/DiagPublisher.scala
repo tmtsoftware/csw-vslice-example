@@ -9,7 +9,7 @@ import csw.services.loc.LocationService._
 import csw.services.loc.LocationSubscriberClient
 import csw.services.ts.TimeService.TimeServiceScheduler
 import csw.util.akka.PublisherActor
-import csw.util.config.StateVariable.CurrentState
+import csw.util.param.StateVariable.CurrentState
 
 /**
  * DiagPublisher provides diagnostic telemetry in the form of two events. DiagPublisher operaties in the 'OperationsState' or 'DiagnosticState'.
@@ -65,11 +65,11 @@ class DiagPublisher(assemblyContext: AssemblyContext, tromboneHCDIn: Option[Acto
    * @return Receive partial function
    */
   def operationsReceive(stateMessageCounter: Int, tromboneHCD: Option[ActorRef]): Receive = {
-    case cs: CurrentState if cs.configKey == TromboneHCD.axisStateCK =>
+    case cs: CurrentState if cs.prefix == TromboneHCD.axisStateCK =>
       if (stateMessageCounter % operationsSkipCount == 0) publishStateUpdate(cs)
       context.become(operationsReceive(stateMessageCounter + 1, tromboneHCD))
 
-    case cs: CurrentState if cs.configKey == TromboneHCD.axisStatsCK => // No nothing
+    case cs: CurrentState if cs.prefix == TromboneHCD.axisStatsCK => // No nothing
     case TimeForAxisStats(_) => // Do nothing, here so it doesn't make an error
     case OperationsState => // Already in operations mode
 
@@ -119,12 +119,12 @@ class DiagPublisher(assemblyContext: AssemblyContext, tromboneHCDIn: Option[Acto
    * @return Receive partial function
    */
   def diagnosticReceive(stateMessageCounter: Int, tromboneHCD: Option[ActorRef], cancelToken: Cancellable): Receive = {
-    case cs: CurrentState if cs.configKey == TromboneHCD.axisStateCK =>
+    case cs: CurrentState if cs.prefix == TromboneHCD.axisStateCK =>
       if (stateMessageCounter % diagnosticSkipCount == 0) publishStateUpdate(cs)
       context.become(diagnosticReceive(stateMessageCounter + 1, tromboneHCD, cancelToken))
 
-    case cs: CurrentState if cs.configKey == TromboneHCD.axisStatsCK =>
-      // Here when a CurrentState is received with the axisStats configKey, the axis statistics are published as an event
+    case cs: CurrentState if cs.prefix == TromboneHCD.axisStatsCK =>
+      // Here when a CurrentState is received with the axisStats prefix, the axis statistics are published as an event
       publishStatsUpdate(cs)
 
     case TimeForAxisStats(periodInSeconds) =>

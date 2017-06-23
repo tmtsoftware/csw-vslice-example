@@ -4,8 +4,8 @@ import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import csw.examples.vslice.assembly.FollowActor.{SetZenithAngle, UpdatedEventData}
 import csw.examples.vslice.assembly.TromboneAssembly.UpdateTromboneHCD
 import csw.services.events.EventService
-import csw.util.config.Events.EventTime
-import csw.util.config.{BooleanItem, DoubleItem}
+import csw.util.param.Events.EventTime
+import csw.util.param.{BooleanParameter, DoubleParameter}
 
 /**
  * FollowCommand encapsulates the actors that collaborate to implement the Follow command.
@@ -41,13 +41,13 @@ import csw.util.config.{BooleanItem, DoubleItem}
  * that executes the algorithms for the trombone assembly.
  *
  * @param ac the trombone Assembly context contains shared values and functions
- * @param nssInUseIn a BooleanItem, set to true if the NFIRAOS Source Simulator is in use, set to false if not in use
+ * @param nssInUseIn a BooleanParameter, set to true if the NFIRAOS Source Simulator is in use, set to false if not in use
  * @param tromboneHCDIn the actor reference to the trombone HCD as a [[scala.Option]]
  * @param eventPublisher the actor reference to the shared TrombonePublisher actor as a [[scala.Option]]
  * @param eventService EventService for subscriptions
  *
  */
-class FollowCommand(ac: AssemblyContext, initialElevation: DoubleItem, val nssInUseIn: BooleanItem, val tromboneHCDIn: Option[ActorRef], eventPublisher: Option[ActorRef], eventService: EventService) extends Actor with ActorLogging {
+class FollowCommand(ac: AssemblyContext, initialElevation: DoubleParameter, val nssInUseIn: BooleanParameter, val tromboneHCDIn: Option[ActorRef], eventPublisher: Option[ActorRef], eventService: EventService) extends Actor with ActorLogging {
   import FollowCommand._
 
   // Create the trombone publisher for publishing SystemEvents to AOESW, etc if one is not provided
@@ -58,7 +58,7 @@ class FollowCommand(ac: AssemblyContext, initialElevation: DoubleItem, val nssIn
 
   def receive: Receive = followReceive(nssInUseIn, initialFollowActor, initialEventSubscriber, tromboneHCDIn)
 
-  def followReceive(nssInUse: BooleanItem, followActor: ActorRef, eventSubscriber: ActorRef, tromboneHCD: Option[ActorRef]): Receive = {
+  def followReceive(nssInUse: BooleanParameter, followActor: ActorRef, eventSubscriber: ActorRef, tromboneHCD: Option[ActorRef]): Receive = {
     case StopFollowing =>
       log.debug("Receive stop following in Follow Command")
       // Send this so that unsubscriptions happen, need to check if needed
@@ -95,31 +95,31 @@ class FollowCommand(ac: AssemblyContext, initialElevation: DoubleItem, val nssIn
     case x => log.error(s"Unexpected message received in TromboneAssembly:FollowCommand: $x")
   }
 
-  private def createFollower(initialElevation: DoubleItem, nssInUse: BooleanItem, tromboneControl: ActorRef, eventPublisher: Option[ActorRef], telemetryPublisher: Option[ActorRef]): ActorRef =
+  private def createFollower(initialElevation: DoubleParameter, nssInUse: BooleanParameter, tromboneControl: ActorRef, eventPublisher: Option[ActorRef], telemetryPublisher: Option[ActorRef]): ActorRef =
     context.actorOf(FollowActor.props(ac, initialElevation, nssInUse, Some(tromboneControl), eventPublisher, eventPublisher), "follower")
 
-  private def createEventSubscriber(nssItem: BooleanItem, followActor: ActorRef, eventService: EventService): ActorRef =
+  private def createEventSubscriber(nssItem: BooleanParameter, followActor: ActorRef, eventService: EventService): ActorRef =
     context.actorOf(TromboneEventSubscriber.props(ac, nssItem, Some(followActor), eventService), "eventsubscriber")
 
 }
 
 object FollowCommand {
 
-  def props(assemblyContext: AssemblyContext, initialElevation: DoubleItem, nssInUse: BooleanItem, tromboneHCD: Option[ActorRef], eventPublisherIn: Option[ActorRef], eventService: EventService) =
-    Props(classOf[FollowCommand], assemblyContext, initialElevation, nssInUse, tromboneHCD, eventPublisherIn, eventService)
+  def props(assemblyContext: AssemblyContext, initialElevation: DoubleParameter, nssInUse: BooleanParameter, tromboneHCD: Option[ActorRef], eventPublisherIn: Option[ActorRef], eventService: EventService) =
+    Props(new FollowCommand(assemblyContext, initialElevation, nssInUse, tromboneHCD, eventPublisherIn, eventService))
 
   trait FollowCommandMessages
 
   case object StopFollowing extends FollowCommandMessages
 
-  case class UpdateNssInUse(nssInUse: BooleanItem) extends FollowCommandMessages
+  case class UpdateNssInUse(nssInUse: BooleanParameter) extends FollowCommandMessages
 
   /**
    * This is an engineering and test method that is used to trigger the same kind of update as a zenith angle and focus error
    * events from external to the Assembly
-   * @param zenithAngle a zenith angle in degrees as a [[csw.util.config.DoubleItem]]
+   * @param zenithAngle a zenith angle in degrees as a [[csw.util.param.DoubleParameter]]
    * @param focusError a focus error value in
    */
-  case class UpdateZAandFE(zenithAngle: DoubleItem, focusError: DoubleItem)
+  case class UpdateZAandFE(zenithAngle: DoubleParameter, focusError: DoubleParameter)
 
 }

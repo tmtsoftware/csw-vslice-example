@@ -7,12 +7,12 @@ import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.japi.Creator;
 import akka.japi.pf.ReceiveBuilder;
-import csw.util.config.*;
+import csw.util.param.*;
 import scala.PartialFunction;
 import scala.runtime.BoxedUnit;
 
-import static javacsw.util.config.JItems.jset;
-import static javacsw.util.config.JItems.jvalue;
+import static javacsw.util.param.JParameters.jset;
+import static javacsw.util.param.JParameters.jvalue;
 
 /**
  * Note that this state actor is not a listener for events. Only the client listens.
@@ -72,7 +72,7 @@ public class TromboneStateActor extends AbstractActor {
   public static final Choice cmdContinuous = new Choice("continuous");
   public static final Choice cmdError = new Choice("error");
   public static final ChoiceKey cmdKey = new ChoiceKey("cmd", Choices.fromChoices(cmdUninitialized, cmdReady, cmdBusy, cmdContinuous, cmdError));
-  public static final ChoiceItem cmdDefault = cmdItem(cmdUninitialized);
+  public static final ChoiceParameter cmdDefault = cmdItem(cmdUninitialized);
 
   public static Choice cmd(TromboneState ts) {
     return jvalue(ts.cmd);
@@ -82,9 +82,9 @@ public class TromboneStateActor extends AbstractActor {
    * A convenience method to set the cmdItem choice
    *
    * @param ch one of the cmd choices
-   * @return a ChoiceItem with the choice value
+   * @return a ChoiceParameter with the choice value
    */
-  public static ChoiceItem cmdItem(Choice ch) {
+  public static ChoiceParameter cmdItem(Choice ch) {
     return jset(cmdKey, ch);
   }
 
@@ -93,7 +93,7 @@ public class TromboneStateActor extends AbstractActor {
   public static final Choice moveIndexed = new Choice("indexed");
   public static final Choice moveMoving = new Choice("moving");
   public static final ChoiceKey moveKey = new ChoiceKey("move", Choices.fromChoices(moveUnindexed, moveIndexing, moveIndexed, moveMoving));
-  public static final ChoiceItem moveDefault = moveItem(moveUnindexed);
+  public static final ChoiceParameter moveDefault = moveItem(moveUnindexed);
 
   public static Choice move(TromboneState ts) {
     return jvalue(ts.move);
@@ -103,14 +103,14 @@ public class TromboneStateActor extends AbstractActor {
    * A convenience method to set the moveItem choice
    *
    * @param ch one of the move choices
-   * @return a ChoiceItem with the choice value
+   * @return a ChoiceParameter with the choice value
    */
-  public static ChoiceItem moveItem(Choice ch) {
+  public static ChoiceParameter moveItem(Choice ch) {
     return jset(moveKey, ch);
   }
 
   public static final BooleanKey sodiumKey = new BooleanKey("sodiumLayer");
-  public static final BooleanItem sodiumLayerDefault = sodiumItem(false);
+  public static final BooleanParameter sodiumLayerDefault = sodiumItem(false);
 
   public static boolean sodiumLayer(TromboneState ts) {
     return jvalue(ts.sodiumLayer);
@@ -120,14 +120,14 @@ public class TromboneStateActor extends AbstractActor {
    * A convenience method to set the sodium layer boolean value indicating the sodium layer has been set
    *
    * @param flag trur or false
-   * @return a BooleanItem with the Boolean value
+   * @return a BooleanParameter with the Boolean value
    */
-  public static BooleanItem sodiumItem(Boolean flag) {
+  public static BooleanParameter sodiumItem(Boolean flag) {
     return jset(sodiumKey, flag);
   }
 
   public static final BooleanKey nssKey = new BooleanKey("nss");
-  public static final BooleanItem nssDefault = nssItem(false);
+  public static final BooleanParameter nssDefault = nssItem(false);
 
   public static Boolean nss(TromboneState ts) {
     return jvalue(ts.nss);
@@ -137,9 +137,9 @@ public class TromboneStateActor extends AbstractActor {
    * A convenience method to set the NSS enabled boolean value
    *
    * @param flag true or false
-   * @return a BooleanItem with the Boolean value
+   * @return a BooleanParameter with the Boolean value
    */
-  public static BooleanItem nssItem(Boolean flag) {
+  public static BooleanParameter nssItem(Boolean flag) {
     return jset(nssKey, flag);
   }
 
@@ -149,10 +149,10 @@ public class TromboneStateActor extends AbstractActor {
    * This class is sent to the publisher for publishing when any state value changes
    */
   public static class TromboneState {
-    public final ChoiceItem cmd;
-    public final ChoiceItem move;
-    public final BooleanItem sodiumLayer;
-    public final BooleanItem nss;
+    public final ChoiceParameter cmd;
+    public final ChoiceParameter move;
+    public final BooleanParameter sodiumLayer;
+    public final BooleanParameter nss;
 
     /**
      * Constructor
@@ -162,7 +162,7 @@ public class TromboneStateActor extends AbstractActor {
      * @param sodiumLayer the current sodiumLayer flag, set when elevation has been set
      * @param nss         the current NSS mode flag
      */
-    public TromboneState(ChoiceItem cmd, ChoiceItem move, BooleanItem sodiumLayer, BooleanItem nss) {
+    public TromboneState(ChoiceParameter cmd, ChoiceParameter move, BooleanParameter sodiumLayer, BooleanParameter nss) {
       this.cmd = cmd;
       this.move = move;
       this.sodiumLayer = sodiumLayer;
@@ -188,12 +188,12 @@ public class TromboneStateActor extends AbstractActor {
     /**
      * Alternate way to create the SetState message using items
      *
-     * @param cmd         a ChoiceItem created with cmdItem
-     * @param move        a ChoiceItem created with moveItem
-     * @param sodiumLayer a BooleanItem created with sodiumItem
-     * @param nss         a BooleanItem created with nssItem
+     * @param cmd         a ChoiceParameter created with cmdItem
+     * @param move        a ChoiceParameter created with moveItem
+     * @param sodiumLayer a BooleanParameter created with sodiumItem
+     * @param nss         a BooleanParameter created with nssItem
      */
-    public SetState(ChoiceItem cmd, ChoiceItem move, BooleanItem sodiumLayer, BooleanItem nss) {
+    public SetState(ChoiceParameter cmd, ChoiceParameter move, BooleanParameter sodiumLayer, BooleanParameter nss) {
       this(new TromboneState(cmd, move, sodiumLayer, nss));
     }
 

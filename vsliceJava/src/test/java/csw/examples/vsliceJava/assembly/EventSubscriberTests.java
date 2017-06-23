@@ -10,7 +10,7 @@ import akka.testkit.TestActorRef;
 import akka.testkit.TestProbe;
 import akka.util.Timeout;
 import csw.services.loc.LocationService;
-import csw.util.config.BooleanItem;
+import csw.util.param.BooleanParameter;
 import javacsw.services.events.IEventService;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -29,8 +29,8 @@ import static csw.examples.vsliceJava.assembly.AssemblyTestData.testFocusErrors;
 import static csw.examples.vsliceJava.assembly.AssemblyTestData.testZenithAngles;
 import static csw.examples.vsliceJava.assembly.FollowActor.StopFollowing;
 import static csw.examples.vsliceJava.assembly.FollowActor.UpdatedEventData;
-import static csw.util.config.Events.SystemEvent;
-import static javacsw.util.config.JItems.jvalue;
+import static csw.util.param.Events.SystemEvent;
+import static javacsw.util.param.JParameters.jvalue;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
 import static csw.examples.vsliceJava.assembly.TromboneEventSubscriber.UpdateNssInUse;
@@ -73,14 +73,14 @@ public class EventSubscriberTests extends TestKit {
     system = null;
   }
 
-  TestActorRef<TromboneEventSubscriber> newTestEventSubscriber(BooleanItem nssInUseIn, Optional<ActorRef> followActor, IEventService eventService) {
+  TestActorRef<TromboneEventSubscriber> newTestEventSubscriber(BooleanParameter nssInUseIn, Optional<ActorRef> followActor, IEventService eventService) {
     Props props = TromboneEventSubscriber.props(assemblyContext, nssInUseIn, followActor, eventService);
     TestActorRef<TromboneEventSubscriber> a = TestActorRef.create(system, props);
     expectNoMsg(duration("200 milli")); // give the new actor time to subscribe before any test publishing...
     return a;
   }
 
-  ActorRef newEventSubscriber(BooleanItem nssInUse, Optional<ActorRef> followActor, IEventService eventService) {
+  ActorRef newEventSubscriber(BooleanParameter nssInUse, Optional<ActorRef> followActor, IEventService eventService) {
     Props props = TromboneEventSubscriber.props(assemblyContext, nssInUse, followActor, eventService);
     ActorRef a = system.actorOf(props);
     expectNoMsg(duration("200 milli")); // give the new actor time to subscribe before any test publishing...
@@ -164,7 +164,7 @@ public class EventSubscriberTests extends TestKit {
       .collect(Collectors.toList());
 
     // These are fake messages for the FollowActor that will be sent to simulate the TCS
-    List<SystemEvent> tcsEvents = testZenithAngles.stream().map(f -> new SystemEvent(zaConfigKey.prefix()).add(za(f)))
+    List<SystemEvent> tcsEvents = testZenithAngles.stream().map(f -> new SystemEvent(zaPrefix.prefix()).add(za(f)))
       .collect(Collectors.toList());
 
     feEvents.forEach(tcsRtc::publish);
@@ -200,7 +200,7 @@ public class EventSubscriberTests extends TestKit {
       .collect(Collectors.toList());
 
     // These are fake messages for the FollowActor that will be sent to simulate the TCS
-    List<SystemEvent> tcsEvents = testZenithAngles.stream().map(f -> new SystemEvent(zaConfigKey.prefix()).add(za(f)))
+    List<SystemEvent> tcsEvents = testZenithAngles.stream().map(f -> new SystemEvent(zaPrefix.prefix()).add(za(f)))
       .collect(Collectors.toList());
 
     feEvents.forEach(tcsRtc::publish);
@@ -271,11 +271,11 @@ public class EventSubscriberTests extends TestKit {
       .collect(Collectors.toList());
 
     // These are fake messages for the FollowActor that will be sent to simulate the TCS
-    List<SystemEvent> tcsEvents = testZenithAngles.stream().map(f -> new SystemEvent(zaConfigKey.prefix()).add(za(f)))
+    List<SystemEvent> tcsEvents = testZenithAngles.stream().map(f -> new SystemEvent(zaPrefix.prefix()).add(za(f)))
       .collect(Collectors.toList());
 
     double testZA = 45.0;
-    tcsRtc.publish(new SystemEvent(zaConfigKey.prefix()).add(za(testZA)));
+    tcsRtc.publish(new SystemEvent(zaPrefix.prefix()).add(za(testZA)));
     UpdatedEventData one = fakeFollowActor.expectMsgClass(timeout.duration(), UpdatedEventData.class);
     assertEquals(jvalue(one.zenithAngle), testZA);
 

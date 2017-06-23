@@ -11,10 +11,10 @@ import csw.services.loc.ComponentType
 import csw.services.pkg.Component.HcdInfo
 import csw.services.pkg.Supervisor._
 import csw.services.pkg.Hcd
-import csw.util.config.Configurations.{ConfigKey, SetupConfig}
-import csw.util.config.StateVariable.CurrentState
-import csw.util.config.UnitsOfMeasure.encoder
-import csw.util.config._
+import csw.util.param.Parameters.{CommandInfo, Prefix, Setup}
+import csw.util.param.StateVariable.CurrentState
+import csw.util.param.UnitsOfMeasure.encoder
+import csw.util.param._
 
 import scala.concurrent.{Await, Future}
 import scala.concurrent.duration._
@@ -165,11 +165,11 @@ class TromboneHCD(override val info: HcdInfo, supervisor: ActorRef) extends Hcd 
     case x                => log.error(s"Unexpected message in TromboneHCD (running state): $x")
   }
 
-  protected def process(sc: SetupConfig): Unit = {
+  protected def process(sc: Setup): Unit = {
     import TromboneHCD._
     log.debug(s"Trombone process received sc: $sc")
 
-    sc.configKey match {
+    sc.prefix match {
       case `axisMoveCK` =>
         tromboneAxis ! Move(sc(positionKey).head, diagFlag = true)
       case `axisDatumCK` =>
@@ -197,7 +197,7 @@ class TromboneHCD(override val info: HcdInfo, supervisor: ActorRef) extends Hcd 
 }
 
 object TromboneHCD {
-  def props(hcdInfo: HcdInfo, supervisor: ActorRef) = Props(classOf[TromboneHCD], hcdInfo, supervisor)
+  def props(hcdInfo: HcdInfo, supervisor: ActorRef) = Props(new TromboneHCD(hcdInfo, supervisor))
 
   // Get the trombone config file from the config service, or use the given resource file if that doesn't work
   val tromboneConfigFile = new File("trombone/tromboneHCD.conf")
@@ -212,7 +212,7 @@ object TromboneHCD {
   val tromboneAxisName = "tromboneAxis"
 
   val axisStatePrefix = s"$trombonePrefix.axis1State"
-  val axisStateCK: ConfigKey = axisStatePrefix
+  val axisStateCK: Prefix = axisStatePrefix
   val axisNameKey = StringKey("axisName")
   val AXIS_IDLE = Choice(SingleAxisSimulator.AXIS_IDLE.toString)
   val AXIS_MOVING = Choice(SingleAxisSimulator.AXIS_MOVING.toString)
@@ -234,7 +234,7 @@ object TromboneHCD {
   )
 
   val axisStatsPrefix = s"$trombonePrefix.axisStats"
-  val axisStatsCK: ConfigKey = axisStatsPrefix
+  val axisStatsCK: Prefix = axisStatsPrefix
   val datumCountKey = IntKey("initCount")
   val moveCountKey = IntKey("moveCount")
   val homeCountKey = IntKey("homeCount")
@@ -254,7 +254,7 @@ object TromboneHCD {
   )
 
   val axisConfigPrefix = s"$trombonePrefix.axisConfig"
-  val axisConfigCK: ConfigKey = axisConfigPrefix
+  val axisConfigCK: Prefix = axisConfigPrefix
   // axisNameKey
   val lowLimitKey = IntKey("lowLimit")
   val lowUserKey = IntKey("lowUser")
@@ -269,21 +269,21 @@ object TromboneHCD {
   )
 
   val axisMovePrefix = s"$trombonePrefix.move"
-  val axisMoveCK: ConfigKey = axisMovePrefix
+  val axisMoveCK: Prefix = axisMovePrefix
 
-  def positionSC(value: Int): SetupConfig = SetupConfig(axisMoveCK).add(positionKey -> value withUnits encoder)
+  def positionSC(commandInfo: CommandInfo, value: Int): Setup = Setup(commandInfo, axisMoveCK).add(positionKey -> value withUnits encoder)
 
   val axisDatumPrefix = s"$trombonePrefix.datum"
-  val axisDatumCK: ConfigKey = axisDatumPrefix
-  val datumSC = SetupConfig(axisDatumCK)
+  val axisDatumCK: Prefix = axisDatumPrefix
+  def datumSC(commandInfo: CommandInfo) = Setup(commandInfo, axisDatumCK)
 
   val axisHomePrefix = s"$trombonePrefix.home"
-  val axisHomeCK: ConfigKey = axisHomePrefix
-  val homeSC = SetupConfig(axisHomeCK)
+  val axisHomeCK: Prefix = axisHomePrefix
+  def homeSC(commandInfo: CommandInfo) = Setup(commandInfo, axisHomeCK)
 
   val axisCancelPrefix = s"$trombonePrefix.cancel"
-  val axisCancelCK: ConfigKey = axisCancelPrefix
-  val cancelSC = SetupConfig(axisCancelCK)
+  val axisCancelCK: Prefix = axisCancelPrefix
+  def cancelSC(commandInfo: CommandInfo) = Setup(commandInfo, axisCancelCK)
 
   // Testing messages for TromboneHCD
   trait TromboneEngineering

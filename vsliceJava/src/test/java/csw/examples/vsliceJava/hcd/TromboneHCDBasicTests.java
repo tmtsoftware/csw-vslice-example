@@ -11,8 +11,8 @@ import akka.util.Timeout;
 import csw.examples.vsliceJava.TestEnv;
 import csw.services.loc.LocationService;
 import csw.services.pkg.Component.HcdInfo;
-import csw.util.config.Configurations.SetupConfig;
-import csw.util.config.StateVariable.CurrentState;
+import csw.util.param.Parameters.Setup;
+import csw.util.param.StateVariable.CurrentState;
 import javacsw.services.ccs.JHcdController;
 import javacsw.services.loc.JConnectionType;
 import javacsw.services.pkg.JComponent;
@@ -25,7 +25,7 @@ import scala.concurrent.duration.FiniteDuration;
 import static csw.examples.vsliceJava.hcd.TromboneHCD.TromboneEngineering.GetAxisConfig;
 import static csw.examples.vsliceJava.hcd.TromboneHCD.*;
 import static csw.examples.vsliceJava.hcd.TromboneHCD.TromboneEngineering.GetAxisStats;
-import static javacsw.util.config.JItems.*;
+import static javacsw.util.param.JParameters.*;
 
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -303,9 +303,9 @@ public class TromboneHCDBasicTests extends TestKit {
     tla.tell(GetAxisStats, self());
     CurrentState stats = expectMsgClass(CurrentState.class);
     //println("Stats: " + stats)
-    assertEquals(stats.configKey(), TromboneHCD.axisStatsCK);
-    assertEquals(stats.item(datumCountKey).head(), 1);
-    assertEquals(stats.item(moveCountKey).head(), 1);
+    assertEquals(stats.prefix(), TromboneHCD.axisStatsCK);
+    assertEquals(stats.parameter(datumCountKey).head(), 1);
+    assertEquals(stats.parameter(moveCountKey).head(), 1);
 
     tla.tell(JHcdController.Unsubscribe, self());
     cleanup(tla);
@@ -322,8 +322,8 @@ public class TromboneHCDBasicTests extends TestKit {
     lifecycleStart(supervisor, tla);
 
     tla.tell(JHcdController.Subscribe, self());
-    // Being done this way to ensure ConfigKey equality works
-    SetupConfig sc = SetupConfig(axisHomePrefix);
+    // Being done this way to ensure Prefix equality works
+    Setup sc = Setup(axisHomePrefix);
     tla.tell(new Submit(sc), self());
 
     Vector<CurrentState> msgs = waitForMoveMsgs();
@@ -337,9 +337,9 @@ public class TromboneHCDBasicTests extends TestKit {
     tla.tell(GetAxisStats, self());
     CurrentState stats = expectMsgClass(CurrentState.class);
     //info(s"Stats: $stats")
-    assertEquals(stats.configKey(), TromboneHCD.axisStatsCK);
-    assertEquals(stats.item(homeCountKey).head(), 1);
-    assertEquals(stats.item(moveCountKey).head(), 1);
+    assertEquals(stats.prefix(), TromboneHCD.axisStatsCK);
+    assertEquals(stats.parameter(homeCountKey).head(), 1);
+    assertEquals(stats.parameter(moveCountKey).head(), 1);
 
     tla.tell(JHcdController.Unsubscribe, self());
     cleanup(tla);
@@ -471,7 +471,7 @@ public class TromboneHCDBasicTests extends TestKit {
       tla.tell(JHcdController.Subscribe, self());
 
       // Move 1
-      tla.tell(new Submit(SetupConfig(axisDatumPrefix)), self()); // Could use ones in TromboneHCD
+      tla.tell(new Submit(Setup(axisDatumPrefix)), self()); // Could use ones in TromboneHCD
       Vector<CurrentState> msgs = waitForMoveMsgs();
       assertEquals(jvalue(jitem(msgs.lastElement(), inHomeKey)), false);
 
@@ -520,14 +520,14 @@ public class TromboneHCDBasicTests extends TestKit {
       tla.tell(GetAxisStats, self());
       CurrentState stats = expectMsgClass(CurrentState.class);
       //println("Stats: " + stats)
-      assertEquals(stats.configKey(), TromboneHCD.axisStatsCK);
-      assertEquals(stats.item(datumCountKey).head(), 1);
-      assertEquals(stats.item(moveCountKey).head(), 6);
-      assertEquals(stats.item(homeCountKey).head(), 2);
-      assertEquals(stats.item(limitCountKey).head(), 1);
-      assertEquals(stats.item(successCountKey).head(), 6);
-      assertEquals(stats.item(failureCountKey).head(), 0);
-      assertEquals(stats.item(cancelCountKey).head(), 0);
+      assertEquals(stats.prefix(), TromboneHCD.axisStatsCK);
+      assertEquals(stats.parameter(datumCountKey).head(), 1);
+      assertEquals(stats.parameter(moveCountKey).head(), 6);
+      assertEquals(stats.parameter(homeCountKey).head(), 2);
+      assertEquals(stats.parameter(limitCountKey).head(), 1);
+      assertEquals(stats.parameter(successCountKey).head(), 6);
+      assertEquals(stats.parameter(failureCountKey).head(), 0);
+      assertEquals(stats.parameter(cancelCountKey).head(), 0);
 
       tla.tell(JHcdController.Unsubscribe, self());
       cleanup(tla);
@@ -562,10 +562,10 @@ public class TromboneHCDBasicTests extends TestKit {
       tla.tell(GetAxisStats, self());
       CurrentState stats = expectMsgClass(CurrentState.class);
       //println("Stats: " + stats)
-      assertEquals(stats.configKey(), TromboneHCD.axisStatsCK);
-      assertEquals(stats.item(moveCountKey).head(), 1);
-      assertEquals(stats.item(successCountKey).head(), 1);
-      assertEquals(stats.item(cancelCountKey).head(), 1);
+      assertEquals(stats.prefix(), TromboneHCD.axisStatsCK);
+      assertEquals(stats.parameter(moveCountKey).head(), 1);
+      assertEquals(stats.parameter(successCountKey).head(), 1);
+      assertEquals(stats.parameter(cancelCountKey).head(), 1);
 
       tla.tell(JHcdController.Unsubscribe, self());
       cleanup(tla);

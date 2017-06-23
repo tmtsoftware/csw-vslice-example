@@ -4,9 +4,9 @@ import com.typesafe.config.Config
 import csw.examples.vslice.assembly.AssemblyContext.{TromboneCalculationConfig, TromboneControlConfig}
 import csw.services.loc.ComponentId
 import csw.services.pkg.Component.AssemblyInfo
-import csw.util.config.Configurations.{ConfigKey, SetupConfig}
-import csw.util.config.UnitsOfMeasure.{degrees, kilometers, micrometers, millimeters}
-import csw.util.config.{BooleanKey, DoubleItem, DoubleKey, StringKey}
+import csw.util.param.Parameters.{CommandInfo, Prefix, Setup}
+import csw.util.param.UnitsOfMeasure.{degrees, kilometers, micrometers, millimeters}
+import csw.util.param.{BooleanKey, DoubleKey, DoubleParameter, StringKey}
 
 /**
  * TMT Source Code: 10/4/16.
@@ -26,49 +26,49 @@ case class AssemblyContext(info: AssemblyInfo, calculationConfig: TromboneCalcul
   // Public command configurations
   // Init submit command
   val initPrefix = s"$componentPrefix.init"
-  val initCK: ConfigKey = initPrefix
+  val initCK: Prefix = initPrefix
 
   // Dataum submit command
   val datumPrefix = s"$componentPrefix.datum"
-  val datumCK: ConfigKey = datumPrefix
+  val datumCK: Prefix = datumPrefix
 
   // Stop submit command
   val stopPrefix = s"$componentPrefix.stop"
-  val stopCK: ConfigKey = stopPrefix
+  val stopCK: Prefix = stopPrefix
 
   // Move submit command
   val movePrefix = s"$componentPrefix.move"
-  val moveCK: ConfigKey = movePrefix
+  val moveCK: Prefix = movePrefix
 
-  def moveSC(position: Double): SetupConfig = SetupConfig(moveCK).add(stagePositionKey -> position withUnits stagePositionUnits)
+  def moveSC(position: Double): Setup = Setup(commandInfo, moveCK).add(stagePositionKey -> position withUnits stagePositionUnits)
 
   // Position submit command
   val positionPrefix = s"$componentPrefix.position"
-  val positionCK: ConfigKey = positionPrefix
+  val positionCK: Prefix = positionPrefix
 
-  def positionSC(rangeDistance: Double): SetupConfig = SetupConfig(positionCK).add(naRangeDistanceKey -> rangeDistance withUnits naRangeDistanceUnits)
+  def positionSC(rangeDistance: Double): Setup = Setup(commandInfo, positionCK).add(naRangeDistanceKey -> rangeDistance withUnits naRangeDistanceUnits)
 
   // setElevation submit command
   val setElevationPrefix = s"$componentPrefix.setElevation"
-  val setElevationCK: ConfigKey = setElevationPrefix
-  def setElevationSC(elevation: Double): SetupConfig = SetupConfig(setElevationCK).add(naElevation(elevation))
+  val setElevationCK: Prefix = setElevationPrefix
+  def setElevationSC(elevation: Double): Setup = Setup(commandInfo, setElevationCK).add(naElevation(elevation))
 
   // setAngle submit command
   val setAnglePrefx = s"$componentPrefix.setAngle"
-  val setAngleCK: ConfigKey = setAnglePrefx
-  def setAngleSC(zenithAngle: Double): SetupConfig = SetupConfig(setAngleCK).add(za(zenithAngle))
+  val setAngleCK: Prefix = setAnglePrefx
+  def setAngleSC(zenithAngle: Double): Setup = Setup(commandInfo, setAngleCK).add(za(zenithAngle))
 
   // Follow submit command
   val followPrefix = s"$componentPrefix.follow"
-  val followCK: ConfigKey = followPrefix
+  val followCK: Prefix = followPrefix
   val nssInUseKey = BooleanKey("nssInUse")
 
   def setNssInUse(value: Boolean) = nssInUseKey -> value
 
-  def followSC(nssInUse: Boolean): SetupConfig = SetupConfig(followCK).add(nssInUseKey -> nssInUse)
+  def followSC(nssInUse: Boolean): Setup = Setup(commandInfo, followCK).add(nssInUseKey -> nssInUse)
 
   // A list of all commands
-  val allCommandKeys: List[ConfigKey] = List(initCK, datumCK, stopCK, moveCK, positionCK, setElevationCK, setAngleCK, followCK)
+  val allCommandKeys: List[Prefix] = List(initCK, datumCK, stopCK, moveCK, positionCK, setElevationCK, setAngleCK, followCK)
 
   // Shared key values --
   // Used by setElevation, setAngle
@@ -78,39 +78,39 @@ case class AssemblyContext(info: AssemblyInfo, calculationConfig: TromboneCalcul
   val focusErrorKey = DoubleKey("focus")
   val focusErrorUnits = micrometers
 
-  def fe(error: Double): DoubleItem = focusErrorKey -> error withUnits focusErrorUnits
+  def fe(error: Double): DoubleParameter = focusErrorKey -> error withUnits focusErrorUnits
 
   val zenithAngleKey = DoubleKey("zenithAngle")
   val zenithAngleUnits = degrees
 
-  def za(angle: Double): DoubleItem = zenithAngleKey -> angle withUnits zenithAngleUnits
+  def za(angle: Double): DoubleParameter = zenithAngleKey -> angle withUnits zenithAngleUnits
 
   val naRangeDistanceKey = DoubleKey("rangeDistance")
   val naRangeDistanceUnits = kilometers
 
-  def rd(rangedistance: Double): DoubleItem = naRangeDistanceKey -> rangedistance withUnits naRangeDistanceUnits
+  def rd(rangedistance: Double): DoubleParameter = naRangeDistanceKey -> rangedistance withUnits naRangeDistanceUnits
 
   val naElevationKey = DoubleKey("elevation")
   val naElevationUnits = kilometers
-  def naElevation(elevation: Double): DoubleItem = naElevationKey -> elevation withUnits naElevationUnits
+  def naElevation(elevation: Double): DoubleParameter = naElevationKey -> elevation withUnits naElevationUnits
 
   val initialElevationKey = DoubleKey("initialElevation")
   val initialElevationUnits = kilometers
-  def iElevation(elevation: Double): DoubleItem = initialElevationKey -> elevation withUnits initialElevationUnits
+  def iElevation(elevation: Double): DoubleParameter = initialElevationKey -> elevation withUnits initialElevationUnits
 
   val stagePositionKey = DoubleKey("stagePosition")
   val stagePositionUnits = millimeters
 
-  def spos(pos: Double): DoubleItem = stagePositionKey -> pos withUnits stagePositionUnits
+  def spos(pos: Double): DoubleParameter = stagePositionKey -> pos withUnits stagePositionUnits
 
   // ---------- Keys used by TromboneEventSubscriber and Others
   // This is the zenith angle from TCS
   val zenithAnglePrefix = "TCS.tcsPk.zenithAngle"
-  val zaConfigKey: ConfigKey = zenithAnglePrefix
+  val zaPrefix: Prefix = zenithAnglePrefix
 
   // This is the focus error from RTC
   val focusErrorPrefix = "RTC.focusError"
-  val feConfigKey: ConfigKey = focusErrorPrefix
+  val fePrefix: Prefix = focusErrorPrefix
 
   // ----------- Keys, etc. used by trombonePublisher, calculator, comamnds
   val aoSystemEventPrefix = s"$componentPrefix.sodiumLayer"
@@ -118,6 +118,10 @@ case class AssemblyContext(info: AssemblyInfo, calculationConfig: TromboneCalcul
   val tromboneStateStatusEventPrefix = s"$componentPrefix.state"
   val axisStateEventPrefix = s"$componentPrefix.axis1State"
   val axisStatsEventPrefix = s"$componentPrefix.axis1Stats"
+
+  // Normally this would contain the obsId, runId and other info about the current observation
+  val commandInfo = new CommandInfo("obs001")
+
 }
 
 object AssemblyContext {

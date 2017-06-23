@@ -15,10 +15,10 @@ import csw.examples.vsliceJava.hcd.TromboneHCD;
 import csw.services.loc.LocationService;
 import csw.services.pkg.Component;
 import csw.services.pkg.Supervisor;
-import csw.util.config.BooleanItem;
-import csw.util.config.DoubleItem;
-import csw.util.config.Events;
-import csw.util.config.JavaHelpers;
+import csw.util.param.BooleanParameter;
+import csw.util.param.DoubleParameter;
+import csw.util.param.Events;
+import csw.util.param.JavaHelpers;
 import javacsw.services.events.IEventService;
 import javacsw.services.events.ITelemetryService;
 import javacsw.services.pkg.JComponent;
@@ -40,16 +40,16 @@ import static csw.examples.vsliceJava.assembly.TrombonePublisher.EngrUpdate;
 import static csw.examples.vsliceJava.hcd.TromboneHCD.*;
 import static csw.services.pkg.SupervisorExternal.LifecycleStateChanged;
 import static csw.services.pkg.SupervisorExternal.SubscribeLifecycleCallback;
-import static csw.util.config.Events.*;
-import static csw.util.config.StateVariable.CurrentState;
+import static csw.util.param.Events.*;
+import static csw.util.param.StateVariable.CurrentState;
 import static javacsw.services.loc.JConnectionType.AkkaType;
 import static javacsw.services.pkg.JComponent.DoNotRegister;
 import static javacsw.services.pkg.JSupervisor.HaltComponent;
 import static javacsw.services.pkg.JSupervisor.LifecycleRunning;
-import static javacsw.util.config.JItems.jadd;
-import static javacsw.util.config.JItems.jset;
-import static javacsw.util.config.JPublisherActor.Subscribe;
-import static javacsw.util.config.JUnitsOfMeasure.*;
+import static javacsw.util.param.JParameters.jadd;
+import static javacsw.util.param.JParameters.jset;
+import static javacsw.util.param.JPublisherActor.Subscribe;
+import static javacsw.util.param.JUnitsOfMeasure.*;
 import static junit.framework.TestCase.assertEquals;
 
 @SuppressWarnings({"OptionalUsedAsFieldOrParameterType", "unused", "FieldCanBeLocal", "WeakerAccess"})
@@ -158,9 +158,9 @@ public class FollowActorTests extends TestKit {
     system = null;
   }
 
-  TestActorRef<FollowActor> newFollower(BooleanItem usingNSS, ActorRef tromboneControl, ActorRef aoPublisher, ActorRef engPublisher) {
+  TestActorRef<FollowActor> newFollower(BooleanParameter usingNSS, ActorRef tromboneControl, ActorRef aoPublisher, ActorRef engPublisher) {
     // Used for creating followers
-    DoubleItem initialElevation = iElevation(assemblyContext.calculationConfig.defaultInitialElevation);
+    DoubleParameter initialElevation = iElevation(assemblyContext.calculationConfig.defaultInitialElevation);
     Props props = FollowActor.props(assemblyContext, initialElevation, usingNSS, Optional.of(tromboneControl),
       Optional.of(aoPublisher), Optional.of(engPublisher));
     TestActorRef<FollowActor> a = TestActorRef.create(system, props);
@@ -455,7 +455,7 @@ public class FollowActorTests extends TestKit {
     ActorRef tromboneControl = system.actorOf(TromboneControl.props(assemblyContext, Optional.empty()));
     tromboneControl.tell(new UpdateTromboneHCD(Optional.of(tromboneHCD)), self());
 
-    BooleanItem nssUsage = setNssInUse(false);
+    BooleanParameter nssUsage = setNssInUse(false);
     // Create the follow actor and give it the actor ref of the publisher for sending calculated events
     // The following uses the same publisher actor for both AOESW and Eng events
     TestActorRef<FollowActor> followActor = newFollower(nssUsage, tromboneControl, publisherActorRef, publisherActorRef);
@@ -481,7 +481,7 @@ public class FollowActorTests extends TestKit {
 
     // These are fake messages for the FollowActor that will be sent to simulate the TCS updating ZA
     List<SystemEvent> tcsEvents = testZenithAngles.stream().map(f ->
-      jadd(new SystemEvent(zaConfigKey.prefix()), za(f))).collect(Collectors.toList());
+      jadd(new SystemEvent(zaPrefix.prefix()), za(f))).collect(Collectors.toList());
 
     // This should result in the length of tcsEvents being published, which is 15
     tcsEvents.forEach(f -> {

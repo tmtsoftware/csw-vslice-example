@@ -8,8 +8,8 @@ import csw.examples.vslice.assembly.FollowActor.{StopFollowing, UpdatedEventData
 import csw.examples.vslice.assembly.TromboneEventSubscriber.UpdateNssInUse
 import csw.services.events.EventService
 import csw.services.loc.LocationService
-import csw.util.config.BooleanItem
-import csw.util.config.Events.SystemEvent
+import csw.util.param.BooleanParameter
+import csw.util.param.Events.SystemEvent
 import org.scalatest.{BeforeAndAfterAll, FunSpecLike, _}
 
 import scala.concurrent.Await
@@ -40,14 +40,14 @@ class EventSubscriberTests extends TestKit(EventSubscriberTests.sys) with Implic
   val assemblyContext = AssemblyTestData.TestAssemblyContext
   import assemblyContext._
 
-  def newTestEventSubscriber(nssInUseIn: BooleanItem, followActor: Option[ActorRef], eventService: EventService): TestActorRef[TromboneEventSubscriber] = {
+  def newTestEventSubscriber(nssInUseIn: BooleanParameter, followActor: Option[ActorRef], eventService: EventService): TestActorRef[TromboneEventSubscriber] = {
     val props = TromboneEventSubscriber.props(assemblyContext, nssInUseIn, followActor, eventService)
     val a: TestActorRef[TromboneEventSubscriber] = TestActorRef(props)
     expectNoMsg(200.milli) // give the new actor time to subscribe before any test publishing...
     a
   }
 
-  def newEventSubscriber(nssInUse: BooleanItem, followActor: Option[ActorRef], eventService: EventService): ActorRef = {
+  def newEventSubscriber(nssInUse: BooleanParameter, followActor: Option[ActorRef], eventService: EventService): ActorRef = {
     val props = TromboneEventSubscriber.props(assemblyContext, nssInUse, followActor, eventService)
     val actorRef = system.actorOf(props)
     expectNoMsg(200.milli) // give the new actor time to subscribe before any test publishing...
@@ -126,7 +126,7 @@ class EventSubscriberTests extends TestKit(EventSubscriberTests.sys) with Implic
       val feEvents = testFocusErrors.map(f => SystemEvent(focusErrorPrefix).add(fe(f)))
 
       // These are fake messages for the FollowActor that will be sent to simulate the TCS
-      val tcsEvents = testZenithAngles.map(f => SystemEvent(zaConfigKey.prefix).add(za(f)))
+      val tcsEvents = testZenithAngles.map(f => SystemEvent(zaPrefix.prefix).add(za(f)))
 
       feEvents.foreach(f => tcsRtc.publish(f))
 
@@ -157,7 +157,7 @@ class EventSubscriberTests extends TestKit(EventSubscriberTests.sys) with Implic
       val feEvents = testFocusErrors.map(f => SystemEvent(focusErrorPrefix).add(fe(f)))
 
       // These are fake messages for the FollowActor that will be sent to simulate the TCS
-      val tcsEvents = testZenithAngles.map(f => SystemEvent(zaConfigKey.prefix).add(za(f)))
+      val tcsEvents = testZenithAngles.map(f => SystemEvent(zaPrefix.prefix).add(za(f)))
 
       feEvents.foreach(f => tcsRtc.publish(f))
 
@@ -211,10 +211,10 @@ class EventSubscriberTests extends TestKit(EventSubscriberTests.sys) with Implic
       val feEvents = testFocusErrors.map(f => SystemEvent(focusErrorPrefix).add(fe(f)))
 
       // These are fake messages for the FollowActor that will be sent to simulate the TCS
-      val tcsEvents = testZenithAngles.map(f => SystemEvent(zaConfigKey.prefix).add(za(f)))
+      val tcsEvents = testZenithAngles.map(f => SystemEvent(zaPrefix.prefix).add(za(f)))
 
       val testZA = 45.0
-      tcsRtc.publish(SystemEvent(zaConfigKey.prefix).add(za(testZA)))
+      tcsRtc.publish(SystemEvent(zaPrefix.prefix).add(za(testZA)))
       val one = fakeFollowActor.expectMsgClass(timeout.duration, classOf[UpdatedEventData])
       one.zenithAngle.head shouldBe testZA
 

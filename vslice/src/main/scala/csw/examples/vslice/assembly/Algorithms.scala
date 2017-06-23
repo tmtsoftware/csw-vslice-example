@@ -1,7 +1,7 @@
 package csw.examples.vslice.assembly
 
 import csw.examples.vslice.assembly.AssemblyContext.{TromboneCalculationConfig, TromboneControlConfig}
-import csw.util.config.DoubleItem
+import csw.util.param.DoubleParameter
 
 /**
  * This object contains functions that implement this test version of the trombone assembly algorithms.
@@ -20,18 +20,18 @@ object Algorithms {
   /**
    * Arbitrary check of the zenith angle to be within bounds
    *
-   * @param zenithAngle DoubleItem that contains zenith angle
+   * @param zenithAngle DoubleParameter that contains zenith angle
    * @return true if valid else false
    */
-  def verifyZenithAngle(zenithAngle: DoubleItem): Boolean = zenithAngle.head < 90.0 && zenithAngle.head >= 0.0
+  def verifyZenithAngle(zenithAngle: DoubleParameter): Boolean = zenithAngle.head < 90.0 && zenithAngle.head >= 0.0
 
   /**
    * Checking the input focus error against fake limits of +/- 20
    *
-   * @param focusError DoubleItem that contains focusError
+   * @param focusError DoubleParameter that contains focusError
    * @return true if valid else false
    */
-  def verifyFocusError(calculationConfig: TromboneCalculationConfig, focusError: DoubleItem): Boolean = focusError.head >= calculationConfig.lowerFocusLimit && focusError.head <= calculationConfig.upperFocusLimit
+  def verifyFocusError(calculationConfig: TromboneCalculationConfig, focusError: DoubleParameter): Boolean = focusError.head >= calculationConfig.lowerFocusLimit && focusError.head <= calculationConfig.upperFocusLimit
 
   def zenithAngleToRangeDistance(elevation: Double, zenithAngle: Double): Double = elevation / Math.cos(Math.toRadians(zenithAngle))
 
@@ -70,7 +70,7 @@ object Algorithms {
   /**
    *
    * @param stagePosition is the value of the stage position in millimeters (currently the total NA elevation)
-   * @return DoubleItem with key naTrombonePosition and units of enc
+   * @return DoubleParameter with key naTrombonePosition and units of enc
    */
   def stagePositionToEncoder(controlConfig: TromboneControlConfig, stagePosition: Double): Int = {
     // Scale value to be between 200 and 1000 encoder

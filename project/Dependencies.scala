@@ -2,9 +2,9 @@ import sbt._
 
 object Dependencies {
 
-  val cswVersion = "0.5"
+  val cswVersion = "0.7"
   val scalaVersion = "2.12.2"
-  val akkaVersion = "2.5.1"
+  val akkaVersion = "2.5.2"
 
   val pkg = "org.tmt" %% "pkg" % cswVersion
   val cs = "org.tmt" %% "cs" % cswVersion

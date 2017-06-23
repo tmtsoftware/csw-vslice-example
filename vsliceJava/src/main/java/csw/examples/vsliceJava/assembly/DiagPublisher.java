@@ -9,10 +9,10 @@ import akka.japi.Creator;
 import csw.examples.vsliceJava.hcd.TromboneHCD;
 import csw.services.loc.LocationService;
 import csw.services.ts.AbstractTimeServiceScheduler;
-import csw.util.config.StateVariable.CurrentState;
+import csw.util.param.StateVariable.CurrentState;
 import javacsw.services.ccs.JHcdController;
 import javacsw.services.pkg.ILocationSubscriberClient;
-import javacsw.util.config.JPublisherActor;
+import javacsw.util.param.JPublisherActor;
 import scala.PartialFunction;
 import scala.runtime.BoxedUnit;
 
@@ -24,7 +24,7 @@ import static csw.examples.vsliceJava.assembly.TrombonePublisher.AxisStatsUpdate
 import static csw.examples.vsliceJava.hcd.TromboneHCD.TromboneEngineering.GetAxisStats;
 import static csw.examples.vsliceJava.hcd.TromboneHCD.*;
 import static csw.services.ts.TimeService.localTimeNow;
-import static javacsw.util.config.JItems.jitem;
+import static javacsw.util.param.JParameters.jitem;
 import static csw.services.loc.LocationService.Location;
 
 /**
@@ -99,7 +99,7 @@ public class DiagPublisher extends AbstractTimeServiceScheduler implements ILoca
     //noinspection CodeBlock2Expr
     return receiveBuilder().
       match(CurrentState.class, cs -> {
-        if (cs.configKey().equals(TromboneHCD.axisStateCK)) {
+        if (cs.prefix().equals(TromboneHCD.axisStateCK)) {
           if (stateMessageCounter % operationsSkipCount == 0) publishStateUpdate(cs);
           getContext().become(operationsReceive(stateMessageCounter + 1, tromboneHCD));
         }
@@ -158,11 +158,11 @@ public class DiagPublisher extends AbstractTimeServiceScheduler implements ILoca
                   Optional<ActorRef> tromboneHCD, Cancellable cancelToken) {
     return receiveBuilder().
       match(CurrentState.class, cs -> {
-        if (cs.configKey().equals(TromboneHCD.axisStateCK)) {
+        if (cs.prefix().equals(TromboneHCD.axisStateCK)) {
           if (stateMessageCounter % diagnosticSkipCount == 0) publishStateUpdate(cs);
           getContext().become(diagnosticReceive(stateMessageCounter + 1, tromboneHCD, cancelToken));
-        } else if (cs.configKey().equals(TromboneHCD.axisStatsCK)) {
-          // Here when a CurrentState is received with the axisStats configKey, the axis statistics are published as an event
+        } else if (cs.prefix().equals(TromboneHCD.axisStatsCK)) {
+          // Here when a CurrentState is received with the axisStats prefix, the axis statistics are published as an event
           publishStatsUpdate(cs);
         }
       }).

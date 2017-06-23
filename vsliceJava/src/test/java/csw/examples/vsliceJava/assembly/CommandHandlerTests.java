@@ -19,7 +19,7 @@ import csw.services.loc.LocationService.ResolvedAkkaLocation;
 import csw.services.loc.LocationService.Unresolved;
 import csw.services.pkg.Component;
 import csw.services.pkg.Supervisor;
-import csw.util.config.Configurations;
+import csw.util.param.Parameters;
 import javacsw.services.events.IEventService;
 import javacsw.services.pkg.JComponent;
 import org.junit.*;
@@ -40,8 +40,8 @@ import static csw.services.ccs.CommandStatus.CommandResult;
 import static csw.services.ccs.CommandStatus.NoLongerValid;
 import static csw.services.pkg.SupervisorExternal.LifecycleStateChanged;
 import static csw.services.pkg.SupervisorExternal.SubscribeLifecycleCallback;
-import static csw.util.config.Configurations.SetupConfig;
-import static csw.util.config.Configurations.SetupConfigArg;
+import static csw.util.param.Parameters.Setup;
+import static csw.util.param.Parameters.SetupArg;
 import static javacsw.services.ccs.JCommandStatus.*;
 import static javacsw.services.ccs.JSequentialExecutor.ExecuteOne;
 import static javacsw.services.loc.JConnectionType.AkkaType;
@@ -140,7 +140,7 @@ public class CommandHandlerTests extends TestKit {
 
     setupState(new TromboneState(cmdItem(cmdReady), moveItem(moveUnindexed), sodiumItem(false), nssItem(false)));
 
-    Configurations.SetupConfig sc = new SetupConfig(ac.datumCK.prefix());
+    Parameters.Setup sc = new Setup(ac.datumCK.prefix());
 
     ch.tell(ExecuteOne(sc, Optional.of(fakeAssembly.ref())), self());
 
@@ -176,7 +176,7 @@ public class CommandHandlerTests extends TestKit {
 
     setupState(new TromboneState(cmdItem(cmdReady), moveItem(moveUnindexed), sodiumItem(false), nssItem(false)));
 
-    Configurations.SetupConfig sc = new SetupConfig(ac.datumCK.prefix());
+    Parameters.Setup sc = new Setup(ac.datumCK.prefix());
 
     ch.tell(ExecuteOne(sc, Optional.of(fakeAssembly.ref())), self());
 
@@ -223,7 +223,7 @@ public class CommandHandlerTests extends TestKit {
 
     setupState(new TromboneState(cmdItem(cmdReady), moveItem(moveUnindexed), sodiumItem(false), nssItem(false)));
 
-    SetupConfigArg sca = Configurations.createSetupConfigArg("testobsId", new SetupConfig(ac.datumCK.prefix()));
+    SetupArg sca = Parameters.createSetupArg("testobsId", new Setup(ac.datumCK.prefix()));
 
     ActorRef se = system.actorOf(SequentialExecutor.props(ch, sca, Optional.of(fakeAssembly.ref())));
 
@@ -267,7 +267,7 @@ public class CommandHandlerTests extends TestKit {
     //expectNoMsg(100.milli)
 
     double testPosition = 90.0;
-    SetupConfigArg sca = Configurations.createSetupConfigArg("testobsId", ac.moveSC(testPosition));
+    SetupArg sca = Parameters.createSetupArg("testobsId", ac.moveSC(testPosition));
 
     ActorRef se2 = system.actorOf(SequentialExecutor.props(ch, sca, Optional.of(fakeAssembly.ref())));
 
@@ -331,7 +331,7 @@ public class CommandHandlerTests extends TestKit {
     double pos1 = 86.0;
     double pos2 = 150.1;
 
-    SetupConfigArg sca = Configurations.createSetupConfigArg("testobsId", ac.moveSC(pos1), ac.moveSC(pos2));
+    SetupArg sca = Parameters.createSetupArg("testobsId", ac.moveSC(pos1), ac.moveSC(pos2));
     System.out.println("SCA: " + sca);
 
     ActorRef se2 = system.actorOf(SequentialExecutor.props(ch, sca, Optional.of(fakeAssembly.ref())));
@@ -365,11 +365,11 @@ public class CommandHandlerTests extends TestKit {
 
     double pos1 = 150.1;
 
-    SetupConfigArg sca = Configurations.createSetupConfigArg("testobsId", ac.moveSC(pos1));
+    SetupArg sca = Parameters.createSetupArg("testobsId", ac.moveSC(pos1));
 
     ActorRef se = system.actorOf(SequentialExecutor.props(ch, sca, Optional.of(fakeAssembly.ref())));
 
-//    Configurations.createSetupConfigArg("testobsId", new SetupConfig(ac.stopCK.prefix()));
+//    Parameters.createSetupArg("testobsId", new Setup(ac.stopCK.prefix()));
     try {
       Thread.sleep(100); // This is an arbitrary time to get things going before sending stop
     } catch (InterruptedException e) {
@@ -382,7 +382,7 @@ public class CommandHandlerTests extends TestKit {
 
     // This will also work
     //  se ! StopCurrentCommand
-    ch.tell(new SetupConfig(ac.stopCK.prefix()), self());
+    ch.tell(new Setup(ac.stopCK.prefix()), self());
 
     CommandResult msg = fakeAssembly.expectMsgClass(FiniteDuration.create(35, TimeUnit.SECONDS), CommandResult.class);
     assertEquals(msg.overall(), Incomplete);
@@ -408,9 +408,9 @@ public class CommandHandlerTests extends TestKit {
     setupState(new TromboneState(cmdItem(cmdReady), moveItem(moveIndexed), sodiumItem(false), nssItem(false)));
 
     double testRangeDistance = 94.0;
-    SetupConfig positionConfig = ac.positionSC(testRangeDistance);
+    Setup positionConfig = ac.positionSC(testRangeDistance);
     logger.info("Position: " + positionConfig);
-    SetupConfigArg sca = Configurations.createSetupConfigArg("testobsId", positionConfig);
+    SetupArg sca = Parameters.createSetupArg("testobsId", positionConfig);
 
     ActorRef se2 = system.actorOf(SequentialExecutor.props(ch, sca, Optional.of(fakeAssembly.ref())));
 
@@ -443,10 +443,10 @@ public class CommandHandlerTests extends TestKit {
     // This will send a config arg with 10 position commands
     int[] testRangeDistance = new int[]{90, 100, 110, 120, 130, 140, 150, 160, 170, 180}; // 90 to 180 by 10
 
-    SetupConfig[] positionConfigs = Arrays.stream(testRangeDistance).mapToObj(ac::positionSC)
-      .toArray(SetupConfig[]::new);
+    Setup[] positionConfigs = Arrays.stream(testRangeDistance).mapToObj(ac::positionSC)
+      .toArray(Setup[]::new);
 
-    SetupConfigArg sca = Configurations.createSetupConfigArg("testobsId", positionConfigs);
+    SetupArg sca = Parameters.createSetupArg("testobsId", positionConfigs);
 
     ActorRef se2 = system.actorOf(SequentialExecutor.props(ch, sca, Optional.of(fakeAssembly.ref())));
 
@@ -508,7 +508,7 @@ public class CommandHandlerTests extends TestKit {
 
     setupState(new TromboneState(cmdItem(cmdReady), moveItem(moveIndexed), sodiumItem(false), nssItem(false)));
 
-    SetupConfigArg sca = Configurations.createSetupConfigArg("testobsId", ac.setAngleSC(22.0));
+    SetupArg sca = Parameters.createSetupArg("testobsId", ac.setAngleSC(22.0));
 
     ActorRef se2 = system.actorOf(SequentialExecutor.props(ch, sca, Optional.of(fakeAssembly.ref())));
 
@@ -540,7 +540,7 @@ public class CommandHandlerTests extends TestKit {
     setupState(new TromboneState(cmdItem(cmdReady), moveItem(moveIndexed), sodiumItem(true), nssItem(false)));
 
     //fakeAssembly.expectNoMsg(30.milli)
-    SetupConfigArg sca = Configurations.createSetupConfigArg("testobsId", ac.followSC(false), new SetupConfig(ac.stopCK.prefix()));
+    SetupArg sca = Parameters.createSetupArg("testobsId", ac.followSC(false), new Setup(ac.stopCK.prefix()));
     ActorRef se = system.actorOf(SequentialExecutor.props(ch, sca, Optional.of(fakeAssembly.ref())));
 
     CommandResult msg2 = fakeAssembly.expectMsgClass(FiniteDuration.create(10, TimeUnit.SECONDS), CommandResult.class);
@@ -580,7 +580,7 @@ public class CommandHandlerTests extends TestKit {
     int expectedEncoderValue = Algorithms.stagePositionToEncoder(ac.controlConfig, stagePosition);
     logger.info("Expected for setElevation: " + expectedEncoderValue);
 
-    SetupConfigArg sca = Configurations.createSetupConfigArg("testobsId", ac.setElevationSC(testElevation));
+    SetupArg sca = Parameters.createSetupArg("testobsId", ac.setElevationSC(testElevation));
     ActorRef se2 = system.actorOf(SequentialExecutor.props(ch, sca, Optional.of(fakeAssembly.ref())));
 
     CommandResult msg1 = fakeAssembly.expectMsgClass(FiniteDuration.create(10, TimeUnit.SECONDS), CommandResult.class);
@@ -594,13 +594,13 @@ public class CommandHandlerTests extends TestKit {
 //    fakeAssembly.expectNoMsg(2.seconds)
 
     // This sets up the follow command to put assembly into follow mode
-    sca = Configurations.createSetupConfigArg("testobsId", ac.followSC(false));
+    sca = Parameters.createSetupArg("testobsId", ac.followSC(false));
     ActorRef se = system.actorOf(SequentialExecutor.props(ch, sca, Optional.of(fakeAssembly.ref())));
     CommandResult msg2 = fakeAssembly.expectMsgClass(FiniteDuration.create(10, TimeUnit.SECONDS), CommandResult.class);
     logger.info("Msg2: " + msg2);
 
     double testZenithAngle = 30.0;
-    sca = Configurations.createSetupConfigArg("testobsId", ac.setAngleSC(testZenithAngle));
+    sca = Parameters.createSetupArg("testobsId", ac.setAngleSC(testZenithAngle));
     ActorRef se3 = system.actorOf(SequentialExecutor.props(ch, sca, Optional.of(fakeAssembly.ref())));
 
     CommandResult msg3 = fakeAssembly.expectMsgClass(FiniteDuration.create(10, TimeUnit.SECONDS), CommandResult.class);
@@ -617,7 +617,7 @@ public class CommandHandlerTests extends TestKit {
     logger.info("Upd2: " + upd);
     assertEquals(upd.current, expectedEncoderValue);
 
-    sca = Configurations.createSetupConfigArg("testobsId", new SetupConfig(ac.stopCK.prefix()));
+    sca = Parameters.createSetupArg("testobsId", new Setup(ac.stopCK.prefix()));
     ActorRef se4 = system.actorOf(SequentialExecutor.props(ch, sca, Optional.of(fakeAssembly.ref())));
 
     CommandResult msg5 = fakeAssembly.expectMsgClass(FiniteDuration.create(10, TimeUnit.SECONDS), CommandResult.class);
@@ -653,8 +653,8 @@ public class CommandHandlerTests extends TestKit {
     setupState(new TromboneState(cmdItem(cmdReady), moveItem(moveIndexed), sodiumItem(true), nssItem(false)));
 
     //fakeAssembly.expectNoMsg(30.milli)
-    SetupConfigArg sca = Configurations.createSetupConfigArg("testobsId", ac.setElevationSC(testElevation), ac.followSC(false), ac.setAngleSC(testZenithAngle),
-      new SetupConfig(ac.stopCK.prefix()));
+    SetupArg sca = Parameters.createSetupArg("testobsId", ac.setElevationSC(testElevation), ac.followSC(false), ac.setAngleSC(testZenithAngle),
+      new Setup(ac.stopCK.prefix()));
     ActorRef se = system.actorOf(SequentialExecutor.props(ch, sca, Optional.of(fakeAssembly.ref())));
 
     CommandResult msg = fakeAssembly.expectMsgClass(FiniteDuration.create(10, TimeUnit.SECONDS), CommandResult.class);
