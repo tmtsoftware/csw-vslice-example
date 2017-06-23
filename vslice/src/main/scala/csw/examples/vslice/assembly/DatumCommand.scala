@@ -5,7 +5,6 @@ import csw.examples.vslice.assembly.TromboneStateActor.TromboneState
 import csw.examples.vslice.hcd.TromboneHCD._
 import csw.services.ccs.CommandStatus.{Completed, Error, NoLongerValid}
 import csw.services.ccs.HcdController
-import csw.services.ccs.SequentialExecutor.{CommandStart, StopCurrentCommand}
 import csw.services.ccs.Validation.WrongInternalStateIssue
 import csw.util.param.Parameters.Setup
 import akka.pattern.ask

@@ -5,8 +5,10 @@ import java.io.File
 import akka.actor.{ActorRef, ActorSystem, Props}
 import akka.util.Timeout
 import csw.examples.vslice.assembly.AssemblyContext.{TromboneCalculationConfig, TromboneControlConfig}
+import csw.examples.vslice.assembly.ParamValidation.validateOneSetup
 import csw.services.alarms.AlarmService
 import csw.services.ccs.AssemblyMessages.{DiagnosticMode, OperationsMode}
+import csw.services.ccs.Validation.{Valid, Validation}
 import csw.services.ccs.{AssemblyController, Validation}
 import csw.services.cs.akka.ConfigServiceClient
 import csw.services.events.{EventService, TelemetryService}
@@ -14,6 +16,7 @@ import csw.services.loc.LocationService._
 import csw.services.loc._
 import csw.services.pkg.Component.AssemblyInfo
 import csw.services.pkg.{Assembly, Supervisor}
+import csw.util.param.Parameters.Setup
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -193,19 +196,17 @@ class TromboneAssembly(val info: AssemblyInfo, supervisor: ActorRef) extends Ass
   }
 
   /**
-   * Function that overrides AssemblyController setup processes incoming SetupArg messages
-   * @param sca received SetupConfgiArg
+   * Function that overrides AssemblyController setup processes incoming Setup messages
+   * @param s received Setup
    * @param commandOriginator the sender of the command
-   * @return a validation object that indicates if the received config is valid
+   * @return a validation object that indicates if the received setup is valid
    */
-  override def setup(sca: SetupArg, commandOriginator: Option[ActorRef]): ValidationList = {
-    // Returns validations for all
-    val validations: ValidationList = validateSequenceConfigArg(sca)
-    if (Validation.isAllValid(validations)) {
-      // Create a SequentialExecutor to process all Setups
-      context.actorOf(SequentialExecutor.props(commandHandler, sca, commandOriginator))
+  override def setup(s: Setup, commandOriginator: Option[ActorRef]): Validation = {
+    val validation = validateOneSetup(s)
+    if (validation == Valid) {
+      context.actorOf(SequentialExecutor.props(commandHandler, s, commandOriginator))
     }
-    validations
+    validation
   }
 
   /**
@@ -213,7 +214,7 @@ class TromboneAssembly(val info: AssemblyInfo, supervisor: ActorRef) extends Ass
    */
   private def validateSequenceConfigArg(sca: SetupArg): ValidationList = {
     // Are all of the configs really for us and correctly formatted, etc?
-    ConfigValidation.validateTromboneSetupArg(sca)
+    ParamValidation.validateTromboneSetupArg(sca)
   }
 
   // Gets the assembly configurations from the config service, or a resource file, if not found and

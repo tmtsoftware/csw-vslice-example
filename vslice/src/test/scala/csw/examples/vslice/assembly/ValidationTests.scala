@@ -11,7 +11,7 @@ import org.scalatest.{BeforeAndAfterAll, FunSpec, Inspectors, Matchers}
  * TMT Source Code: 8/25/16.
  */
 class ValidationTests extends FunSpec with Matchers with Inspectors with BeforeAndAfterAll {
-  import ConfigValidation._
+  import ParamValidation._
 
   implicit val ac = AssemblyTestData.TestAssemblyContext
   import ac._
@@ -314,7 +314,7 @@ class ValidationTests extends FunSpec with Matchers with Inspectors with BeforeA
       val sca = Parameters.createSetupArg("testobsId", Setup(initCK), Setup(positionCK), Setup(moveCK).add(stagePositionKey -> 22 withUnits kilometers))
 
       // Check if validated properly
-      val validations = ConfigValidation.validateTromboneSetupArg(sca)
+      val validations = ParamValidation.validateTromboneSetupArg(sca)
       validations.size should equal(sca.configs.size)
       validations.head shouldBe Valid
       validations(1) shouldBe a[Invalid]
@@ -338,7 +338,7 @@ class ValidationTests extends FunSpec with Matchers with Inspectors with BeforeA
       // Same with no errors
       val sca2 = Parameters.createSetupArg("testobsId", Setup(initCK), positionSC(22.0), moveSC(44.0))
 
-      val validations2 = ConfigValidation.validateTromboneSetupArg(sca2)
+      val validations2 = ParamValidation.validateTromboneSetupArg(sca2)
       isAllValid(validations2) shouldBe true
 
     }

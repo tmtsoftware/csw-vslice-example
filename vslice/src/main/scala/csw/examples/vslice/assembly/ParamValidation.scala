@@ -8,7 +8,7 @@ import scala.util.Try
 /**
  * TMT Source Code: 8/24/16.
  */
-object ConfigValidation {
+object ParamValidation {
 
 //  /**
 //   * Looks for any Setups in a SetupArg that fail validation and returns as a list of only Invalid
@@ -24,16 +24,16 @@ object ConfigValidation {
    * Runs Trombone-specific validation on a single Setup.
    * @return
    */
-  def validateOneSetup(sc: Setup)(implicit ac: AssemblyContext): Validation = {
-    sc.prefix match {
-      case ac.initCK         => initValidation(sc)
-      case ac.datumCK        => datumValidation(sc)
-      case ac.stopCK         => stopValidation(sc)
-      case ac.moveCK         => moveValidation(sc)
-      case ac.positionCK     => positionValidation(sc)
-      case ac.setElevationCK => setElevationValidation(sc)
-      case ac.setAngleCK     => setAngleValidation(sc)
-      case ac.followCK       => followValidation(sc)
+  def validateOneSetup(s: Setup)(implicit ac: AssemblyContext): Validation = {
+    s.prefix match {
+      case ac.initCK         => initValidation(s)
+      case ac.datumCK        => datumValidation(s)
+      case ac.stopCK         => stopValidation(s)
+      case ac.moveCK         => moveValidation(s)
+      case ac.positionCK     => positionValidation(s)
+      case ac.setElevationCK => setElevationValidation(s)
+      case ac.setAngleCK     => setAngleValidation(s)
+      case ac.followCK       => followValidation(s)
       case x                 => Invalid(OtherIssue(s"Setup with prefix $x is not supported"))
     }
   }
