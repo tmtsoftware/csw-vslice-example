@@ -23,9 +23,9 @@ import java.util.function.Consumer;
 import static akka.pattern.PatternsCS.ask;
 import static csw.examples.vsliceJava.assembly.TromboneStateActor.*;
 import static csw.examples.vsliceJava.hcd.TromboneHCD.*;
-import static csw.services.ccs.CommandStatus.*;
-import static csw.services.ccs.CommandStatus.Error;
-import static csw.services.ccs.CommandStatus.Invalid;
+import static csw.services.ccs.CommandResponse.*;
+import static csw.services.ccs.CommandResponse.Error;
+import static csw.services.ccs.CommandResponse.Invalid;
 import static csw.services.ccs.Validation.*;
 import static csw.services.loc.LocationService.*;
 import static csw.util.param.Parameters.Prefix;
@@ -298,7 +298,7 @@ class TromboneCommandHandler extends AbstractActor implements TromboneStateClien
         // Execute the command actor asynchronously, pass the command status back, kill the actor and go back to waiting
         ask(currentCommand, JSequentialExecutor.CommandStart(), timeout.duration().toMillis()).
           thenApply(reply -> {
-            CommandStatus cs = (CommandStatus) reply;
+            CommandResponse cs = (CommandResponse) reply;
             commandOriginator.ifPresent(actorRef -> actorRef.tell(cs, self()));
             currentCommand.tell(PoisonPill.getInstance(), self());
             self().tell(new CommandDone(), self());
@@ -344,13 +344,13 @@ class TromboneCommandHandler extends AbstractActor implements TromboneStateClien
   }
 
   static void executeMatch(ActorContext context, StateMatcher stateMatcher, ActorRef currentStateSource, Optional<ActorRef> replyTo,
-                           Timeout timeout, Consumer<CommandStatus> codeBlock) {
+                           Timeout timeout, Consumer<CommandResponse> codeBlock) {
 
     ActorRef matcher = context.actorOf(MultiStateMatcherActor.props(currentStateSource, timeout));
 
     ask(matcher, MultiStateMatcherActor.createStartMatch(stateMatcher), timeout).
       thenApply(reply -> {
-        CommandStatus cmdStatus = (CommandStatus) reply;
+        CommandResponse cmdStatus = (CommandResponse) reply;
         codeBlock.accept(cmdStatus);
         replyTo.ifPresent(actorRef -> actorRef.tell(cmdStatus, context.self()));
         return null;

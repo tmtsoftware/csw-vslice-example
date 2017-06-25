@@ -7,7 +7,7 @@ import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.japi.Creator;
 import akka.util.Timeout;
-import csw.services.ccs.CommandStatus.Error;
+import csw.services.ccs.CommandResponse.Error;
 import csw.services.ccs.DemandMatcher;
 import csw.services.ccs.HcdController;
 import csw.util.param.DoubleParameter;
@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 
 import static csw.examples.vsliceJava.assembly.TromboneStateActor.*;
 import static csw.examples.vsliceJava.hcd.TromboneHCD.*;
-import static csw.services.ccs.CommandStatus.NoLongerValid;
+import static csw.services.ccs.CommandResponse.NoLongerValid;
 import static csw.services.ccs.Validation.WrongInternalStateIssue;
 import static csw.util.param.Parameters.Setup;
 import static javacsw.services.ccs.JCommandStatus.Completed;

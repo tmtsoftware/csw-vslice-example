@@ -7,7 +7,7 @@ import com.typesafe.scalalogging.LazyLogging
 import csw.examples.vslice.TestEnv
 import csw.services.apps.containerCmd.ContainerCmd
 import csw.services.ccs.AssemblyController.Submit
-import csw.services.ccs.CommandStatus._
+import csw.services.ccs.CommandResponse._
 import csw.services.ccs.Validation.WrongInternalStateIssue
 import csw.services.events.EventService
 import csw.services.loc.LocationService

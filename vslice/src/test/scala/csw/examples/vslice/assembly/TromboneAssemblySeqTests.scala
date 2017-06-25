@@ -7,7 +7,7 @@ import com.typesafe.scalalogging.LazyLogging
 import csw.examples.vslice.TestEnv
 import csw.services.apps.containerCmd.ContainerCmd
 import csw.services.ccs.BlockingAssemblyClient
-import csw.services.ccs.CommandStatus.AllCompleted
+import csw.services.ccs.CommandResponse.AllCompleted
 import csw.services.events.Event
 import csw.services.loc.LocationService
 import csw.services.pkg.Supervisor._

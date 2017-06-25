@@ -4,9 +4,7 @@ import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.util.Timeout
 import csw.examples.vslice.assembly.TromboneStateActor.TromboneState
 import csw.examples.vslice.hcd.TromboneHCD._
-import csw.services.ccs.CommandStatus.{Completed, Error, NoLongerValid}
 import csw.services.ccs.HcdController
-import csw.services.ccs.SequentialExecutor.{CommandStart, StopCurrentCommand}
 import csw.services.ccs.Validation.WrongInternalStateIssue
 import csw.util.param.Parameters.Setup
 import csw.util.param.UnitsOfMeasure.encoder
@@ -14,6 +12,8 @@ import csw.util.param.UnitsOfMeasure.encoder
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import akka.pattern.ask
+import csw.examples.vslice.assembly.TromboneAssembly.{CommandStart, StopCurrentCommand}
+import csw.services.ccs.CommandStatus.{Completed, Error, NoLongerValid}
 
 /**
  * This actor implements the setElevation command.
@@ -25,7 +25,7 @@ import akka.pattern.ask
  * command, the sodium layer state must be set to true, which is not the case with the mvoe command.  There is probably
  * a way to refactor this to reuse the move command.
  */
-class SetElevationCommand(ac: AssemblyContext, sc: Setup, tromboneHCD: ActorRef, startState: TromboneState, stateActor: Option[ActorRef]) extends Actor with ActorLogging {
+class SetElevationCommand(ac: AssemblyContext, s: Setup, tromboneHCD: ActorRef, startState: TromboneState, stateActor: Option[ActorRef]) extends Actor with ActorLogging {
 
   import TromboneCommandHandler._
   import TromboneStateActor._
@@ -38,7 +38,7 @@ class SetElevationCommand(ac: AssemblyContext, sc: Setup, tromboneHCD: ActorRef,
         val mySender = sender()
 
         // Note that units have already been verified here
-        val elevationItem = sc(ac.naElevationKey)
+        val elevationItem = s(ac.naElevationKey)
 
         // Let the elevation be the range distance
         // Convert range distance to encoder units from mm
@@ -63,7 +63,7 @@ class SetElevationCommand(ac: AssemblyContext, sc: Setup, tromboneHCD: ActorRef,
       }
     case StopCurrentCommand =>
       log.debug("SetElevation command -- STOP")
-      tromboneHCD ! HcdController.Submit(cancelSC(commandInfo))
+      tromboneHCD ! HcdController.Submit(cancelSC(s.info))
   }
 
   private def sendState(setState: SetState): Unit = {
@@ -74,6 +74,6 @@ class SetElevationCommand(ac: AssemblyContext, sc: Setup, tromboneHCD: ActorRef,
 
 object SetElevationCommand {
 
-  def props(ac: AssemblyContext, sc: Setup, tromboneHCD: ActorRef, startState: TromboneState, stateActor: Option[ActorRef]): Props =
-    Props(new SetElevationCommand(ac, sc, tromboneHCD, startState, stateActor))
+  def props(ac: AssemblyContext, s: Setup, tromboneHCD: ActorRef, startState: TromboneState, stateActor: Option[ActorRef]): Props =
+    Props(new SetElevationCommand(ac, s, tromboneHCD, startState, stateActor))
 }

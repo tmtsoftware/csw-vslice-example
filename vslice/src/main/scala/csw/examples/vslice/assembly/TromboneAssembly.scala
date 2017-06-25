@@ -9,7 +9,7 @@ import csw.examples.vslice.assembly.ParamValidation.validateOneSetup
 import csw.services.alarms.AlarmService
 import csw.services.ccs.AssemblyMessages.{DiagnosticMode, OperationsMode}
 import csw.services.ccs.Validation.{Valid, Validation}
-import csw.services.ccs.{AssemblyController, Validation}
+import csw.services.ccs.AssemblyController
 import csw.services.cs.akka.ConfigServiceClient
 import csw.services.events.{EventService, TelemetryService}
 import csw.services.loc.LocationService._
@@ -204,17 +204,9 @@ class TromboneAssembly(val info: AssemblyInfo, supervisor: ActorRef) extends Ass
   override def setup(s: Setup, commandOriginator: Option[ActorRef]): Validation = {
     val validation = validateOneSetup(s)
     if (validation == Valid) {
-      context.actorOf(SequentialExecutor.props(commandHandler, s, commandOriginator))
+      commandHandler ! s
     }
     validation
-  }
-
-  /**
-   * Performs the initial validation of the incoming SetupConfgiArg
-   */
-  private def validateSequenceConfigArg(sca: SetupArg): ValidationList = {
-    // Are all of the configs really for us and correctly formatted, etc?
-    ParamValidation.validateTromboneSetupArg(sca)
   }
 
   // Gets the assembly configurations from the config service, or a resource file, if not found and
@@ -249,6 +241,10 @@ object TromboneAssembly {
    * @param tromboneHCD the ActorRef of the tromboneHCD or None
    */
   case class UpdateTromboneHCD(tromboneHCD: Option[ActorRef])
+
+  // Used internally to start/stop  commands
+  private[assembly] case object CommandStart
+  private[assembly] case object StopCurrentCommand
 
   private val badEventService: Option[EventService] = None
   private val badTelemetryService: Option[TelemetryService] = None

@@ -10,7 +10,7 @@ import akka.util.Timeout;
 import csw.examples.vsliceJava.TestEnv;
 import csw.examples.vsliceJava.hcd.TromboneHCD;
 import csw.services.alarms.AlarmKey;
-import csw.services.ccs.CommandStatus.CommandStatus;
+import csw.services.ccs.CommandResponse.CommandResponse;
 import csw.services.loc.LocationService;
 import csw.services.pkg.Component;
 import csw.services.pkg.Supervisor;
@@ -276,7 +276,7 @@ public class AlarmMonitorTests extends TestKit {
     // Move to the 0 position
     ch.tell(JSequentialExecutor.ExecuteOne(ac.moveSC(limitPosition), Optional.of(fakeAssembly.ref())), self());
     // Watch for command completion
-    CommandStatus result = fakeAssembly.expectMsgClass(FiniteDuration.create(5, TimeUnit.SECONDS), CommandStatus.class);
+    CommandResponse result = fakeAssembly.expectMsgClass(FiniteDuration.create(5, TimeUnit.SECONDS), CommandResponse.class);
     logger.info("Result: " + result);
     assert(Completed.equals(result));
 
@@ -289,7 +289,7 @@ public class AlarmMonitorTests extends TestKit {
 
     // Now move it out of the limit and see that the alarm is cleared
     ch.tell(JSequentialExecutor.ExecuteOne(ac.moveSC(clearPosition), Optional.of(fakeAssembly.ref())), self());
-    fakeAssembly.expectMsgClass(FiniteDuration.create(5, TimeUnit.SECONDS), CommandStatus.class);
+    fakeAssembly.expectMsgClass(FiniteDuration.create(5, TimeUnit.SECONDS), CommandResponse.class);
 
     expectNoMsg(FiniteDuration.create(1, TimeUnit.SECONDS)); // A bit of time for processing and update of AlarmService
 

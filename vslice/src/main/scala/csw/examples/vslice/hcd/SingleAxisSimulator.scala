@@ -188,7 +188,7 @@ class SingleAxisSimulator(val axisConfig: AxisConfig, replyTo: Option[ActorRef])
 }
 
 object SingleAxisSimulator {
-  def props(axisConfig: AxisConfig, replyTo: Option[ActorRef] = None) = Props(classOf[SingleAxisSimulator], axisConfig, replyTo)
+  def props(axisConfig: AxisConfig, replyTo: Option[ActorRef] = None) = Props(new SingleAxisSimulator(axisConfig, replyTo))
 
   //  case class AxisConfig(axisName: String, lowLimit: Int, lowUser: Int, highUser: Int, highLimit: Int, home: Int, startPosition: Int, stepDelayMS: Int)
 
@@ -293,7 +293,7 @@ class MotionWorker(val start: Int, val destinationIn: Int, val delayInMS: Int, r
 }
 
 object MotionWorker {
-  def props(start: Int, destination: Int, delayInMS: Int, replyTo: ActorRef, diagFlag: Boolean) = Props(classOf[MotionWorker], start, destination, delayInMS, replyTo, diagFlag)
+  def props(start: Int, destination: Int, delayInMS: Int, replyTo: ActorRef, diagFlag: Boolean) = Props(new MotionWorker(start, destination, delayInMS, replyTo, diagFlag))
 
   trait MotionWorkerMsgs
   case object Start extends MotionWorkerMsgs

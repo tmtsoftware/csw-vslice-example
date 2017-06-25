@@ -5,10 +5,10 @@ import akka.pattern.ask
 import akka.util.Timeout
 import csw.examples.vslice.assembly.FollowActor.SetZenithAngle
 import csw.examples.vslice.assembly.FollowCommand.StopFollowing
+import csw.examples.vslice.assembly.TromboneAssembly.{CommandStart, StopCurrentCommand}
 import csw.examples.vslice.hcd.TromboneHCD
 import csw.examples.vslice.hcd.TromboneHCD._
 import csw.services.ccs.CommandStatus._
-import csw.services.ccs.SequentialExecutor.{CommandStart, ExecuteOne, StopCurrentCommand}
 import csw.services.ccs.MultiStateMatcherActor.StartMatch
 import csw.services.ccs.{DemandMatcher, MultiStateMatcherActor, StateMatcher}
 import csw.services.ccs.Validation.{RequiredHCDUnavailableIssue, UnsupportedCommandInStateIssue, WrongInternalStateIssue}
@@ -83,60 +83,60 @@ class TromboneCommandHandler(ac: AssemblyContext, tromboneHCDIn: Option[ActorRef
     case l: Location =>
       handleLocations(l)
 
-    case ExecuteOne(sc, commandOriginator) =>
+    case s: Setup =>
 
-      sc.prefix match {
+      s.prefix match {
         case ac.initCK =>
           log.info("Init not fully implemented -- only sets state ready!")
           Await.ready(tromboneStateActor ? SetState(cmdItem(cmdReady), moveItem(moveUnindexed), sodiumItem(false), nssItem(false)), timeout.duration)
-          commandOriginator.foreach(_ ! Completed)
+          sender() ! Completed
 
         case ac.datumCK =>
           if (isHCDAvailable) {
             log.info(s"Datums State: $currentState")
-            val datumActorRef = context.actorOf(DatumCommand.props(sc, tromboneHCD, currentState, Some(tromboneStateActor)))
-            context.become(actorExecutingReceive(datumActorRef, commandOriginator))
+            val datumActorRef = context.actorOf(DatumCommand.props(s, tromboneHCD, currentState, Some(tromboneStateActor)))
+            context.become(actorExecutingReceive(datumActorRef, Some(sender())))
             self ! CommandStart
-          } else hcdNotAvailableResponse(commandOriginator)
+          } else hcdNotAvailableResponse(Some(sender()))
 
         case ac.moveCK =>
           if (isHCDAvailable) {
-            val moveActorRef = context.actorOf(MoveCommand.props(ac, sc, tromboneHCD, currentState, Some(tromboneStateActor)))
-            context.become(actorExecutingReceive(moveActorRef, commandOriginator))
+            val moveActorRef = context.actorOf(MoveCommand.props(ac, s, tromboneHCD, currentState, Some(tromboneStateActor)))
+            context.become(actorExecutingReceive(moveActorRef, Some(sender())))
             self ! CommandStart
-          } else hcdNotAvailableResponse(commandOriginator)
+          } else hcdNotAvailableResponse(Some(sender()))
 
         case ac.positionCK =>
           if (isHCDAvailable) {
-            val positionActorRef = context.actorOf(PositionCommand.props(ac, sc, tromboneHCD, currentState, Some(tromboneStateActor)))
-            context.become(actorExecutingReceive(positionActorRef, commandOriginator))
+            val positionActorRef = context.actorOf(PositionCommand.props(ac, s, tromboneHCD, currentState, Some(tromboneStateActor)))
+            context.become(actorExecutingReceive(positionActorRef, Some(sender())))
             self ! CommandStart
-          } else hcdNotAvailableResponse(commandOriginator)
+          } else hcdNotAvailableResponse(Some(sender()))
 
         case ac.stopCK =>
-          commandOriginator.foreach(_ ! NoLongerValid(WrongInternalStateIssue("Trombone assembly must be executing a command to use stop")))
+          sender() ! NoLongerValid(WrongInternalStateIssue("Trombone assembly must be executing a command to use stop"))
 
         case ac.setAngleCK =>
-          commandOriginator.foreach(_ ! NoLongerValid(WrongInternalStateIssue("Trombone assembly must be following for setAngle")))
+          sender() ! NoLongerValid(WrongInternalStateIssue("Trombone assembly must be following for setAngle"))
 
         case ac.setElevationCK =>
           // Setting the elevation state here for a future follow command
-          setElevationItem = sc(ac.naElevationKey)
+          setElevationItem = s(ac.naElevationKey)
           log.info("Setting elevation to: " + setElevationItem)
           // Note that units have already been verified here
-          val setElevationActorRef = context.actorOf(SetElevationCommand.props(ac, sc, tromboneHCD, currentState, Some(tromboneStateActor)))
-          context.become(actorExecutingReceive(setElevationActorRef, commandOriginator))
+          val setElevationActorRef = context.actorOf(SetElevationCommand.props(ac, s, tromboneHCD, currentState, Some(tromboneStateActor)))
+          context.become(actorExecutingReceive(setElevationActorRef, Some(sender())))
           self ! CommandStart
 
         case ac.followCK =>
           if (cmd(currentState) == cmdUninitialized
             || (move(currentState) != moveIndexed && move(currentState) != moveMoving)
             || !sodiumLayer(currentState)) {
-            commandOriginator.foreach(_ ! NoLongerValid(WrongInternalStateIssue(s"Assembly state of ${cmd(currentState)}/${move(currentState)}/${sodiumLayer(currentState)} does not allow follow")))
+            sender() ! NoLongerValid(WrongInternalStateIssue(s"Assembly state of ${cmd(currentState)}/${move(currentState)}/${sodiumLayer(currentState)} does not allow follow"))
           } else {
             // No state set during follow
             // At this point, parameters have been checked so direct access is okay
-            val nssItem = sc(ac.nssInUseKey)
+            val nssItem = s(ac.nssInUseKey)
 
             log.info("Set elevation is: " + setElevationItem)
 
@@ -147,14 +147,15 @@ class TromboneCommandHandler(ac: AssemblyContext, tromboneHCDIn: Option[ActorRef
             log.info("Going to followReceive")
             context.become(followReceive(eventService.get, followCommandActor))
             // Note that this is where sodiumLayer is set allowing other commands that require this state
+            val commandOriginator = sender()
             (tromboneStateActor ? SetState(cmdContinuous, moveMoving, sodiumLayer(currentState), nssItem.head)).onComplete {
-              _ => commandOriginator.foreach(_ ! Completed)
+              _ => commandOriginator ! Completed
             }
           }
 
         case otherCommand =>
           log.error(s"TromboneCommandHandler:noFollowReceive received an unknown command: $otherCommand")
-          commandOriginator.foreach(_ ! Invalid(UnsupportedCommandInStateIssue(s"""Trombone assembly does not support the command \"${otherCommand.prefix}\" in the current state.""")))
+          sender() ! Invalid(UnsupportedCommandInStateIssue(s"""Trombone assembly does not support the command \"${otherCommand.prefix}\" in the current state."""))
       }
 
     case x => log.error(s"TromboneCommandHandler:noFollowReceive received an unknown message: $x")
@@ -165,10 +166,10 @@ class TromboneCommandHandler(ac: AssemblyContext, tromboneHCDIn: Option[ActorRef
   }
 
   def followReceive(eventService: EventService, followActor: ActorRef): Receive = stateReceive orElse {
-    case ExecuteOne(sc, commandOriginator) =>
-      sc.prefix match {
+    case s: Setup =>
+      s.prefix match {
         case ac.datumCK | ac.moveCK | ac.positionCK | ac.followCK | ac.setElevationCK =>
-          commandOriginator.foreach(_ ! Invalid(WrongInternalStateIssue("Trombone assembly cannot be following for datum, move, position, setElevation, and follow")))
+          sender() ! Invalid(WrongInternalStateIssue("Trombone assembly cannot be following for datum, move, position, setElevation, and follow"))
 
         case ac.setAngleCK =>
           // Unclear what to really do with state here
@@ -178,9 +179,9 @@ class TromboneCommandHandler(ac: AssemblyContext, tromboneHCDIn: Option[ActorRef
 
           // At this point, parameters have been checked so direct access is okay
           // Send the SetAngle to the follow actor
-          val zenithAngleItem = sc(ac.zenithAngleKey)
+          val zenithAngleItem = s(ac.zenithAngleKey)
           followActor ! SetZenithAngle(zenithAngleItem)
-          executeMatch(context, idleMatcher, tromboneHCD, commandOriginator) {
+          executeMatch(context, idleMatcher, tromboneHCD, Some(sender())) {
             case Completed =>
               // Wait to make sure the state is set before continuing.
               Await.ready(tromboneStateActor ? SetState(cmdContinuous, move(currentState), sodiumLayer(currentState), nss(currentState)), timeout.duration)
@@ -197,7 +198,7 @@ class TromboneCommandHandler(ac: AssemblyContext, tromboneHCDIn: Option[ActorRef
 
           // Go back to no follow state
           context.become(noFollowReceive())
-          commandOriginator.foreach(_ ! Completed)
+          sender() ! Completed
 
         case x => log.warning(s"Unknown config key: $x")
       }
@@ -211,9 +212,9 @@ class TromboneCommandHandler(ac: AssemblyContext, tromboneHCDIn: Option[ActorRef
 
       // Execute the command actor asynchronously, pass the command status back, kill the actor and go back to waiting
       for {
-        cs <- (currentCommand ? CommandStart).mapTo[CommandStatus]
+        cr <- (currentCommand ? CommandStart).mapTo[CommandResponse]
       } {
-        commandOriginator.foreach(_ ! cs)
+        commandOriginator.foreach(_ ! cr)
         currentCommand ! PoisonPill
         self ! CommandDone
       }
@@ -225,7 +226,7 @@ class TromboneCommandHandler(ac: AssemblyContext, tromboneHCDIn: Option[ActorRef
       log.debug("actorExecutingReceive: Stop CK")
       closeDownMotionCommand(currentCommand, commandOriginator)
 
-    case ExecuteOne(Setup(ac.commandInfo, ac.stopCK, _), _) =>
+    case Setup(ac.commandInfo, ac.stopCK, _) =>
       log.debug("actorExecutingReceive: ExecuteOneStop")
       closeDownMotionCommand(currentCommand, commandOriginator)
 
@@ -250,13 +251,13 @@ object TromboneCommandHandler {
     Props(new TromboneCommandHandler(assemblyContext, tromboneHCDIn, allEventPublisher))
 
   def executeMatch(context: ActorContext, stateMatcher: StateMatcher, currentStateSource: ActorRef, replyTo: Option[ActorRef] = None,
-                   timeout: Timeout = Timeout(5.seconds))(codeBlock: PartialFunction[CommandStatus, Unit]): Unit = {
+                   timeout: Timeout = Timeout(5.seconds))(codeBlock: PartialFunction[CommandResponse, Unit]): Unit = {
     import context.dispatcher
     implicit val t = Timeout(timeout.duration + 1.seconds)
 
     val matcher = context.actorOf(MultiStateMatcherActor.props(currentStateSource, timeout))
     for {
-      cmdStatus <- (matcher ? StartMatch(stateMatcher)).mapTo[CommandStatus]
+      cmdStatus <- (matcher ? StartMatch(stateMatcher)).mapTo[CommandResponse]
     } {
       codeBlock(cmdStatus)
       replyTo.foreach(_ ! cmdStatus)

@@ -9,7 +9,7 @@ import akka.testkit.TestProbe;
 import akka.util.Timeout;
 import csw.examples.vsliceJava.TestEnv;
 import csw.examples.vsliceJava.hcd.TromboneHCD;
-import csw.services.ccs.CommandStatus.CommandStatus;
+import csw.services.ccs.CommandResponse.CommandResponse;
 import csw.services.ccs.SequentialExecutor;
 import csw.services.ccs.Validation;
 import csw.services.loc.Connection.AkkaConnection;
@@ -36,8 +36,8 @@ import java.util.concurrent.TimeUnit;
 import static csw.examples.vsliceJava.assembly.TromboneStateActor.*;
 import static csw.examples.vsliceJava.hcd.SingleAxisSimulator.AxisUpdate;
 import static csw.examples.vsliceJava.hcd.TromboneHCD.TromboneEngineering.GetAxisUpdateNow;
-import static csw.services.ccs.CommandStatus.CommandResult;
-import static csw.services.ccs.CommandStatus.NoLongerValid;
+import static csw.services.ccs.CommandResponse.CommandResult;
+import static csw.services.ccs.CommandResponse.NoLongerValid;
 import static csw.services.pkg.SupervisorExternal.LifecycleStateChanged;
 import static csw.services.pkg.SupervisorExternal.SubscribeLifecycleCallback;
 import static csw.util.param.Parameters.Setup;
@@ -144,8 +144,8 @@ public class CommandHandlerTests extends TestKit {
 
     ch.tell(ExecuteOne(sc, Optional.of(fakeAssembly.ref())), self());
 
-    CommandStatus msg = fakeAssembly.expectMsgClass(FiniteDuration.create(10, TimeUnit.SECONDS),
-      CommandStatus.class);
+    CommandResponse msg = fakeAssembly.expectMsgClass(FiniteDuration.create(10, TimeUnit.SECONDS),
+      CommandResponse.class);
     assertEquals(msg, Completed);
     //info("Final: " + msg)
 
@@ -153,8 +153,8 @@ public class CommandHandlerTests extends TestKit {
     ch.tell(new TromboneState(cmdItem(cmdUninitialized), moveItem(moveUnindexed), sodiumItem(false), nssItem(false)), self());
     ch.tell(ExecuteOne(sc, Optional.of(fakeAssembly.ref())), self());
 
-    CommandStatus errMsg = fakeAssembly.expectMsgClass(FiniteDuration.create(10, TimeUnit.SECONDS),
-      CommandStatus.class);
+    CommandResponse errMsg = fakeAssembly.expectMsgClass(FiniteDuration.create(10, TimeUnit.SECONDS),
+      CommandResponse.class);
 
     assertTrue(errMsg instanceof NoLongerValid);
 
@@ -180,8 +180,8 @@ public class CommandHandlerTests extends TestKit {
 
     ch.tell(ExecuteOne(sc, Optional.of(fakeAssembly.ref())), self());
 
-    CommandStatus msg = fakeAssembly.expectMsgClass(FiniteDuration.create(10, TimeUnit.SECONDS),
-      CommandStatus.class);
+    CommandResponse msg = fakeAssembly.expectMsgClass(FiniteDuration.create(10, TimeUnit.SECONDS),
+      CommandResponse.class);
     assertEquals(msg, Completed);
     //info("Final: " + msg)
 
@@ -191,8 +191,8 @@ public class CommandHandlerTests extends TestKit {
     ch.tell(ExecuteOne(sc, Optional.of(fakeAssembly.ref())), self());
 
     // XXX TODO: Check problem here
-    CommandStatus errMsg = fakeAssembly.expectMsgClass(FiniteDuration.create(10, TimeUnit.SECONDS),
-      CommandStatus.class);
+    CommandResponse errMsg = fakeAssembly.expectMsgClass(FiniteDuration.create(10, TimeUnit.SECONDS),
+      CommandResponse.class);
 
     assertTrue(errMsg instanceof NoLongerValid);
     assertTrue(((NoLongerValid)errMsg).issue() instanceof Validation.RequiredHCDUnavailableIssue);
@@ -201,7 +201,7 @@ public class CommandHandlerTests extends TestKit {
     ch.tell(resolvedHCD, self());
 
     ch.tell(ExecuteOne(sc, Optional.of(fakeAssembly.ref())), self());
-    CommandStatus msg2 = fakeAssembly.expectMsgClass(duration("10 seconds"), CommandStatus.class);
+    CommandResponse msg2 = fakeAssembly.expectMsgClass(duration("10 seconds"), CommandResponse.class);
     assertEquals(msg2, Completed);
 
     cleanup(tromboneHCD, ch);
@@ -239,7 +239,7 @@ public class CommandHandlerTests extends TestKit {
 
     CommandResult errMsg = fakeAssembly.expectMsgClass(FiniteDuration.create(10, TimeUnit.SECONDS), CommandResult.class);
     assertEquals(errMsg.overall(), Incomplete);
-    CommandStatus e1 = errMsg.details().getResults().get(0).first();
+    CommandResponse e1 = errMsg.details().getResults().get(0).first();
     assertTrue(e1 instanceof NoLongerValid);
     assertTrue(((NoLongerValid) e1).issue() instanceof Validation.WrongInternalStateIssue);
 
@@ -302,7 +302,7 @@ public class CommandHandlerTests extends TestKit {
     double testPosition = 90.0;
     ch.tell(ExecuteOne(ac.moveSC(testPosition), Optional.of(fakeAssembly.ref())), self());
 
-    fakeAssembly.expectMsgClass(FiniteDuration.create(35, TimeUnit.SECONDS), CommandStatus.class);
+    fakeAssembly.expectMsgClass(FiniteDuration.create(35, TimeUnit.SECONDS), CommandResponse.class);
     int finalPos = Algorithms.stagePositionToEncoder(ac.controlConfig, testPosition);
 
     // Use the engineering GetAxisUpdate to get the current encoder for checking
@@ -481,7 +481,7 @@ public class CommandHandlerTests extends TestKit {
     double testEl = 150.0;
     ch.tell(ExecuteOne(ac.setElevationSC(testEl), Optional.of(fakeAssembly.ref())), self());
 
-    fakeAssembly.expectMsgClass(FiniteDuration.create(5, TimeUnit.SECONDS), CommandStatus.class);
+    fakeAssembly.expectMsgClass(FiniteDuration.create(5, TimeUnit.SECONDS), CommandResponse.class);
     int finalPos = Algorithms.stagePositionToEncoder(ac.controlConfig, testEl);
 
     // Use the engineering GetAxisUpdate to get the current encoder for checking

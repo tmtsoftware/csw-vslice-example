@@ -4,9 +4,7 @@ import akka.actor.{Actor, ActorLogging, ActorRef, Props}
 import akka.util.Timeout
 import csw.examples.vslice.assembly.TromboneStateActor.TromboneState
 import csw.examples.vslice.hcd.TromboneHCD._
-import csw.services.ccs.CommandStatus.{Completed, Error, NoLongerValid}
 import csw.services.ccs.HcdController
-import csw.services.ccs.SequentialExecutor.{CommandStart, StopCurrentCommand}
 import csw.services.ccs.Validation.WrongInternalStateIssue
 import csw.util.param.Parameters.Setup
 import csw.util.param.UnitsOfMeasure.encoder
@@ -14,11 +12,13 @@ import csw.util.param.UnitsOfMeasure.encoder
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import akka.pattern.ask
+import csw.examples.vslice.assembly.TromboneAssembly.{CommandStart, StopCurrentCommand}
+import csw.services.ccs.CommandStatus.{Completed, Error, NoLongerValid}
 
 /**
  * TMT Source Code: 10/22/16.
  */
-class MoveCommand(ac: AssemblyContext, sc: Setup, tromboneHCD: ActorRef, startState: TromboneState, stateActor: Option[ActorRef]) extends Actor with ActorLogging {
+class MoveCommand(ac: AssemblyContext, s: Setup, tromboneHCD: ActorRef, startState: TromboneState, stateActor: Option[ActorRef]) extends Actor with ActorLogging {
   import TromboneCommandHandler._
   import TromboneStateActor._
 
@@ -29,7 +29,7 @@ class MoveCommand(ac: AssemblyContext, sc: Setup, tromboneHCD: ActorRef, startSt
         sender() ! NoLongerValid(WrongInternalStateIssue(s"Assembly state of ${cmd(startState)}/${move(startState)} does not allow move"))
       } else {
         val mySender = sender()
-        val stagePosition = sc(ac.stagePositionKey)
+        val stagePosition = s(ac.stagePositionKey)
 
         // Convert to encoder units from mm
         val encoderPosition = Algorithms.stagePositionToEncoder(ac.controlConfig, stagePosition.head)
@@ -38,7 +38,7 @@ class MoveCommand(ac: AssemblyContext, sc: Setup, tromboneHCD: ActorRef, startSt
 
         val stateMatcher = posMatcher(encoderPosition)
         // Position key is encoder units
-        val scOut = Setup(axisMoveCK).add(positionKey -> encoderPosition withUnits encoder)
+        val scOut = Setup(s.info, axisMoveCK).add(positionKey -> encoderPosition withUnits encoder)
 
         sendState(SetState(cmdItem(cmdBusy), moveItem(moveMoving), startState.sodiumLayer, startState.nss))
         tromboneHCD ! HcdController.Submit(scOut)
@@ -52,7 +52,7 @@ class MoveCommand(ac: AssemblyContext, sc: Setup, tromboneHCD: ActorRef, startSt
 
     case StopCurrentCommand =>
       log.info("Move command -- STOP")
-      tromboneHCD ! HcdController.Submit(cancelSC(commandInfo))
+      tromboneHCD ! HcdController.Submit(cancelSC(s.info))
   }
 
   private def sendState(setState: SetState): Unit = {
@@ -62,6 +62,6 @@ class MoveCommand(ac: AssemblyContext, sc: Setup, tromboneHCD: ActorRef, startSt
 }
 
 object MoveCommand {
-  def props(ac: AssemblyContext, sc: Setup, tromboneHCD: ActorRef, startState: TromboneState, stateActor: Option[ActorRef]): Props =
-    Props(classOf[MoveCommand], ac, sc, tromboneHCD, startState, stateActor)
+  def props(ac: AssemblyContext, s: Setup, tromboneHCD: ActorRef, startState: TromboneState, stateActor: Option[ActorRef]): Props =
+    Props(new MoveCommand(ac, s, tromboneHCD, startState, stateActor))
 }

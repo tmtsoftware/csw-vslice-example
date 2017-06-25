@@ -1,6 +1,6 @@
 package csw.examples.vsliceJava.assembly;
 
-import csw.services.ccs.CommandStatus;
+import csw.services.ccs.CommandResponse;
 import csw.util.param.Parameters;
 import csw.util.param.Parameters.SequenceConfig;
 import csw.util.param.Parameters.Setup;
@@ -374,12 +374,12 @@ public class ValidationTests {
 
   @Test
   public void test26() {
-    // should convert validation invalid successfully to a CommandStatus invalid
+    // should convert validation invalid successfully to a CommandResponse invalid
     String testmessage = "test message";
 
     Invalid t1 = new Invalid(WrongPrefixIssue(testmessage));
 
-    CommandStatus.Invalid c1 = JCommandStatus.Invalid(t1);
+    CommandResponse.Invalid c1 = JCommandStatus.Invalid(t1);
     assertTrue(c1.issue() instanceof WrongPrefixIssue);
     assertEquals(c1.issue().reason(), testmessage);
   }
@@ -401,19 +401,19 @@ public class ValidationTests {
 
     // Convert to pairs
     List<SequenceConfig> configs = sca.getConfigs().stream().map(f -> (SequenceConfig) f).collect(Collectors.toList());
-    List<CommandStatus.CommandResultPair> cresult = CommandStatus.validationsToCommandResultPairs(configs, validations);
+    List<CommandResponse.CommandResultPair> cresult = CommandResponse.validationsToCommandResultPairs(configs, validations);
     assertEquals(cresult.size(), sca.configs().size());
     assertEquals(cresult.get(0).status(), JCommandStatus.Valid);
     assertEquals(cresult.get(0).config(), sca.getConfigs().get(0));
 
-    assertTrue(cresult.get(1).status() instanceof CommandStatus.Invalid);
+    assertTrue(cresult.get(1).status() instanceof CommandResponse.Invalid);
     assertEquals(cresult.get(1).config(), sca.getConfigs().get(1));
 
-    assertTrue(cresult.get(2).status() instanceof CommandStatus.Invalid);
+    assertTrue(cresult.get(2).status() instanceof CommandResponse.Invalid);
     assertEquals(cresult.get(2).config(), sca.getConfigs().get(2));
 
     // Is correct overall returned
-    assertEquals(CommandStatus.validationsToOverallCommandStatus(validations), NotAccepted);
+    assertEquals(CommandResponse.validationsToOverallCommandStatus(validations), NotAccepted);
 
     // Same with no errors
     SetupArg sca2 = Parameters.createSetupArg("testobsId",

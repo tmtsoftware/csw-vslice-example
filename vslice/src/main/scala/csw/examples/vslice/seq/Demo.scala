@@ -3,10 +3,10 @@ package csw.examples.vslice.seq
 import akka.util.Timeout
 import com.typesafe.scalalogging.LazyLogging
 import csw.services.ccs.AssemblyMessages.{DiagnosticMode, OperationsMode}
-import csw.util.param.{BooleanKey, Parameters, DoubleParameter, DoubleKey}
-import csw.util.param.Parameters.{Prefix, Setup, SetupArg}
+import csw.util.param.{BooleanKey, DoubleKey, DoubleParameter}
+import csw.util.param.Parameters.{CommandInfo, Prefix, Setup}
 import csw.services.ccs.BlockingAssemblyClient
-import csw.services.ccs.CommandStatus.CommandResult
+import csw.services.ccs.CommandStatus.CommandResponse
 import csw.services.events.EventService.EventMonitor
 import csw.services.events.TelemetryService.TelemetryMonitor
 import csw.services.events.{Event, EventService, TelemetryService}
@@ -17,6 +17,7 @@ import scala.concurrent.duration._
 /**
  * TMT Source Code: 12/4/16.
  */
+//noinspection TypeAnnotation
 object Demo extends LazyLogging {
   import csw.services.sequencer.SequencerEnv._
 
@@ -28,6 +29,8 @@ object Demo extends LazyLogging {
   val componentPrefix: String = "nfiraos.ncc.trombone"
 
   val obsId: String = "testObsId"
+
+  val commandInfo: CommandInfo = obsId
 
   // Public command configurations
   // Init submit command
@@ -55,17 +58,17 @@ object Demo extends LazyLogging {
   // Move submit command
   val movePrefix = s"$componentPrefix.move"
   val moveCK: Prefix = movePrefix
-  def moveSC(position: Double): Setup = Setup(moveCK).add(stagePositionKey -> position withUnits stagePositionUnits)
+  def moveSC(position: Double): Setup = Setup(commandInfo, moveCK).add(stagePositionKey -> position withUnits stagePositionUnits)
 
   // Position submit command
   val positionPrefix = s"$componentPrefix.position"
   val positionCK: Prefix = positionPrefix
-  def positionSC(rangeDistance: Double): Setup = Setup(positionCK).add(naRangeDistanceKey -> rangeDistance withUnits naRangeDistanceUnits)
+  def positionSC(rangeDistance: Double): Setup = Setup(commandInfo, positionCK).add(naRangeDistanceKey -> rangeDistance withUnits naRangeDistanceUnits)
 
   // setElevation submit command
   val setElevationPrefix = s"$componentPrefix.setElevation"
   val setElevationCK: Prefix = setElevationPrefix
-  def setElevationSC(elevation: Double): Setup = Setup(setElevationCK).add(naElevation(elevation))
+  def setElevationSC(elevation: Double): Setup = Setup(commandInfo, setElevationCK).add(naElevation(elevation))
 
   // Follow submit command
   val followPrefix = s"$componentPrefix.follow"
@@ -73,12 +76,12 @@ object Demo extends LazyLogging {
   val nssInUseKey = BooleanKey("nssInUse")
 
   // Follow command
-  def followSC(nssInUse: Boolean): Setup = Setup(followCK).add(nssInUseKey -> nssInUse)
+  def followSC(nssInUse: Boolean): Setup = Setup(commandInfo, followCK).add(nssInUseKey -> nssInUse)
 
   // setAngle submit command
   val setAnglePrefx = s"$componentPrefix.setAngle"
   val setAngleCK: Prefix = setAnglePrefx
-  def setAngleSC(zenithAngle: Double): Setup = Setup(setAngleCK).add(za(zenithAngle))
+  def setAngleSC(zenithAngle: Double): Setup = Setup(commandInfo, setAngleCK).add(za(zenithAngle))
 
   // Stop Command
   val stopPrefix = s"$componentPrefix.stop"
@@ -91,15 +94,16 @@ object Demo extends LazyLogging {
 
   // Test SetupArgs
   // Init and Datum axis
-  val sca1 = Parameters.createSetupArg(obsId, Setup(initCK), Setup(datumCK))
+  val setup1Init = Setup(commandInfo, initCK)
+  val setup1Datum = Setup(commandInfo, datumCK)
 
   // Sends One Move
-  val sca2 = Parameters.createSetupArg(obsId, positionSC(100.0))
+  val setup2 = positionSC(100.0)
 
   // This will send a config arg with 10 position commands
-  val testRangeDistance = 40 to 130 by 10
-  val positionConfigs = testRangeDistance.map(f => positionSC(f))
-  val sca3 = Parameters.createSetupArg(obsId, positionConfigs: _*)
+//  val testRangeDistance = 40 to 130 by 10
+//  val positionConfigs = testRangeDistance.map(f => positionSC(f))
+//  val setup3 = Parameters.createSetupArg(obsId, positionConfigs: _*)
 
   /**
    * Returns the TromboneAssembly after LocationService lookup
@@ -114,11 +118,21 @@ object Demo extends LazyLogging {
   def getTromboneHcd: HcdClient = resolveHcd(thName)
 
   /**
-   * Sends an init and datum. Needs to be run before anything else
+   * Sends an init. Needs to be run before anything else
    * @param tla the BlockingAssemblyClient returned by getTrombone
-   * @return CommandResult and the conclusion of execution
+   * @return CommandResponse and the conclusion of execution
    */
-  def init(tla: BlockingAssemblyClient): CommandResult = tla.submit(sca1)
+  def init(tla: BlockingAssemblyClient): CommandResponse = {
+    tla.submit(setup1Init)
+  }
+
+  /**
+   * Sends a datum command to the assembly.
+   * @return CommandResponse and the conclusion of execution
+   */
+  def datum(tla: BlockingAssemblyClient): CommandResponse = {
+    tla.submit(setup1Datum)
+  }
 
   /**
    * Send one move command to the Trombone Assembly
@@ -126,57 +140,57 @@ object Demo extends LazyLogging {
    * @param pos some move position as a double in millimeters.  Should be around 100-2000 or you will drive it to a limit
    * @return CommandResult and the conclusion of execution
    */
-  def oneMove(tla: BlockingAssemblyClient, pos: Double): CommandResult = {
-    tla.submit(Parameters.createSetupArg(obsId, moveSC(pos)))
+  def oneMove(tla: BlockingAssemblyClient, pos: Double): CommandResponse = {
+    tla.submit(moveSC(pos))
   }
 
   /**
    * Send one position command to the Trombone Assembly
    * @param tla the BlockingAssemblyClient returned by getTrombone
    * @param pos some position as a double.  Should be around 90-200 or you will drive it to a limit
-   * @return CommandResult and the conclusion of execution
+   * @return CommandResponse and the conclusion of execution
    */
-  def onePos(tla: BlockingAssemblyClient, pos: Double): CommandResult = {
-    tla.submit(Parameters.createSetupArg(obsId, positionSC(pos)))
+  def onePos(tla: BlockingAssemblyClient, pos: Double): CommandResponse = {
+    tla.submit(positionSC(pos))
   }
 
   /**
    * setElevation before going to follow mode
    * @param tla the BlockingAssemblyClient returned by getTrombone
    * @param el some elevation should be in kilometers around 90-130 or so
-   * @return CommandResult at the end of execution
+   * @return CommandResponse at the end of execution
    */
-  def setElevation(tla: BlockingAssemblyClient, el: Double): CommandResult = {
-    tla.submit(Parameters.createSetupArg(obsId, setElevationSC(el)))
+  def setElevation(tla: BlockingAssemblyClient, el: Double): CommandResponse = {
+    tla.submit(setElevationSC(el))
   }
 
   /**
    * Set the TromboneAssembly into follow mode.  Note you must do init, datum, and setElevation prior to this command
    * @param tla the BlockingAssemblyClient returned by getTrombone
    * @param nssMode true if NFIRAOS source simulator in use
-   * @return CommandResult at end of execution
+   * @return CommandResponse at end of execution
    */
-  def follow(tla: BlockingAssemblyClient, nssMode: Boolean): CommandResult = {
-    tla.submit(Parameters.createSetupArg(obsId, followSC(nssMode)))
+  def follow(tla: BlockingAssemblyClient, nssMode: Boolean): CommandResponse = {
+    tla.submit(followSC(nssMode))
   }
 
   /**
    * Set the zenith angle while in Follow mode.  Should be between 0 and 60 or so.  Haven't tested beyond that.
    * @param tla the BlockingAssemblyClient returned by getTrombon
    * @param degrees some zenith angle value
-   * @return CommandResult at the end of execution
+   * @return CommandResponse at the end of execution
    */
-  def setAngle(tla: BlockingAssemblyClient, degrees: Double): CommandResult = {
-    tla.submit(Parameters.createSetupArg(obsId, setAngleSC(degrees)))
+  def setAngle(tla: BlockingAssemblyClient, degrees: Double): CommandResponse = {
+    tla.submit(setAngleSC(degrees))
   }
 
   /**
    * Send the stop command. This will take Trombone Assembly out of Follow mode or stop an ongoing postition command
    * @param tla the BlockingAssemblyClient returned by getTrombone
-   * @return CommandResult at end of execution
+   * @return CommandResponse at end of execution
    */
-  def stop(tla: BlockingAssemblyClient): CommandResult = {
-    tla.submit(Parameters.createSetupArg(obsId, Setup(stopCK)))
+  def stop(tla: BlockingAssemblyClient): CommandResponse = {
+    tla.submit(Setup(commandInfo, stopCK))
   }
 
   /**

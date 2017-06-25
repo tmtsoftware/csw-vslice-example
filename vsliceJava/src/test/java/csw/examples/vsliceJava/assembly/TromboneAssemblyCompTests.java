@@ -10,7 +10,7 @@ import akka.util.Timeout;
 import csw.examples.vsliceJava.TestEnv;
 import csw.services.apps.containerCmd.ContainerCmd;
 import csw.services.ccs.AssemblyController.Submit;
-import csw.services.ccs.CommandStatus.CommandResult;
+import csw.services.ccs.CommandResponse.CommandResult;
 import csw.services.loc.LocationService;
 import csw.services.pkg.SupervisorExternal.SubscribeLifecycleCallback;
 import csw.services.sequencer.SequencerEnv;

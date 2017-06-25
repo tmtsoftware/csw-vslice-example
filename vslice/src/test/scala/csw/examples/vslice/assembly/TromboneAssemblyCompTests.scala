@@ -10,7 +10,7 @@ import com.typesafe.scalalogging.LazyLogging
 import csw.examples.vslice.TestEnv
 import csw.services.apps.containerCmd.ContainerCmd
 import csw.services.ccs.AssemblyController.Submit
-import csw.services.ccs.CommandStatus.{Accepted, AllCompleted, CommandResult, Completed}
+import csw.services.ccs.CommandResponse.{Accepted, AllCompleted, CommandResult, Completed}
 import csw.services.loc.LocationService
 import csw.services.pkg.Component.AssemblyInfo
 import csw.services.pkg.Supervisor

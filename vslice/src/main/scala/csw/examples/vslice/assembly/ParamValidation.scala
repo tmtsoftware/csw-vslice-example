@@ -10,16 +10,6 @@ import scala.util.Try
  */
 object ParamValidation {
 
-//  /**
-//   * Looks for any Setups in a SetupArg that fail validation and returns as a list of only Invalid
-//   * @param sca input SetupArg for checking
-//   * @param ac AssemblyContext provides command names
-//   * @return scala [[List]] that includes only the Invalid configurations in the SetupArg
-//   */
-//  def invalidsInTromboneSetupArg(sca: SetupArg)(implicit ac: AssemblyContext): List[Invalid] =
-//    // Returns a list of all failed validations in config arg
-//    validateTromboneSetupArg(sca).collect { case a: Invalid => a }
-
   /**
    * Runs Trombone-specific validation on a single Setup.
    * @return
@@ -37,10 +27,6 @@ object ParamValidation {
       case x                 => Invalid(OtherIssue(s"Setup with prefix $x is not supported"))
     }
   }
-
-  // Validates a SetupArg for Trombone Assembly
-  def validateTromboneSetupArg(sca: SetupArg)(implicit ac: AssemblyContext): ValidationList =
-    sca.configs.map(config => validateOneSetup(config)).toList
 
   /**
    * Validation for the init Setup
