@@ -10,9 +10,7 @@ import csw.examples.vslice.TestEnv
 import csw.examples.vslice.hcd.SingleAxisSimulator.AxisUpdate
 import csw.examples.vslice.hcd.TromboneHCD
 import csw.examples.vslice.hcd.TromboneHCD.GetAxisUpdateNow
-import csw.services.ccs.CommandResponse._
-import csw.services.ccs.SequentialExecutor
-import csw.services.ccs.SequentialExecutor.ExecuteOne
+import csw.services.ccs.CommandStatus.{CommandResponse, Completed, NoLongerValid}
 import csw.services.ccs.Validation.{RequiredHCDUnavailableIssue, WrongInternalStateIssue}
 import csw.services.events.EventService
 import csw.services.events.EventService.eventServiceConnection
@@ -25,7 +23,7 @@ import csw.services.pkg.Supervisor
 import csw.services.pkg.Supervisor.{HaltComponent, LifecycleRunning}
 import csw.services.pkg.SupervisorExternal.{ExComponentShutdown, LifecycleStateChanged, SubscribeLifecycleCallback}
 import csw.util.param.Parameters
-import csw.util.param.Parameters.Setup
+import csw.util.param.Parameters.{CommandInfo, Setup}
 import org.scalatest.{BeforeAndAfterAll, FunSpecLike, _}
 
 import scala.concurrent.Await
@@ -43,6 +41,8 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     with FunSpecLike with Matchers with BeforeAndAfterAll with BeforeAndAfterEach with LazyLogging {
 
   import TromboneStateActor._
+
+  val commandInfo: CommandInfo = "Obs001"
 
   override protected def beforeEach(): Unit = {
     TestEnv.resetRedisServices()
@@ -82,7 +82,7 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     Supervisor(testInfo)
   }
 
-  def newCommandHandler(tromboneHCD: ActorRef, allEventPublisher: Option[ActorRef] = None) = {
+  def newCommandHandler(tromboneHCD: ActorRef, allEventPublisher: Option[ActorRef] = None): ActorRef = {
     //val thandler = TestActorRef(TromboneCommandHandler.props(configs, tromboneHCD, allEventPublisher), "X")
     //thandler
     system.actorOf(TromboneCommandHandler.props(ac, Some(tromboneHCD), allEventPublisher))
@@ -118,17 +118,17 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
 
     setupState(TromboneState(cmdItem(cmdReady), moveItem(moveUnindexed), sodiumItem(false), nssItem(false)))
 
-    val sc = Setup(ac.datumCK)
+    val sc = Setup(commandInfo, ac.datumCK)
 
-    ch ! ExecuteOne(sc, Some(fakeAssembly.ref))
+    ch.tell(sc, fakeAssembly.ref)
 
-    val msg: CommandResponse = fakeAssembly.expectMsgClass(10.seconds, classOf[CommandResponse])
+    val msg = fakeAssembly.expectMsgClass(10.seconds, classOf[CommandResponse])
     msg shouldBe Completed
     //info("Final: " + msg)
 
     // Demonstrate error
     ch ! TromboneState(cmdItem(cmdUninitialized), moveItem(moveUnindexed), sodiumItem(false), nssItem(false))
-    ch ! ExecuteOne(sc, Some(fakeAssembly.ref))
+    ch.tell(sc, fakeAssembly.ref)
 
     val errMsg = fakeAssembly.expectMsgClass(10.seconds, classOf[CommandResponse])
     errMsg shouldBe a[NoLongerValid]
@@ -153,18 +153,18 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
 
     setupState(TromboneState(cmdItem(cmdReady), moveItem(moveUnindexed), sodiumItem(false), nssItem(false)))
 
-    val sc = Setup(ac.datumCK)
+    val sc = Setup(commandInfo, ac.datumCK)
 
-    ch ! ExecuteOne(sc, Some(fakeAssembly.ref))
+    ch.tell(sc, fakeAssembly.ref)
 
-    val msg: CommandResponse = fakeAssembly.expectMsgClass(10.seconds, classOf[CommandResponse])
+    val msg = fakeAssembly.expectMsgClass(10.seconds, classOf[CommandResponse])
     msg shouldBe Completed
     //info("Final: " + msg
 
     val unresolvedHCD = Unresolved(AkkaConnection(ac.hcdComponentId))
     ch ! unresolvedHCD
 
-    ch ! ExecuteOne(sc, Some(fakeAssembly.ref))
+    ch.tell(sc, fakeAssembly.ref)
 
     val errMsg: CommandResponse = fakeAssembly.expectMsgClass(10.seconds, classOf[CommandResponse])
     errMsg shouldBe a[NoLongerValid]
@@ -173,8 +173,8 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     val resolvedHCD = ResolvedAkkaLocation(AkkaConnection(ac.hcdComponentId), new URI("http://help"), "", Some(tromboneHCD))
     ch ! resolvedHCD
 
-    ch ! ExecuteOne(sc, Some(fakeAssembly.ref))
-    val msg2: CommandResponse = fakeAssembly.expectMsgClass(10.seconds, classOf[CommandResponse])
+    ch.tell(sc, fakeAssembly.ref)
+    val msg2 = fakeAssembly.expectMsgClass(10.seconds, classOf[CommandResponse])
     msg2 shouldBe Completed
 
     cleanup(tromboneHCD, ch)
@@ -194,25 +194,21 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
 
     setupState(TromboneState(cmdItem(cmdReady), moveItem(moveUnindexed), sodiumItem(false), nssItem(false)))
 
-    val sca = Parameters.createSetupArg("testobsId", Setup(ac.datumCK))
+    val sca = Setup(commandInfo, ac.datumCK)
+    ch.tell(sca, fakeAssembly.ref)
 
-    val se = system.actorOf(SequentialExecutor.props(ch, sca, Some(fakeAssembly.ref)))
-
-    val msg = fakeAssembly.expectMsgClass(10.seconds, classOf[CommandResult])
+    val msg = fakeAssembly.expectMsgClass(10.seconds, classOf[CommandResponse])
     //info("Final: " + msg)
-    msg.overall shouldBe AllCompleted
-    msg.details.results.size shouldBe 1
+    msg shouldBe Completed
 
     // Demonstrate error
     ch ! TromboneState(cmdItem(cmdUninitialized), moveItem(moveUnindexed), sodiumItem(false), nssItem(false))
 
-    val se2 = system.actorOf(SequentialExecutor.props(ch, sca, Some(fakeAssembly.ref)))
+    ch.tell(sca, fakeAssembly.ref)
 
-    val errMsg = fakeAssembly.expectMsgClass(10.seconds, classOf[CommandResult])
-    errMsg.overall should equal(Incomplete)
-    val e1 = errMsg.details.results.head.status
-    e1 shouldBe a[NoLongerValid]
-    e1.asInstanceOf[NoLongerValid].issue shouldBe a[WrongInternalStateIssue]
+    val errMsg = fakeAssembly.expectMsgClass(10.seconds, classOf[CommandResponse])
+    errMsg shouldBe a[NoLongerValid]
+    errMsg.asInstanceOf[NoLongerValid].issue shouldBe a[WrongInternalStateIssue]
 
     //info("Final: " + errMsg)
 
@@ -236,11 +232,11 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     //expectNoMsg(100.milli)
 
     val testPosition = 90.0
-    val sca = Parameters.createSetupArg("testobsId", ac.moveSC(testPosition))
+    val sca = ac.moveSC(testPosition)
 
-    val se2 = system.actorOf(SequentialExecutor.props(ch, sca, Some(fakeAssembly.ref)))
+    ch.tell(sca, fakeAssembly.ref)
 
-    fakeAssembly.expectMsgClass(35.seconds, classOf[CommandResult])
+    fakeAssembly.expectMsgClass(35.seconds, classOf[CommandResponse])
     val finalPos = Algorithms.stagePositionToEncoder(ac.controlConfig, testPosition)
 
     // Use the engineering GetAxisUpdate to get the current encoder for checking
@@ -248,7 +244,7 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     val upd = fakeAssembly.expectMsgClass(classOf[AxisUpdate])
     upd.current should equal(finalPos)
 
-    cleanup(tromboneHCD, ch, se2)
+    cleanup(tromboneHCD, ch)
   }
 
   it("should allow running a move without sequence") {
@@ -268,7 +264,7 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     //expectNoMsg(100.milli)
 
     val testPosition = 90.0
-    ch ! ExecuteOne(ac.moveSC(testPosition), Some(fakeAssembly.ref))
+    ch.tell(ac.moveSC(testPosition), fakeAssembly.ref)
 
     fakeAssembly.expectMsgClass(35.seconds, classOf[CommandResponse])
     val finalPos = Algorithms.stagePositionToEncoder(ac.controlConfig, testPosition)
@@ -297,13 +293,14 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     val pos1 = 86.0
     val pos2 = 150.1
 
-    val sca = Parameters.createSetupArg("testobsId", ac.moveSC(pos1), ac.moveSC(pos2))
+    val sca1 = ac.moveSC(pos1)
+    val sca2 = ac.moveSC(pos2)
 
     val se2 = system.actorOf(SequentialExecutor.props(ch, sca, Some(fakeAssembly.ref)))
 
     val finalPos = Algorithms.stagePositionToEncoder(ac.controlConfig, pos2)
 
-    val msg = fakeAssembly.expectMsgClass(35.seconds, classOf[CommandResult])
+    val msg = fakeAssembly.expectMsgClass(35.seconds, classOf[CommandResponse])
     info(s"result: $msg")
 
     fakeAssembly.send(tromboneHCD, GetAxisUpdateNow)
@@ -343,7 +340,7 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     //  se ! StopCurrentCommand
     ch ! Setup(ac.stopCK)
 
-    val msg = fakeAssembly.expectMsgClass(35.seconds, classOf[CommandResult])
+    val msg = fakeAssembly.expectMsgClass(35.seconds, classOf[CommandResponse])
     msg.overall shouldBe Incomplete
     msg.details.status(0) shouldBe Cancelled
     info(s"result: $msg")
@@ -372,7 +369,7 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
 
     val se2 = system.actorOf(SequentialExecutor.props(ch, sca, Some(fakeAssembly.ref)))
 
-    fakeAssembly.expectMsgClass(5.seconds, classOf[CommandResult])
+    fakeAssembly.expectMsgClass(5.seconds, classOf[CommandResponse])
     val finalPos = Algorithms.stagePositionToEncoder(ac.controlConfig, testRangeDistance)
 
     // Use the engineering GetAxisUpdate to get the current encoder
@@ -405,7 +402,7 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
 
     val se2 = system.actorOf(SequentialExecutor.props(ch, sca, Some(fakeAssembly.ref)))
 
-    val msg = fakeAssembly.expectMsgClass(10.seconds, classOf[CommandResult])
+    val msg = fakeAssembly.expectMsgClass(10.seconds, classOf[CommandResponse])
     //info("Final: " + msg)
 
     // Test
@@ -465,7 +462,7 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
 
     val se2 = system.actorOf(SequentialExecutor.props(ch, sca, Some(fakeAssembly.ref)))
 
-    val errMsg = fakeAssembly.expectMsgClass(35.seconds, classOf[CommandResult])
+    val errMsg = fakeAssembly.expectMsgClass(35.seconds, classOf[CommandResponse])
     errMsg.overall should equal(Incomplete)
     errMsg.details.results.head.status shouldBe a[NoLongerValid]
 
@@ -495,7 +492,7 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     val sca = Parameters.createSetupArg("testobsId", ac.followSC(false), Setup(ac.stopCK))
     val se = system.actorOf(SequentialExecutor.props(ch, sca, Some(fakeAssembly.ref)))
 
-    val msg2 = fakeAssembly.expectMsgClass(10.seconds, classOf[CommandResult])
+    val msg2 = fakeAssembly.expectMsgClass(10.seconds, classOf[CommandResponse])
     info("Msg: " + msg2)
 
     cleanup(tromboneHCD, se, ch)
@@ -534,7 +531,7 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     var sca = Parameters.createSetupArg("testobsId", ac.setElevationSC(testElevation))
     val se2 = system.actorOf(SequentialExecutor.props(ch, sca, Some(fakeAssembly.ref)))
 
-    val msg1 = fakeAssembly.expectMsgClass(10.seconds, classOf[CommandResult])
+    val msg1 = fakeAssembly.expectMsgClass(10.seconds, classOf[CommandResponse])
     logger.info("Msg: " + msg1)
 
     // Use the engineering GetAxisUpdate to get the current encoder for checking
@@ -547,14 +544,14 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     // This sets up the follow command to put assembly into follow mode
     sca = Parameters.createSetupArg("testobsId", ac.followSC(nssInUse = false))
     val se = system.actorOf(SequentialExecutor.props(ch, sca, Some(fakeAssembly.ref)))
-    val msg2 = fakeAssembly.expectMsgClass(10.seconds, classOf[CommandResult])
+    val msg2 = fakeAssembly.expectMsgClass(10.seconds, classOf[CommandResponse])
     logger.info("Msg2: " + msg2)
 
     val testZenithAngle = 30.0
     sca = Parameters.createSetupArg("testobsId", ac.setAngleSC(testZenithAngle))
     val se3 = system.actorOf(SequentialExecutor.props(ch, sca, Some(fakeAssembly.ref)))
 
-    val msg3 = fakeAssembly.expectMsgClass(10.seconds, classOf[CommandResult])
+    val msg3 = fakeAssembly.expectMsgClass(10.seconds, classOf[CommandResponse])
     logger.info("Msg3: " + msg3)
 
     totalRangeDistance = Algorithms.focusZenithAngleToRangeDistance(ac.calculationConfig, testElevation, testFocusError, testZenithAngle)
@@ -571,7 +568,7 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     sca = Parameters.createSetupArg("testobsId", Setup(ac.stopCK))
     val se4 = system.actorOf(SequentialExecutor.props(ch, sca, Some(fakeAssembly.ref)))
 
-    val msg5 = fakeAssembly.expectMsgClass(10.seconds, classOf[CommandResult])
+    val msg5 = fakeAssembly.expectMsgClass(10.seconds, classOf[CommandResponse])
     logger.info("Msg: " + msg5)
     fakeAssembly.expectNoMsg(1.seconds)
 
@@ -607,7 +604,7 @@ class CommandHandlerTests extends TestKit(CommandHandlerTests.system)
     val sca = Parameters.createSetupArg("testobsId", ac.setElevationSC(testElevation), ac.followSC(false), ac.setAngleSC(testZenithAngle), Setup(ac.stopCK))
     val se = system.actorOf(SequentialExecutor.props(ch, sca, Some(fakeAssembly.ref)))
 
-    val msg = fakeAssembly.expectMsgClass(10.seconds, classOf[CommandResult])
+    val msg = fakeAssembly.expectMsgClass(10.seconds, classOf[CommandResponse])
     logger.info(">>>>>>>Msg: " + msg)
 
     fakeAssembly.expectNoMsg(2.seconds)

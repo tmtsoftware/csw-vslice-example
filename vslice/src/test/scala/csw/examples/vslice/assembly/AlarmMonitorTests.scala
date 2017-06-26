@@ -22,6 +22,7 @@ import org.scalatest.{BeforeAndAfterAll, _}
 import scala.concurrent.Await
 import scala.concurrent.duration._
 import akka.pattern.ask
+import csw.services.ccs.CommandStatus.{CommandResponse, Completed}
 
 /**
  * These tests are for the Trombone AlarmMonitor.
@@ -38,7 +39,6 @@ class AlarmMonitorTests extends TestKit(AlarmMonitorTests.system) with ImplicitS
     with FunSpecLike with Matchers with BeforeAndAfterAll with BeforeAndAfterEach with LazyLogging {
 
   import TromboneAlarmMonitor._
-  import TromboneStateActor._
 
   implicit val timeout = Timeout(10.seconds)
 
@@ -230,7 +230,7 @@ class AlarmMonitorTests extends TestKit(AlarmMonitorTests.system) with ImplicitS
     expectNoMsg(1.second)
 
     // Move to the 0 position
-    ch ! ExecuteOne(moveSC(limitPosition), Some(fakeAssembly.ref))
+    ch.tell(moveSC(limitPosition), fakeAssembly.ref)
     // Watch for command completion
     val result = fakeAssembly.expectMsgClass(5.seconds, classOf[CommandResponse])
     logger.info("Result: " + result)
@@ -244,7 +244,7 @@ class AlarmMonitorTests extends TestKit(AlarmMonitorTests.system) with ImplicitS
     alarmValue2.reported shouldBe Warning
 
     // Now move it out of the limit and see that the alarm is cleared
-    ch ! ExecuteOne(moveSC(clearPosition), Some(fakeAssembly.ref))
+    ch.tell(moveSC(clearPosition), fakeAssembly.ref)
     fakeAssembly.expectMsgClass(5.seconds, classOf[CommandResponse])
 
     expectNoMsg(1.second) // A bit of time for processing and update of AlarmService

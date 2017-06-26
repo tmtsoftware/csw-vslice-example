@@ -2,13 +2,14 @@ package csw.examples.vslice.assembly
 
 import csw.examples.vslice.assembly.AssemblyContext.{TromboneCalculationConfig, TromboneControlConfig}
 import csw.services.loc.Connection.AkkaConnection
-import csw.services.loc.{ComponentId, ComponentType, Connection}
+import csw.services.loc.{ComponentId, ComponentType}
 import csw.services.loc.ConnectionType.AkkaType
-import csw.services.pkg.Component.{AssemblyInfo, DoNotRegister, RegisterAndTrackServices}
+import csw.services.pkg.Component.{AssemblyInfo, RegisterAndTrackServices}
 
 /**
  * TMT Source Code: 8/12/16.
  */
+//noinspection TypeAnnotation
 object AssemblyTestData {
 
   import Algorithms._

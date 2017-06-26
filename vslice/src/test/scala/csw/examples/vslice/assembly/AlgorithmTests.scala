@@ -1,10 +1,11 @@
 package csw.examples.vslice.assembly
 
-import org.scalatest.{BeforeAndAfterAll, FunSpec, Inspectors, Matchers}
+import org.scalatest.{FunSpec, Inspectors, Matchers}
 
 /**
  * These are tests of the calculations in the Calculation Actor
  */
+//noinspection TypeAnnotation
 class AlgorithmTests extends FunSpec with Matchers with Inspectors {
   import Algorithms._
   import AssemblyTestData._
