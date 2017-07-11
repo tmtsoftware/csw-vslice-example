@@ -13,6 +13,7 @@ import static csw.util.param.Parameters.Prefix;
 import static csw.util.param.Parameters.Setup;
 import static javacsw.util.param.JParameterSetDsl.setup;
 import static javacsw.util.param.JParameters.*;
+import csw.util.param.Parameters.CommandInfo;
 import static javacsw.util.param.JUnitsOfMeasure.*;
 
 /**
@@ -53,8 +54,12 @@ public class AssemblyContext {
   public final String movePrefix;
   public final Prefix moveCK;
 
+  // Normally this would contain the obsId, runId and other info about the current observation
+  public final CommandInfo commandInfo = new CommandInfo("obs001");
+
+
   public Setup moveSC(double position) {
-    return sc(moveCK.prefix(), jset(stagePositionKey, position).withUnits(stagePositionUnits));
+    return setup(commandInfo, moveCK.prefix(), jset(stagePositionKey, position).withUnits(stagePositionUnits));
   }
 
   // Position submit command
@@ -62,7 +67,7 @@ public class AssemblyContext {
   public final Prefix positionCK;
 
   public Setup positionSC(double rangeDistance) {
-    return sc(positionCK.prefix(), jset(naRangeDistanceKey, rangeDistance).withUnits(naRangeDistanceUnits));
+    return setup(commandInfo, positionCK.prefix(), jset(naRangeDistanceKey, rangeDistance).withUnits(naRangeDistanceUnits));
   }
 
   // setElevation submit command
@@ -70,7 +75,7 @@ public class AssemblyContext {
   public final Prefix setElevationCK;
 
   public Setup setElevationSC(double elevation) {
-    return sc(setElevationCK.prefix(), naElevation(elevation));
+    return setup(commandInfo, setElevationCK.prefix(), naElevation(elevation));
   }
 
   // setAngle submit command
@@ -78,7 +83,7 @@ public class AssemblyContext {
   public final Prefix setAngleCK;
 
   public Setup setAngleSC(double zenithAngle) {
-    return jadd(sc(setAngleCK.prefix()), za(zenithAngle));
+    return jadd(setup(commandInfo, setAngleCK.prefix()), za(zenithAngle));
   }
 
   // Follow submit command
@@ -91,7 +96,7 @@ public class AssemblyContext {
   }
 
   public Setup followSC(boolean nssInUse) {
-    return sc(followCK.prefix(), jset(nssInUseKey, nssInUse));
+    return setup(commandInfo, followCK.prefix(), jset(nssInUseKey, nssInUse));
   }
 
   // A list of all commands

@@ -359,7 +359,7 @@ class FollowPositionTests extends TestKit(FollowPositionTests.system) with Impli
       // reusing the actual equations to test that the events are proper
       val calcData = calculatedTestData(calculationConfig, controlConfig, testFE)
       // This uses to two to create the expected messages from the calculatorActor
-      val msgsExpected = calcData.map(p => Submit(positionSC(getenc(p))))
+      val msgsExpected = calcData.map(p => Submit(positionSC(commandInfo, getenc(p))))
 
       // This collects the set of messages from the calculator setup above
       val msgs = fakeTromboneHCD.receiveN(msgsExpected.size)

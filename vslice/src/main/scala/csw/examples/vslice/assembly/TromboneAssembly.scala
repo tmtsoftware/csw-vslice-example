@@ -204,7 +204,7 @@ class TromboneAssembly(val info: AssemblyInfo, supervisor: ActorRef) extends Ass
   override def setup(s: Setup, commandOriginator: Option[ActorRef]): Validation = {
     val validation = validateOneSetup(s)
     if (validation == Valid) {
-      commandHandler ! s
+      commandHandler.tell(s, commandOriginator.getOrElse(ActorRef.noSender))
     }
     validation
   }

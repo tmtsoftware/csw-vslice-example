@@ -10,25 +10,23 @@ import com.typesafe.scalalogging.LazyLogging
 import csw.examples.vslice.TestEnv
 import csw.services.apps.containerCmd.ContainerCmd
 import csw.services.ccs.AssemblyController.Submit
-import csw.services.ccs.CommandResponse.{Accepted, AllCompleted, CommandResult, Completed}
+import csw.services.ccs.CommandStatus.{Accepted, CommandResponse, Completed}
 import csw.services.loc.LocationService
 import csw.services.pkg.Component.AssemblyInfo
 import csw.services.pkg.Supervisor
 import csw.services.pkg.Supervisor._
 import csw.services.pkg.SupervisorExternal.{LifecycleStateChanged, SubscribeLifecycleCallback}
-import csw.util.param.Parameters
 import csw.util.param.Parameters.Setup
 import org.scalatest.{BeforeAndAfterAll, _}
 import csw.services.sequencer.SequencerEnv._
 
 import scala.concurrent.duration._
-import scala.util.Try
 
 object TromboneAssemblyCompTests {
   LocationService.initInterface()
 
   private val system = ActorSystem("TromboneAssemblyCompTests")
-  private val taName = "lgsTrombone"
+//  private val taName = "lgsTrombone"
   private val thName = "lgsTromboneHCD"
 }
 
@@ -92,20 +90,25 @@ class TromboneAssemblyCompTests extends TestKit(TromboneAssemblyCompTests.system
 
       fakeSequencer.expectNoMsg(3.seconds) // wait for connections
 
-      val sca = Parameters.createSetupArg("testobsId", Setup(initCK), Setup(datumCK))
-
-      fakeSequencer.send(tla, Submit(sca))
-
+      fakeSequencer.send(tla, Submit(Setup(commandInfo, initCK)))
       // This first one is the accept/verification
-      val acceptedMsg = fakeSequencer.expectMsgClass(3.seconds, classOf[CommandResult])
-      acceptedMsg.overall shouldBe Accepted
-
-      val completeMsg = fakeSequencer.expectMsgClass(3.seconds, classOf[CommandResult])
-      completeMsg.overall shouldBe AllCompleted
-      completeMsg.details.status(0) shouldBe Completed
+      val acceptedMsg = fakeSequencer.expectMsgClass(3.seconds, classOf[CommandResponse])
+      acceptedMsg shouldBe Accepted
+      val completeMsg = fakeSequencer.expectMsgClass(3.seconds, classOf[CommandResponse])
+      completeMsg shouldBe Completed
       // Wait a bit to see if there is any spurious messages
       fakeSequencer.expectNoMsg(250.milli)
-      info("Msg: " + completeMsg)
+
+      fakeSequencer.send(tla, Submit(Setup(commandInfo, datumCK)))
+      // This first one is the accept/verification
+      val acceptedMsg2 = fakeSequencer.expectMsgClass(3.seconds, classOf[CommandResponse])
+      acceptedMsg2 shouldBe Accepted
+      val completeMsg2 = fakeSequencer.expectMsgClass(3.seconds, classOf[CommandResponse])
+      completeMsg2 shouldBe Completed
+      // Wait a bit to see if there is any spurious messages
+      fakeSequencer.expectNoMsg(250.milli)
+
+
       cleanup(tla)
     }
 
@@ -118,36 +121,37 @@ class TromboneAssemblyCompTests extends TestKit(TromboneAssemblyCompTests.system
 
       //fakeSequencer.expectNoMsg(12.seconds)  // wait for connections
 
-      val datum = Parameters.createSetupArg("testobsId", Setup(initCK), Setup(datumCK))
-      fakeSequencer.send(tla, Submit(datum))
-
+      fakeSequencer.send(tla, Submit(Setup(commandInfo, initCK)))
       // This first one is the accept/verification
-      var acceptedMsg = fakeSequencer.expectMsgClass(3.seconds, classOf[CommandResult])
-      logger.info("msg1: " + acceptedMsg)
-      acceptedMsg.overall shouldBe Accepted
+      val acceptedMsg = fakeSequencer.expectMsgClass(3.seconds, classOf[CommandResponse])
+      acceptedMsg shouldBe Accepted
+      val completeMsg = fakeSequencer.expectMsgClass(3.seconds, classOf[CommandResponse])
+      completeMsg shouldBe Completed
 
-      // Second one is completion of the executed ones
-      var completeMsg = fakeSequencer.expectMsgClass(3.seconds, classOf[CommandResult])
-      logger.info("msg2: " + completeMsg)
-      completeMsg.overall shouldBe AllCompleted
+      fakeSequencer.send(tla, Submit(Setup(commandInfo, datumCK)))
+      // This first one is the accept/verification
+      val acceptedMsg2 = fakeSequencer.expectMsgClass(3.seconds, classOf[CommandResponse])
+      acceptedMsg2 shouldBe Accepted
+      val completeMsg2 = fakeSequencer.expectMsgClass(3.seconds, classOf[CommandResponse])
+      completeMsg2 shouldBe Completed
 
       // This will send a config arg with 10 position commands
       val testRangeDistance = 90 to 180 by 10
       val positionConfigs = testRangeDistance.map(f => positionSC(f))
 
-      val sca = Parameters.createSetupArg("testobsId", positionConfigs: _*)
-      fakeSequencer.send(tla, Submit(sca))
+//      val sca = Parameters.createSetupArg("testobsId", positionConfigs: _*)
+      positionConfigs.foreach { pc =>
+        fakeSequencer.send(tla, Submit(pc))
 
-      // This first one is the accept/verification
-      acceptedMsg = fakeSequencer.expectMsgClass(3.seconds, classOf[CommandResult])
-      logger.info("msg1: " + acceptedMsg)
-      acceptedMsg.overall shouldBe Accepted
+        // This first one is the accept/verification
+        val acceptedMsg = fakeSequencer.expectMsgClass(3.seconds, classOf[CommandResponse])
+        acceptedMsg shouldBe Accepted
 
-      // Second one is completion of the executed ones - give this some extra time to complete
-      completeMsg = fakeSequencer.expectMsgClass(10.seconds, classOf[CommandResult])
-      logger.info("msg2: " + completeMsg)
-      completeMsg.overall shouldBe AllCompleted
-      completeMsg.details.results.size shouldBe sca.configs.size
+        // Second one is completion of the executed ones - give this some extra time to complete
+        val completeMsg = fakeSequencer.expectMsgClass(10.seconds, classOf[CommandResponse])
+        completeMsg shouldBe Completed
+      }
+
       cleanup(tla)
     }
   }

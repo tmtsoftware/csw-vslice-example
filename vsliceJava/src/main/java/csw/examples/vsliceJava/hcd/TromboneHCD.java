@@ -5,7 +5,6 @@ import akka.actor.Props;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.japi.Creator;
-import akka.japi.pf.ReceiveBuilder;
 import akka.pattern.Patterns;
 import akka.util.Timeout;
 import csw.services.loc.ComponentType;
@@ -15,13 +14,11 @@ import csw.util.param.*;
 import javacsw.services.ccs.JHcdController;
 import javacsw.services.cs.akka.JConfigServiceClient;
 import javacsw.services.loc.JComponentType;
-import javacsw.services.pkg.*;
-import scala.PartialFunction;
 import scala.concurrent.Await;
 import scala.concurrent.duration.Duration;
-import scala.runtime.BoxedUnit;
 
 import static javacsw.util.param.JParameters.*;
+import csw.util.param.Parameters.CommandInfo;
 import static javacsw.util.param.JParameterSetDsl.*;
 import static javacsw.util.param.JUnitsOfMeasure.encoder;
 import static javacsw.services.pkg.JSupervisor.*;
@@ -192,17 +189,17 @@ public class TromboneHCD extends JHcdController {
   }
 
   /**
-   * @param sc the config received
+   * @param s the config received
    */
   @Override
-  public void process(Setup sc) {
+  public void process(Setup s) {
 //    import TromboneHCD._
 
-    log.debug("Trombone process received sc: " + sc);
+    log.debug("Trombone process received sc: " + s);
 
-    Prefix prefix = sc.prefix();
+    Prefix prefix = s.prefix();
     if (prefix.equals(axisMoveCK)) {
-      tromboneAxis.tell(new SingleAxisSimulator.Move(jvalue(jitem(sc, positionKey)), true), self());
+      tromboneAxis.tell(new SingleAxisSimulator.Move(jvalue(jparameter(s, positionKey)), true), self());
     } else if (prefix.equals(axisDatumCK)) {
       log.info("Received Datum");
       tromboneAxis.tell(SingleAxisSimulator.Datum.instance, self());
@@ -318,21 +315,27 @@ public class TromboneHCD extends JHcdController {
   public static final String axisMovePrefix = trombonePrefix + ".move";
   public static final Prefix axisMoveCK = new Prefix(axisMovePrefix);
 
-  public static Setup positionSC(int value) {
-    return sc(axisMovePrefix, jset(positionKey, value).withUnits(encoder));
+  public static Setup positionSC(CommandInfo commandInfo, int value) {
+    return setup(commandInfo, axisMovePrefix, jset(positionKey, value).withUnits(encoder));
   }
 
   public static final String axisDatumPrefix = trombonePrefix + ".datum";
   public static final Prefix axisDatumCK = new Prefix(axisDatumPrefix);
-  public static final Setup datumSC = Setup(axisDatumCK);
+  public static Setup datumSC(CommandInfo commandInfo) {
+    return Setup(commandInfo, axisDatumCK);
+  }
 
   public static final String axisHomePrefix = trombonePrefix + ".home";
   public static final Prefix axisHomeCK = new Prefix(axisHomePrefix);
-  public static final Setup homeSC = Setup(axisHomeCK);
+  public static Setup homeSC(CommandInfo commandInfo) {
+    return Setup(commandInfo, axisHomeCK);
+  }
 
   public static final String axisCancelPrefix = trombonePrefix + ".cancel";
   public static final Prefix axisCancelCK = new Prefix(axisCancelPrefix);
-  public static final Setup cancelSC = Setup(axisCancelCK);
+  public static Setup cancelSC(CommandInfo commandInfo) {
+    return Setup(commandInfo, axisCancelCK);
+  }
 
   // Testing messages for TromboneHCD
   public enum TromboneEngineering {

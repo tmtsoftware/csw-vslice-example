@@ -18,7 +18,7 @@ import scala.concurrent.duration._
  * TMT Source Code: 10/21/16.
  */
 class DatumCommand(s: Setup, tromboneHCD: ActorRef, startState: TromboneState, stateActor: Option[ActorRef])
-  extends Actor with ActorLogging {
+    extends Actor with ActorLogging {
   import TromboneCommandHandler._
   import TromboneStateActor._
 

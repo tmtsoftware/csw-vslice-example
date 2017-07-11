@@ -2,70 +2,66 @@ package csw.examples.vsliceJava.assembly;
 
 import csw.util.param.Parameters.Prefix;
 import csw.util.param.Parameters.Setup;
-import csw.util.param.Parameters.SetupArg;
 import csw.util.param.DoubleParameter;
 import csw.util.param.StringParameter;
 import javacsw.services.ccs.JValidation;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 import static csw.examples.vsliceJava.assembly.AssemblyContext.*;
 import static csw.examples.vsliceJava.assembly.AssemblyContext.configurationVersionKey;
-import static csw.services.ccs.Validation.Invalid;
 import static csw.services.ccs.Validation.Validation;
 import static javacsw.services.ccs.JValidation.*;
-import static javacsw.util.param.JParameters.jitem;
+import static javacsw.util.param.JParameters.jparameter;
 import static javacsw.util.param.JParameters.jvalue;
 
 /**
  * TMT Source Code: 8/24/16.
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
-public class ConfigValidation {
+public class ParamValidation {
 
-  /**
-   * Looks for any Setups in a SetupArg that fail validation and returns as a list of only Invalid
-   *
-   * @param sca input SetupArg for checking
-   * @param ac  AssemblyContext provides command names
-   * @return scala [[List]] that includes only the Invalid configurations in the SetupArg
-   */
-  public static List<Invalid> invalidsInTromboneSetupArg(SetupArg sca, AssemblyContext ac) {
-    // Returns a list of all failed validations in config arg
-    List<Validation> list = validateTromboneSetupArg(sca, ac);
-    List<Invalid> badList = new ArrayList<>();
-    for (Validation v : list) {
-      if (v instanceof Invalid) badList.add((Invalid) v);
-    }
-    return badList;
-  }
+//  /**
+//   * Looks for any Setups in a SetupArg that fail validation and returns as a list of only Invalid
+//   *
+//   * @param sca input SetupArg for checking
+//   * @param ac  AssemblyContext provides command names
+//   * @return scala [[List]] that includes only the Invalid configurations in the SetupArg
+//   */
+//  public static List<Invalid> invalidsInTromboneSetupArg(SetupArg sca, AssemblyContext ac) {
+//    // Returns a list of all failed validations in config arg
+//    List<Validation> list = validateTromboneSetupArg(sca, ac);
+//    List<Invalid> badList = new ArrayList<>();
+//    for (Validation v : list) {
+//      if (v instanceof Invalid) badList.add((Invalid) v);
+//    }
+//    return badList;
+//  }
 
   /**
    * Runs Trombone-specific validation on a single Setup.
    */
-  public static Validation validateOneSetup(Setup sc, AssemblyContext ac) {
-    Prefix prefix = sc.prefix();
-    if (prefix.equals(ac.initCK)) return initValidation(sc, ac);
-    if (prefix.equals(ac.datumCK)) return datumValidation(sc);
-    if (prefix.equals(ac.stopCK)) return stopValidation(sc);
-    if (prefix.equals(ac.moveCK)) return moveValidation(sc, ac);
-    if (prefix.equals(ac.positionCK)) return positionValidation(sc, ac);
-    if (prefix.equals(ac.setElevationCK)) return setElevationValidation(sc, ac);
-    if (prefix.equals(ac.setAngleCK)) return setAngleValidation(sc, ac);
-    if (prefix.equals(ac.followCK)) return followValidation(sc, ac);
+  public static Validation validateOneSetup(Setup s, AssemblyContext ac) {
+    Prefix prefix = s.prefix();
+    if (prefix.equals(ac.initCK)) return initValidation(s, ac);
+    if (prefix.equals(ac.datumCK)) return datumValidation(s);
+    if (prefix.equals(ac.stopCK)) return stopValidation(s);
+    if (prefix.equals(ac.moveCK)) return moveValidation(s, ac);
+    if (prefix.equals(ac.positionCK)) return positionValidation(s, ac);
+    if (prefix.equals(ac.setElevationCK)) return setElevationValidation(s, ac);
+    if (prefix.equals(ac.setAngleCK)) return setAngleValidation(s, ac);
+    if (prefix.equals(ac.followCK)) return followValidation(s, ac);
     return Invalid(OtherIssue("Setup with prefix $x is not support for $componentName"));
   }
 
-  // Validates a SetupArg for Trombone Assembly
-  public static List<Validation> validateTromboneSetupArg(SetupArg sca, AssemblyContext ac) {
-    List<Validation> result = new ArrayList<>();
-    for (Setup config : sca.getConfigs()) {
-      result.add(validateOneSetup(config, ac));
-    }
-    return result;
-  }
+//  // Validates a SetupArg for Trombone Assembly
+//  public static List<Validation> validateTromboneSetupArg(SetupArg sca, AssemblyContext ac) {
+//    List<Validation> result = new ArrayList<>();
+//    for (Setup config : sca.getConfigs()) {
+//      result.add(validateOneSetup(config, ac));
+//    }
+//    return result;
+//  }
 
   /**
    * Validation for the init Setup
@@ -92,15 +88,15 @@ public class ConfigValidation {
           + configurationNameKey + " and " + configurationVersionKey));
 
       try {
-        StringParameter i1 = jitem(sc, configurationNameKey);
-        StringParameter i2 = jitem(sc, configurationVersionKey);
+        StringParameter i1 = jparameter(sc, configurationNameKey);
+        StringParameter i2 = jparameter(sc, configurationVersionKey);
       } catch (Exception ex) {
-        return Invalid(JValidation.WrongItemTypeIssue("The init Setup requires StringItems named: "
+        return Invalid(JValidation.WrongParameterTypeIssue("The init Setup requires StringItems named: "
           + configurationVersionKey + " and " + configurationVersionKey));
       }
       return JValidation.Valid;
     }
-    return Invalid(WrongNumberOfItemsIssue("The init configuration requires 0 or 2 items, but " + size + " were received"));
+    return Invalid(WrongNumberOfParametersIssue("The init configuration requires 0 or 2 items, but " + size + " were received"));
   }
 
   /**
@@ -142,11 +138,11 @@ public class ConfigValidation {
     }
 
     try {
-      jitem(sc, stagePositionKey);
+      jparameter(sc, stagePositionKey);
     } catch(Exception ex) {
-      return Invalid(WrongItemTypeIssue("The move Setup must have a DoubleParameter named: " + stagePositionKey));
+      return Invalid(WrongParameterTypeIssue("The move Setup must have a DoubleParameter named: " + stagePositionKey));
     }
-    if (jitem(sc, stagePositionKey).units() != stagePositionUnits) {
+    if (jparameter(sc, stagePositionKey).units() != stagePositionUnits) {
       return Invalid(WrongUnitsIssue("The move Setup parameter: "
         + stagePositionKey
         + " must have units of: "
@@ -173,19 +169,19 @@ public class ConfigValidation {
     }
 
     try {
-      jitem(sc, naRangeDistanceKey);
+      jparameter(sc, naRangeDistanceKey);
     } catch(Exception ex) {
-      return Invalid(WrongItemTypeIssue("The position Setup must have a DoubleParameter named: " + naRangeDistanceKey));
+      return Invalid(WrongParameterTypeIssue("The position Setup must have a DoubleParameter named: " + naRangeDistanceKey));
     }
 
-    if (jitem(sc, naRangeDistanceKey).units() != naRangeDistanceUnits) {
+    if (jparameter(sc, naRangeDistanceKey).units() != naRangeDistanceUnits) {
       return Invalid(WrongUnitsIssue("The position Setup parameter: "
         + naRangeDistanceKey
         + " must have units of: "
         + naRangeDistanceUnits));
     }
 
-    double el = jvalue(jitem(sc, naRangeDistanceKey));
+    double el = jvalue(jparameter(sc, naRangeDistanceKey));
     if (el < 0) {
       return Invalid(ItemValueOutOfRangeIssue("Range distance value of "
         + el
@@ -212,12 +208,12 @@ public class ConfigValidation {
     }
 
     try {
-      jitem(sc, naElevationKey);
+      jparameter(sc, naElevationKey);
     } catch(Exception ex) {
-      return Invalid(WrongItemTypeIssue("The setElevation Setup must have a parameter: " + naElevationKey + " as a DoubleParameter"));
+      return Invalid(WrongParameterTypeIssue("The setElevation Setup must have a parameter: " + naElevationKey + " as a DoubleParameter"));
     }
 
-    if (jitem(sc, naElevationKey).units() != naRangeDistanceUnits) {
+    if (jparameter(sc, naElevationKey).units() != naRangeDistanceUnits) {
       return Invalid(WrongUnitsIssue("The move Setup parameter: "
         + naElevationKey
         + " must have units: "
@@ -244,12 +240,12 @@ public class ConfigValidation {
     }
 
     try {
-      jitem(sc, zenithAngleKey);
+      jparameter(sc, zenithAngleKey);
     } catch(Exception ex) {
-      return Invalid(WrongItemTypeIssue("The setAngle Setup must have a DoubleParameter named: " + zenithAngleKey));
+      return Invalid(WrongParameterTypeIssue("The setAngle Setup must have a DoubleParameter named: " + zenithAngleKey));
     }
 
-    DoubleParameter di = jitem(sc, zenithAngleKey);
+    DoubleParameter di = jparameter(sc, zenithAngleKey);
     if (di.units() != zenithAngleUnits) {
       return Invalid(WrongUnitsIssue("The setAngle Setup parameter: "
         + zenithAngleKey
@@ -276,9 +272,9 @@ public class ConfigValidation {
     }
 
     try {
-      jitem(sc, nssInUseKey);
+      jparameter(sc, nssInUseKey);
     } catch(Exception ex) {
-      return Invalid(WrongItemTypeIssue("The follow Setup must have a BooleanParameter named " + nssInUseKey));
+      return Invalid(WrongParameterTypeIssue("The follow Setup must have a BooleanParameter named " + nssInUseKey));
     }
 
     return Valid;

@@ -69,7 +69,7 @@ class TromboneControl extends AbstractActor {
         log.debug("Setting trombone axis to stage position: " + jvalue(newPosition) + " and encoder: " + encoderPosition);
 
         // Send command to HCD here
-        tromboneHCD.ifPresent(actorRef -> actorRef.tell(new Submit(TromboneHCD.positionSC(encoderPosition)), self()));
+        tromboneHCD.ifPresent(actorRef -> actorRef.tell(new Submit(TromboneHCD.positionSC(ac.commandInfo, encoderPosition)), self()));
       }).
       match(TromboneAssembly.UpdateTromboneHCD.class, t -> getContext().become(controlReceive(t.tromboneHCD))).
       matchAny(t -> log.warning("Unexpected message received in TromboneControl:controlReceive: " + t)).

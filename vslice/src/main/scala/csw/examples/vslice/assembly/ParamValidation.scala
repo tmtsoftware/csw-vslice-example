@@ -50,7 +50,7 @@ object ParamValidation {
       else if (Try(sc(configurationNameKey)).isFailure || Try(sc(configurationVersionKey)).isFailure)
         Invalid(WrongParameterTypeIssue(s"The init Setup requires StringParameters named: $configurationVersionKey and $configurationVersionKey"))
       else Valid
-    } else Invalid(WrongNumberOfParametersIssue(s"The init configuration requires 0 or 2 items, but $size were received"))
+    } else Invalid(WrongNumberOfParametersIssue(s"The init Setup requires 0 or 2 items, but $size were received"))
   }
 
   /**

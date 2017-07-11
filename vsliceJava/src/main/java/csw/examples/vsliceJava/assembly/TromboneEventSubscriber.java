@@ -19,7 +19,7 @@ import static csw.services.events.EventService.EventMonitor;
 import static csw.util.param.Parameters.Prefix;
 import static csw.util.param.Events.EventTime;
 import static csw.util.param.Events.SystemEvent;
-import static javacsw.util.param.JParameters.jitem;
+import static javacsw.util.param.JParameters.jparameter;
 import static javacsw.util.param.JParameters.jvalue;
 
 /**
@@ -93,7 +93,7 @@ public class TromboneEventSubscriber extends AbstractActor implements ILocationS
 
       match(SystemEvent.class, event -> {
         if (event.info().source().equals(AssemblyContext.zaPrefix)) {
-          DoubleParameter newZenithAngle = jitem(event, AssemblyContext.zenithAngleKey);
+          DoubleParameter newZenithAngle = jparameter(event, AssemblyContext.zenithAngleKey);
           log.info("Received ZA: " + event);
           updateFollowActor(newZenithAngle, cFocusError, event.info().eventTime());
           // Pass the new values to the next message
@@ -102,7 +102,7 @@ public class TromboneEventSubscriber extends AbstractActor implements ILocationS
         } else if (event.info().source().equals(AssemblyContext.fePrefix)) {
           // Update focusError state and then update calculator
           log.info("Received FE: " + event);
-          DoubleParameter newFocusError = jitem(event, AssemblyContext.focusErrorKey);
+          DoubleParameter newFocusError = jparameter(event, AssemblyContext.focusErrorKey);
           updateFollowActor(cZenithAngle, newFocusError, event.info().eventTime());
           // Pass the new values to the next message
           getContext().become(subscribeReceive(cNssInUse, cZenithAngle, newFocusError));

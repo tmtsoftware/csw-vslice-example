@@ -24,7 +24,7 @@ import static csw.examples.vsliceJava.assembly.TrombonePublisher.AxisStatsUpdate
 import static csw.examples.vsliceJava.hcd.TromboneHCD.TromboneEngineering.GetAxisStats;
 import static csw.examples.vsliceJava.hcd.TromboneHCD.*;
 import static csw.services.ts.TimeService.localTimeNow;
-import static javacsw.util.param.JParameters.jitem;
+import static javacsw.util.param.JParameters.jparameter;
 import static csw.services.loc.LocationService.Location;
 
 /**
@@ -219,12 +219,12 @@ public class DiagPublisher extends AbstractTimeServiceScheduler implements ILoca
     log.debug("publish state: " + cs);
     eventPublisher.ifPresent(actorRef ->
       actorRef.tell(new AxisStateUpdate(
-          jitem(cs, axisNameKey),
-          jitem(cs, positionKey),
-          jitem(cs, stateKey),
-          jitem(cs, inLowLimitKey),
-          jitem(cs, inHighLimitKey),
-          jitem(cs, inHomeKey)),
+          jparameter(cs, axisNameKey),
+          jparameter(cs, positionKey),
+          jparameter(cs, stateKey),
+          jparameter(cs, inLowLimitKey),
+          jparameter(cs, inHighLimitKey),
+          jparameter(cs, inHomeKey)),
         self()));
   }
 
@@ -232,14 +232,14 @@ public class DiagPublisher extends AbstractTimeServiceScheduler implements ILoca
     log.debug("publish stats");
     eventPublisher.ifPresent(actorRef ->
       actorRef.tell(new AxisStatsUpdate(
-          jitem(cs, axisNameKey),
-          jitem(cs, datumCountKey),
-          jitem(cs, moveCountKey),
-          jitem(cs, homeCountKey),
-          jitem(cs, limitCountKey),
-          jitem(cs, successCountKey),
-          jitem(cs, failureCountKey),
-          jitem(cs, cancelCountKey)),
+          jparameter(cs, axisNameKey),
+          jparameter(cs, datumCountKey),
+          jparameter(cs, moveCountKey),
+          jparameter(cs, homeCountKey),
+          jparameter(cs, limitCountKey),
+          jparameter(cs, successCountKey),
+          jparameter(cs, failureCountKey),
+          jparameter(cs, cancelCountKey)),
         self()));
   }
 

@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static csw.examples.vsliceJava.assembly.AssemblyContext.*;
-import static csw.examples.vsliceJava.assembly.ConfigValidation.*;
+import static csw.examples.vsliceJava.assembly.ParamValidation.*;
 import static csw.services.ccs.Validation.*;
 import static javacsw.services.ccs.JCommandStatus.NotAccepted;
 import static javacsw.services.ccs.JValidation.Valid;
@@ -393,7 +393,7 @@ public class ValidationTests {
       new Setup(assemblyContext.moveCK.prefix()).add(jset(stagePositionKey, 22.0).withUnits(kilometers)));
 
     // Check if validated properly
-    List<Validation> validations = ConfigValidation.validateTromboneSetupArg(sca, assemblyContext);
+    List<Validation> validations = ParamValidation.validateTromboneSetupArg(sca, assemblyContext);
     assertEquals(validations.size(), sca.configs().size());
     assertEquals(validations.get(0), Valid);
     assertTrue(validations.get(1) instanceof Invalid);
@@ -419,7 +419,7 @@ public class ValidationTests {
     SetupArg sca2 = Parameters.createSetupArg("testobsId",
       new Setup(assemblyContext.initCK.prefix()), assemblyContext.positionSC(22.0), assemblyContext.moveSC(44.0));
 
-    List<Validation> validations2 = ConfigValidation.validateTromboneSetupArg(sca2, assemblyContext);
+    List<Validation> validations2 = ParamValidation.validateTromboneSetupArg(sca2, assemblyContext);
     assertTrue(isAllValid(validations2));
   }
 }

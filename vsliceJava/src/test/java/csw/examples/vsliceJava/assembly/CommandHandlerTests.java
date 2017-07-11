@@ -9,8 +9,9 @@ import akka.testkit.TestProbe;
 import akka.util.Timeout;
 import csw.examples.vsliceJava.TestEnv;
 import csw.examples.vsliceJava.hcd.TromboneHCD;
-import csw.services.ccs.CommandResponse.CommandResponse;
-import csw.services.ccs.SequentialExecutor;
+import csw.services.ccs.CommandStatus;
+import csw.services.ccs.CommandStatus.CommandResponse;
+import csw.services.ccs.CommandStatus.NoLongerValid;
 import csw.services.ccs.Validation;
 import csw.services.loc.Connection.AkkaConnection;
 import csw.services.loc.LocationService;
@@ -36,14 +37,10 @@ import java.util.concurrent.TimeUnit;
 import static csw.examples.vsliceJava.assembly.TromboneStateActor.*;
 import static csw.examples.vsliceJava.hcd.SingleAxisSimulator.AxisUpdate;
 import static csw.examples.vsliceJava.hcd.TromboneHCD.TromboneEngineering.GetAxisUpdateNow;
-import static csw.services.ccs.CommandResponse.CommandResult;
-import static csw.services.ccs.CommandResponse.NoLongerValid;
 import static csw.services.pkg.SupervisorExternal.LifecycleStateChanged;
 import static csw.services.pkg.SupervisorExternal.SubscribeLifecycleCallback;
 import static csw.util.param.Parameters.Setup;
-import static csw.util.param.Parameters.SetupArg;
 import static javacsw.services.ccs.JCommandStatus.*;
-import static javacsw.services.ccs.JSequentialExecutor.ExecuteOne;
 import static javacsw.services.loc.JConnectionType.AkkaType;
 import static javacsw.services.pkg.JComponent.DoNotRegister;
 import static javacsw.services.pkg.JSupervisor.HaltComponent;
@@ -140,18 +137,17 @@ public class CommandHandlerTests extends TestKit {
 
     setupState(new TromboneState(cmdItem(cmdReady), moveItem(moveUnindexed), sodiumItem(false), nssItem(false)));
 
-    Parameters.Setup sc = new Setup(ac.datumCK.prefix());
+    Parameters.Setup sc = new Setup(ac.commandInfo, ac.datumCK.prefix());
 
-    ch.tell(ExecuteOne(sc, Optional.of(fakeAssembly.ref())), self());
+    ch.tell(sc, fakeAssembly.ref());
 
     CommandResponse msg = fakeAssembly.expectMsgClass(FiniteDuration.create(10, TimeUnit.SECONDS),
       CommandResponse.class);
     assertEquals(msg, Completed);
-    //info("Final: " + msg)
 
     // Demonstrate error
     ch.tell(new TromboneState(cmdItem(cmdUninitialized), moveItem(moveUnindexed), sodiumItem(false), nssItem(false)), self());
-    ch.tell(ExecuteOne(sc, Optional.of(fakeAssembly.ref())), self());
+    ch.tell(sc, fakeAssembly.ref());
 
     CommandResponse errMsg = fakeAssembly.expectMsgClass(FiniteDuration.create(10, TimeUnit.SECONDS),
       CommandResponse.class);
@@ -176,9 +172,9 @@ public class CommandHandlerTests extends TestKit {
 
     setupState(new TromboneState(cmdItem(cmdReady), moveItem(moveUnindexed), sodiumItem(false), nssItem(false)));
 
-    Parameters.Setup sc = new Setup(ac.datumCK.prefix());
+    Parameters.Setup sc = new Setup(ac.commandInfo, ac.datumCK.prefix());
 
-    ch.tell(ExecuteOne(sc, Optional.of(fakeAssembly.ref())), self());
+    ch.tell(sc, fakeAssembly.ref());
 
     CommandResponse msg = fakeAssembly.expectMsgClass(FiniteDuration.create(10, TimeUnit.SECONDS),
       CommandResponse.class);
@@ -188,7 +184,7 @@ public class CommandHandlerTests extends TestKit {
     Location unresolvedHCD = new Unresolved(new AkkaConnection(ac.hcdComponentId));
     ch.tell(unresolvedHCD, self());
 
-    ch.tell(ExecuteOne(sc, Optional.of(fakeAssembly.ref())), self());
+    ch.tell(sc, fakeAssembly.ref());
 
     // XXX TODO: Check problem here
     CommandResponse errMsg = fakeAssembly.expectMsgClass(FiniteDuration.create(10, TimeUnit.SECONDS),
@@ -200,7 +196,7 @@ public class CommandHandlerTests extends TestKit {
     Location resolvedHCD = new ResolvedAkkaLocation(new AkkaConnection(ac.hcdComponentId), new URI("http://help"), "", Optional.of(tromboneHCD));
     ch.tell(resolvedHCD, self());
 
-    ch.tell(ExecuteOne(sc, Optional.of(fakeAssembly.ref())), self());
+    ch.tell(sc, fakeAssembly.ref());
     CommandResponse msg2 = fakeAssembly.expectMsgClass(duration("10 seconds"), CommandResponse.class);
     assertEquals(msg2, Completed);
 
@@ -208,45 +204,45 @@ public class CommandHandlerTests extends TestKit {
   }
 
 
-  @Test
-  public void shouldAllowRunningDatumThroughSequentialExecutor() {
-    ActorRef tromboneHCD = startHCD();
-    TestProbe fakeAssembly = new TestProbe(system);
-
-    // The following is to synchronize the test with the HCD entering Running state
-    // This is boiler plate for setting up an HCD for testing
-    tromboneHCD.tell(new SubscribeLifecycleCallback(fakeAssembly.ref()), self());
-    fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleRunning));
-    //info("Running")
-
-    ActorRef ch = newCommandHandler(tromboneHCD, Optional.empty());
-
-    setupState(new TromboneState(cmdItem(cmdReady), moveItem(moveUnindexed), sodiumItem(false), nssItem(false)));
-
-    SetupArg sca = Parameters.createSetupArg("testobsId", new Setup(ac.datumCK.prefix()));
-
-    ActorRef se = system.actorOf(SequentialExecutor.props(ch, sca, Optional.of(fakeAssembly.ref())));
-
-    CommandResult msg = fakeAssembly.expectMsgClass(FiniteDuration.create(10, TimeUnit.SECONDS), CommandResult.class);
-    //info("Final: " + msg)
-    assertEquals(msg.overall(), AllCompleted);
-    assertEquals(msg.details().results().size(), 1);
-
-    // Demonstrate error
-    ch.tell(new TromboneState(cmdItem(cmdUninitialized), moveItem(moveUnindexed), sodiumItem(false), nssItem(false)), self());
-
-    ActorRef se2 = system.actorOf(SequentialExecutor.props(ch, sca, Optional.of(fakeAssembly.ref())));
-
-    CommandResult errMsg = fakeAssembly.expectMsgClass(FiniteDuration.create(10, TimeUnit.SECONDS), CommandResult.class);
-    assertEquals(errMsg.overall(), Incomplete);
-    CommandResponse e1 = errMsg.details().getResults().get(0).first();
-    assertTrue(e1 instanceof NoLongerValid);
-    assertTrue(((NoLongerValid) e1).issue() instanceof Validation.WrongInternalStateIssue);
-
-    //info("Final: " + errMsg)
-
-    cleanup(tromboneHCD, ch);
-  }
+//  @Test
+//  public void shouldAllowRunningDatumThroughSequentialExecutor() {
+//    ActorRef tromboneHCD = startHCD();
+//    TestProbe fakeAssembly = new TestProbe(system);
+//
+//    // The following is to synchronize the test with the HCD entering Running state
+//    // This is boiler plate for setting up an HCD for testing
+//    tromboneHCD.tell(new SubscribeLifecycleCallback(fakeAssembly.ref()), self());
+//    fakeAssembly.expectMsg(new LifecycleStateChanged(LifecycleRunning));
+//    //info("Running")
+//
+//    ActorRef ch = newCommandHandler(tromboneHCD, Optional.empty());
+//
+//    setupState(new TromboneState(cmdItem(cmdReady), moveItem(moveUnindexed), sodiumItem(false), nssItem(false)));
+//
+//    Setup s = new Setup(ac.commandInfo, ac.datumCK.prefix());
+//
+//    ActorRef se = system.actorOf(SequentialExecutor.props(ch, sca, Optional.of(fakeAssembly.ref())));
+//
+//    CommandResult msg = fakeAssembly.expectMsgClass(FiniteDuration.create(10, TimeUnit.SECONDS), CommandResult.class);
+//    //info("Final: " + msg)
+//    assertEquals(msg.overall(), AllCompleted);
+//    assertEquals(msg.details().results().size(), 1);
+//
+//    // Demonstrate error
+//    ch.tell(new TromboneState(cmdItem(cmdUninitialized), moveItem(moveUnindexed), sodiumItem(false), nssItem(false)), self());
+//
+//    ActorRef se2 = system.actorOf(SequentialExecutor.props(ch, sca, Optional.of(fakeAssembly.ref())));
+//
+//    CommandResult errMsg = fakeAssembly.expectMsgClass(FiniteDuration.create(10, TimeUnit.SECONDS), CommandResult.class);
+//    assertEquals(errMsg.overall(), Incomplete);
+//    CommandResponse e1 = errMsg.details().getResults().get(0).first();
+//    assertTrue(e1 instanceof NoLongerValid);
+//    assertTrue(((NoLongerValid) e1).issue() instanceof Validation.WrongInternalStateIssue);
+//
+//    //info("Final: " + errMsg)
+//
+//    cleanup(tromboneHCD, ch);
+//  }
 
   @Test
   public void shouldAllowRunningMove() {

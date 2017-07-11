@@ -8,14 +8,16 @@ import akka.japi.Creator;
 import akka.util.Timeout;
 import com.typesafe.config.Config;
 import csw.services.ccs.AssemblyMessages;
-import csw.services.ccs.SequentialExecutor;
 import csw.services.ccs.Validation;
 import csw.services.loc.LocationService.*;
 import csw.services.loc.LocationSubscriberActor;
 import csw.services.pkg.Component;
 import csw.services.pkg.Supervisor;
+import csw.util.param.Parameters.Setup;
+import csw.util.param.Parameters.Observe;
 import javacsw.services.alarms.IAlarmService;
 import javacsw.services.ccs.JAssemblyMessages;
+import javacsw.services.ccs.JValidation;
 import javacsw.services.cs.akka.JConfigServiceClient;
 import javacsw.services.events.IEventService;
 import javacsw.services.events.ITelemetryService;
@@ -23,13 +25,11 @@ import javacsw.services.loc.JLocationSubscriberActor;
 import javacsw.services.ccs.JAssemblyController;
 
 import java.io.File;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static csw.examples.vsliceJava.assembly.AssemblyContext.TromboneCalculationConfig;
 import static csw.examples.vsliceJava.assembly.AssemblyContext.TromboneControlConfig;
-import static csw.util.param.Parameters.SetupArg;
 import static javacsw.services.pkg.JSupervisor.*;
 
 /**
@@ -254,32 +254,22 @@ public class TromboneAssembly extends JAssemblyController {
 
   /**
    * Function that overrides AssemblyController setup processes incoming SetupArg messages
-   * @param sca received SetupConfgiArg
+   * @param s received SetupConfgiArg
    * @param commandOriginator the sender of the command
    * @return a validation object that indicates if the received config is valid
    */
   @Override
-  public List<Validation.Validation> setup(SetupArg sca, Optional<ActorRef> commandOriginator) {
-    // Returns validations for all
-    List<Validation.Validation> validations = validateSequenceConfigArg(sca);
-    if (Validation.isAllValid(validations)) {
-      // Create a SequentialExecutor to process all Setups
-      ActorRef executor = newExecutor(commandHandler, sca, commandOriginator);
+  public Validation.Validation setup(Setup s, Optional<ActorRef> commandOriginator) {
+    Validation.Validation validation = ParamValidation.validateOneSetup(s, ac);
+    if (validation == JValidation.Valid) {
+      commandHandler.tell(s, commandOriginator.orElse(ActorRef.noSender()));
     }
-    return validations;
+    return validation;
   }
 
-  /**
-   * Validates a received config arg and returns the first
-   */
-  private List<Validation.Validation> validateSequenceConfigArg(SetupArg sca) {
-    // Are all of the configs really for us and correctly formatted, etc?
-    return ConfigValidation.validateTromboneSetupArg(sca, ac);
-  }
-
-  // Convenience method to create a new SequentialExecutor
-  private ActorRef newExecutor(ActorRef commandHandler, SetupArg sca, Optional<ActorRef> commandOriginator) {
-    return getContext().actorOf(SequentialExecutor.props(commandHandler, sca, commandOriginator));
+  @Override
+  public Validation.Validation observe(Observe o, Optional<ActorRef> replyTo) {
+    return JValidation.Valid;
   }
 
   // Holds the assembly configurations
@@ -339,6 +329,17 @@ public class TromboneAssembly extends JAssemblyController {
     public UpdateTromboneHCD(Optional<ActorRef> tromboneHCD) {
       this.tromboneHCD = tromboneHCD;
     }
+  }
+
+  // Used internally to start/stop  commands
+  public static class CommandStart {
+    private CommandStart(){}
+    public static final CommandStart instance = new CommandStart();
+  }
+
+  public static class StopCurrentCommand {
+    private StopCurrentCommand(){}
+    public static final StopCurrentCommand instance = new StopCurrentCommand();
   }
 
 }

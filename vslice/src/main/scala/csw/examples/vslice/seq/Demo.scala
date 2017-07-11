@@ -101,9 +101,9 @@ object Demo extends LazyLogging {
   val setup2 = positionSC(100.0)
 
   // This will send a config arg with 10 position commands
-//  val testRangeDistance = 40 to 130 by 10
-//  val positionConfigs = testRangeDistance.map(f => positionSC(f))
-//  val setup3 = Parameters.createSetupArg(obsId, positionConfigs: _*)
+  //  val testRangeDistance = 40 to 130 by 10
+  //  val positionConfigs = testRangeDistance.map(f => positionSC(f))
+  //  val setup3 = Parameters.createSetupArg(obsId, positionConfigs: _*)
 
   /**
    * Returns the TromboneAssembly after LocationService lookup

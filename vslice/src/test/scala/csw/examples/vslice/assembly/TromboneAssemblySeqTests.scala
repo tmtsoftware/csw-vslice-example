@@ -7,7 +7,6 @@ import com.typesafe.scalalogging.LazyLogging
 import csw.examples.vslice.TestEnv
 import csw.services.apps.containerCmd.ContainerCmd
 import csw.services.ccs.BlockingAssemblyClient
-import csw.services.ccs.CommandResponse.AllCompleted
 import csw.services.events.Event
 import csw.services.loc.LocationService
 import csw.services.pkg.Supervisor._
@@ -62,13 +61,13 @@ class TromboneAssemblySeqTests extends TestKit(TromboneAssemblySeqTests.system) 
   private val positionPrefix = s"$componentPrefix.position"
   private val positionCK: Prefix = positionPrefix
 
-  def positionSC(rangeDistance: Double): Setup = Setup(positionCK).add(naRangeDistanceKey -> rangeDistance withUnits naRangeDistanceUnits)
+  def positionSC(rangeDistance: Double): Setup = Setup(commandInfo, positionCK).add(naRangeDistanceKey -> rangeDistance withUnits naRangeDistanceUnits)
 
   def eventPrinter(ev: Event): Unit = {
     logger.info(s"EventReceived: $ev")
   }
 
-  private val sca1 = Parameters.createSetupArg("testobsId", Setup(initCK), Setup(datumCK))
+  private val sca1 = List(Setup(commandInfo, initCK), Setup(commandInfo, datumCK))
 
   // This will send a config arg with 10 position commands
   private val testRangeDistance = 90 to 130 by 10

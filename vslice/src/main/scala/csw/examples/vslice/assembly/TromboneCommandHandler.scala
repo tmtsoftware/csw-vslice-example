@@ -226,10 +226,6 @@ class TromboneCommandHandler(ac: AssemblyContext, tromboneHCDIn: Option[ActorRef
       log.debug("actorExecutingReceive: Stop CK")
       closeDownMotionCommand(currentCommand, commandOriginator)
 
-    case Setup(ac.commandInfo, ac.stopCK, _) =>
-      log.debug("actorExecutingReceive: ExecuteOneStop")
-      closeDownMotionCommand(currentCommand, commandOriginator)
-
     case x => log.error(s"TromboneCommandHandler:actorExecutingReceive received an unknown message: $x")
   }
 

@@ -7,22 +7,20 @@ import akka.event.Logging;
 import akka.event.LoggingAdapter;
 import akka.japi.Creator;
 import akka.util.Timeout;
-import csw.services.ccs.CommandResponse.Error;
+import csw.services.ccs.CommandStatus;
 import csw.services.ccs.DemandMatcher;
 import csw.services.ccs.HcdController;
 import csw.util.param.DoubleParameter;
-import javacsw.services.ccs.JSequentialExecutor;
 
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static csw.examples.vsliceJava.assembly.TromboneStateActor.*;
 import static csw.examples.vsliceJava.hcd.TromboneHCD.*;
-import static csw.services.ccs.CommandResponse.NoLongerValid;
 import static csw.services.ccs.Validation.WrongInternalStateIssue;
 import static csw.util.param.Parameters.Setup;
 import static javacsw.services.ccs.JCommandStatus.Completed;
-import static javacsw.util.param.JParameterSetDsl.sc;
+import static javacsw.util.param.JParameterSetDsl.setup;
 import static javacsw.util.param.JParameters.*;
 import static javacsw.util.param.JUnitsOfMeasure.encoder;
 import static akka.pattern.PatternsCS.ask;
@@ -42,15 +40,15 @@ public class SetElevationCommand extends AbstractActor {
 
   private final LoggingAdapter log = Logging.getLogger(getContext().system(), this);
   private final AssemblyContext ac;
-  private final Setup sc;
+  private final Setup s;
   private final ActorRef tromboneHCD;
   private final TromboneState startState;
   private final Optional<ActorRef> stateActor;
 
-  private SetElevationCommand(AssemblyContext ac, Setup sc, ActorRef tromboneHCD,
+  private SetElevationCommand(AssemblyContext ac, Setup s, ActorRef tromboneHCD,
                               TromboneState startState, Optional<ActorRef> stateActor) {
     this.ac = ac;
-    this.sc = sc;
+    this.s = s;
     this.tromboneHCD = tromboneHCD;
     this.startState = startState;
     this.stateActor = stateActor;
@@ -60,14 +58,14 @@ public class SetElevationCommand extends AbstractActor {
   @Override
   public Receive createReceive() {
     return receiveBuilder().
-        matchEquals(JSequentialExecutor.CommandStart(), t -> {
+        matchEquals(TromboneAssembly.CommandStart.instance, t -> {
           if (cmd(startState).equals(cmdUninitialized) || (!move(startState).equals(moveIndexed) && !move(startState).equals(moveMoving))) {
-            sender().tell(new NoLongerValid(new WrongInternalStateIssue(
+            sender().tell(new CommandStatus.NoLongerValid(new WrongInternalStateIssue(
                 "Assembly state of " + cmd(startState) + "/" + move(startState) + " does not allow setElevation")), self());
           } else {
             ActorRef mySender = sender();
             // Note that units have already been verified here
-            DoubleParameter elevationItem = jitem(sc, AssemblyContext.naElevationKey);
+            DoubleParameter elevationItem = jparameter(s, AssemblyContext.naElevationKey);
 
             // Let the elevation be the range distance
             // Convert range distance to encoder units from mm
@@ -78,7 +76,7 @@ public class SetElevationCommand extends AbstractActor {
 
             DemandMatcher stateMatcher = TromboneCommandHandler.posMatcher(encoderPosition);
             // Position key is encoder units
-            Setup scOut = jadd(sc(axisMoveCK.prefix(), jset(positionKey, encoderPosition).withUnits(encoder)));
+            Setup scOut = jadd(setup(s.info(), axisMoveCK.prefix(), jset(positionKey, encoderPosition).withUnits(encoder)));
             sendState(new SetState(cmdItem(cmdBusy), moveItem(moveMoving), startState.sodiumLayer, startState.nss));
             tromboneHCD.tell(new HcdController.Submit(scOut), self());
 
@@ -87,15 +85,15 @@ public class SetElevationCommand extends AbstractActor {
               if (status == Completed)
                 // NOTE ---> This is the place where sodium layer state gets set to TRUE
                 sendState(new SetState(cmdItem(cmdReady), moveItem(moveIndexed), sodiumItem(true), startState.nss));
-              else if (status instanceof Error)
-                log.error("setElevation command match failed with message: " + ((Error)status).message());
+              else if (status instanceof CommandStatus.Error)
+                log.error("setElevation command match failed with message: " + ((CommandStatus.Error)status).message());
             });
 
           }
         }).
-        matchEquals(JSequentialExecutor.StopCurrentCommand(), t -> {
+        matchEquals(TromboneAssembly.StopCurrentCommand.instance, t -> {
           log.info("SetElevation command -- STOP");
-          tromboneHCD.tell(new HcdController.Submit(cancelSC), self());
+          tromboneHCD.tell(new HcdController.Submit(cancelSC(s.info())), self());
         }).
         matchAny(t -> log.warning("Unknown message received: " + t)).
         build();
